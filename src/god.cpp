@@ -1107,15 +1107,17 @@ public:
 class Juejing: public TriggerSkill{
 public:
     Juejing():TriggerSkill("juejing"){
-        events << DrawNCards << PhaseChange;
+        events << PhaseChange;
         frequency = Compulsory;
     }
 
-    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const{
-        if(event == DrawNCards)
-            data = data.toInt() + player->getLostHp();
-        else if(event == PhaseChange && player->getPhase() == Player::Discard)
-            player->setXueyi(2, player->hasLordSkill("xueyi"));
+    virtual bool trigger(TriggerEvent , ServerPlayer *player, QVariant &) const{
+        if(player->getPhase() == Player::Draw){
+            QVariant n = 2 + player->getLostHp();
+            player->getRoom()->getThread()->trigger(DrawNCards, player, n);
+
+            return true;
+        }
 
         return false;
     }
@@ -1134,15 +1136,6 @@ public:
                 || pattern == "nullification";
     }
 
-    virtual bool isEnabledAtPlay(const Player *player) const{
-        if(Slash::IsAvailable(player))
-            Self->setFlags("can_slash");
-        else
-            Self->setFlags("-can_slash");
-
-        return player->isWounded() || Self->hasFlag("can_slash");
-    }
-
     virtual bool viewFilter(const QList<CardItem *> &selected, const CardItem *to_select) const{
         const Card *card = to_select->getFilteredCard();
         int n = qMax(1, Self->getHp());
@@ -1152,17 +1145,8 @@ public:
 
         switch(ClientInstance->getStatus()){
         case Client::Playing:{
-                if(!selected.isEmpty()){
-                    return card->getSuit() == selected.first()->getFilteredCard()->getSuit();
-                }
-
-                bool can_filter = false;
-                if(Self->isWounded())
-                    can_filter = can_filter || (card->getSuit() == Card::Heart);
-                if(Self->hasFlag("can_slash"))
-                    can_filter = can_filter || (card->getSuit() == Card::Diamond);
-
-                return can_filter;
+                // diamond as fire slash
+                return card->getSuit() == Card::Diamond;
             }
 
         case Client::Responsing:{
@@ -1173,8 +1157,6 @@ public:
                     return card->getSuit() == Card::Spade;
                 else if(pattern == "peach" || pattern == "peach+analeptic")
                     return card->getSuit() == Card::Heart;
-                else if(pattern == "slash")
-                    return card->getSuit() == Card::Diamond;
             }
 
         default:
@@ -1198,33 +1180,30 @@ public:
         switch(card->getSuit()){
         case Card::Spade:{
                 new_card = new Nullification(suit, number);
-                new_card->addSubcards(cards);
-                new_card->setSkillName(objectName());
                 break;
             }
 
         case Card::Heart:{
                 new_card = new Peach(suit, number);
-                new_card->addSubcards(cards);
-                new_card->setSkillName(objectName());
                 break;
             }
 
         case Card::Club:{
                 new_card = new Jink(suit, number);
-                new_card->addSubcards(cards);
-                new_card->setSkillName(objectName());
                 break;
             }
 
         case Card::Diamond:{
                 new_card = new FireSlash(suit, number);
-                new_card->addSubcards(cards);
-                new_card->setSkillName(objectName());
                 break;
             }
         default:
             break;
+        }
+
+        if(new_card){
+            new_card->setSkillName(objectName());
+            new_card->addSubcard(card);
         }
 
         return new_card;
