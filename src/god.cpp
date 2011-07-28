@@ -1113,8 +1113,11 @@ public:
 
     virtual bool trigger(TriggerEvent , ServerPlayer *player, QVariant &) const{
         if(player->getPhase() == Player::Draw){
-            QVariant n = 2 + player->getLostHp();
-            player->getRoom()->getThread()->trigger(DrawNCards, player, n);
+            QVariant draw_num = 2 + player->getLostHp();
+            player->getRoom()->getThread()->trigger(DrawNCards, player, draw_num);
+            int n = draw_num.toInt();
+            if(n > 0)
+                player->drawCards(n, false);
 
             return true;
         }
@@ -1203,7 +1206,7 @@ public:
 
         if(new_card){
             new_card->setSkillName(objectName());
-            new_card->addSubcard(card);
+            new_card->addSubcards(cards);
         }
 
         return new_card;
