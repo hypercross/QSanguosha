@@ -1,7 +1,16 @@
 #include "configdialog.h"
 #include "ui_configdialog.h"
 #include "settings.h"
-#include "irrKlang.h"
+
+#ifdef AUDIO_SUPPORT
+#ifdef  Q_OS_WIN32
+    #include "irrKlang.h"
+    extern irrklang::ISoundEngine *SoundEngine;
+#else
+    #include <phonon/AudioOutput>
+    extern Phonon::AudioOutput *SoundOutput;
+#endif
+#endif
 
 #include <QFileDialog>
 #include <QDesktopServices>
@@ -23,8 +32,9 @@ ConfigDialog::ConfigDialog(QWidget *parent) :
 
     ui->enableEffectCheckBox->setChecked(Config.EnableEffects);
     ui->enableLastWordCheckBox->setChecked(Config.EnableLastWord);
-    ui->enableBgMusicCheckBox->setChecked(Config.EnableBgMusic);    
+    ui->enableBgMusicCheckBox->setChecked(Config.EnableBgMusic);
     ui->fitInViewCheckBox->setChecked(Config.FitInView);
+    ui->circularViewCheckBox->setChecked(Config.value("CircularView", false).toBool());
 
     ui->volumeSlider->setValue(100 * Config.Volume);
 
@@ -85,14 +95,12 @@ void ConfigDialog::on_resetBgButton_clicked()
 {
     ui->bgPathLineEdit->clear();
 
-    QString filename = "backdrop/new-year.jpg";
+    QString filename = "backdrop/guixin.jpg";
     Config.BackgroundBrush = filename;
     Config.setValue("BackgroundBrush", filename);
 
     emit bg_changed();
 }
-
-extern irrklang::ISoundEngine *SoundEngine;
 
 void ConfigDialog::saveConfig()
 {
@@ -102,10 +110,17 @@ void ConfigDialog::saveConfig()
 
     float volume = ui->volumeSlider->value() / 100.0;
     Config.Volume = volume;
-    Config.setValue("Volume", volume);    
+    Config.setValue("Volume", volume);
 
+#ifdef AUDIO_SUPPORT
+#ifdef  Q_OS_WIN32
     if(SoundEngine)
         SoundEngine->setSoundVolume(Config.Volume);
+#else
+    if(SoundOutput)
+        SoundOutput->setVolume(Config.Volume);
+#endif
+#endif
 
     bool enabled = ui->enableEffectCheckBox->isChecked();
     Config.EnableEffects = enabled;
@@ -121,6 +136,8 @@ void ConfigDialog::saveConfig()
 
     Config.FitInView = ui->fitInViewCheckBox->isChecked();
     Config.setValue("FitInView", Config.FitInView);
+
+    Config.setValue("CircularView", ui->circularViewCheckBox->isChecked());
 
     Config.NeverNullifyMyTrick = ui->neverNullifyMyTrickCheckBox->isChecked();
     Config.setValue("NeverNullifyMyTrick", Config.NeverNullifyMyTrick);

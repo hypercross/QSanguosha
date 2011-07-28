@@ -6,6 +6,7 @@
 #include <QIcon>
 
 class Room;
+class Player;
 class ServerPlayer;
 class Client;
 class ClientPlayer;
@@ -71,12 +72,12 @@ public:
 
     QString getPixmapPath() const;
     QString getIconPath() const;
-    QString getPackage() const;    
+    QString getPackage() const;
     QIcon getSuitIcon() const;
     QString getFullName(bool include_suit = false) const;
     QString getLogName() const;
     QString getName() const;
-    QString getSkillName() const;   
+    QString getSkillName() const;
     void setSkillName(const QString &skill_name);
     QString getDescription() const;
     QString getEffectPath() const;
@@ -100,13 +101,16 @@ public:
     bool isNDTrick() const;
 
     // card target selection
-    bool targetFixed() const;
-    virtual bool targetsFeasible(const QList<const ClientPlayer *> &targets) const;
-    virtual bool targetFilter(const QList<const ClientPlayer *> &targets, const ClientPlayer *to_select) const;
-    virtual bool isAvailable() const;
+    virtual bool targetFixed() const;
+    virtual bool targetsFeasible(const QList<const Player *> &targets, const Player *Self) const;
+    virtual bool targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const;
+    virtual bool isAvailable(const Player *player) const;
+    virtual const Card *validate(const CardUseStruct *card_use) const;
+    virtual const Card *validateInResposing(ServerPlayer *user, bool *continuable) const;
 
     bool isOnce() const;
     bool isMute() const;
+    bool willThrow() const;
 
     virtual void onUse(Room *room, const CardUseStruct &card_use) const;
     virtual void use(Room *room, ServerPlayer *source,  const QList<ServerPlayer *> &targets) const;
@@ -131,11 +135,12 @@ protected:
     bool once;
     QString skill_name;
     bool mute;
+    bool will_throw;
 
 private:
     Suit suit;
     int number;
-    int id;    
+    int id;
 };
 
 class SkillCard: public Card{
@@ -143,16 +148,14 @@ class SkillCard: public Card{
 
 public:
     SkillCard();
-    bool willThrow() const;
     void setUserString(const QString &user_string);
 
-    virtual QString getSubtype() const;    
+    virtual QString getSubtype() const;
     virtual QString getType() const;
     virtual CardType getTypeId() const;
-    virtual QString toString() const;    
+    virtual QString toString() const;
 
 protected:
-    bool will_throw;
     QString user_string;
 };
 

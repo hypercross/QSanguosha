@@ -87,9 +87,7 @@ bool Player::isDead() const{
 }
 
 void Player::setAlive(bool alive){
-    if(this->alive && alive == false){
-        this->alive = alive;
-    }
+    this->alive = alive;
 }
 
 QString Player::getFlags() const{
@@ -106,13 +104,7 @@ void Player::setFlags(const QString &flag){
         QString copy = flag;
         copy.remove(unset_symbol);
         flags.remove(copy);
-
-        if(copy == "drank")
-            emit drank_changed(false);
     }else{
-        if(flag == "drank")
-            emit drank_changed(true);
-
         flags.insert(flag);
     }
 }
@@ -155,25 +147,7 @@ int Player::distanceTo(const Player *other) const{
     int left = aliveCount() - right;
     int distance = qMin(left, right);
 
-    // the shorten ways of distance
-    if(getOffensiveHorse())
-        distance --;
-
-    if(hasSkill("mashu"))
-        distance --;
-
-    if(hasSkill("yicong") && getHp() > 2)
-        distance --;
-
-    // the lengthen ways of distance
-    if(other->getDefensiveHorse())
-        distance ++;
-
-    if(other->hasSkill("feiying"))
-        distance ++;
-
-    if(other->hasSkill("yicong") && other->getHp() <= 2)
-        distance ++;
+    distance += Sanguosha->correctDistance(this, other);
 
     // keep the distance >=1
     if(distance < 1)
@@ -182,31 +156,12 @@ int Player::distanceTo(const Player *other) const{
     return distance;
 }
 
-int Player::getGeneralMaxHP() const{
-    if(general2 == NULL)
-        return general->getMaxHp();
-
-    int first = general->getMaxHp();
-    int second = general2->getMaxHp();
-
-    int max_hp;
-    switch(Config.MaxHpScheme){
-    case 2: max_hp = (first + second)/2; break;
-    case 1: max_hp = qMin(first, second); break;
-    case 0:
-    default:
-        max_hp = first + second - 3; break;
-    }
-
-    return qMin(max_hp, 8);
-}
-
 void Player::setGeneral(const General *new_general){
     if(this->general != new_general){
         this->general = new_general;
-        if(new_general){
-            setKingdom(general->getKingdom());
-        }
+
+        if(new_general && kingdom.isEmpty())
+            setKingdom(new_general->getKingdom());
 
         emit general_changed();
     }
@@ -257,7 +212,7 @@ void Player::setState(const QString &state){
 
 void Player::setRole(const QString &role){
     if(this->role != role){
-        this->role = role;        
+        this->role = role;
         emit role_changed(role);
     }
 }
@@ -292,18 +247,18 @@ const General *Player::getGeneral() const{
     return general;
 }
 
-bool Player::hasSkill(const QString &skill_name) const{
-    if(general)
-        return general->hasSkill(skill_name) || acquired_skills.contains(skill_name);
-    else
-        return false;
+bool Player::isLord() const{
+    return getRole() == "lord";
 }
 
-bool Player::hasLordSkill(const QString &skill_name) const{
-    if(acquired_skills.contains(skill_name))
+bool Player::hasSkill(const QString &skill_name) const{
+    if(general && general->hasSkill(skill_name))
         return true;
-    else
-        return general->hasSkill(skill_name) && role == "lord";
+
+    if(general2 && general2->hasSkill(skill_name))
+        return true;
+
+    return acquired_skills.contains(skill_name);
 }
 
 void Player::acquireSkill(const QString &skill_name){
@@ -312,6 +267,10 @@ void Player::acquireSkill(const QString &skill_name){
 
 void Player::loseSkill(const QString &skill_name){
     acquired_skills.remove(skill_name);
+}
+
+void Player::loseAllSkills(){
+    acquired_skills.clear();
 }
 
 QString Player::getPhaseString() const{
@@ -365,6 +324,10 @@ bool Player::hasEquip(const Card *card) const{
     return weapon == card || armor == card || defensive_horse == card || offensive_horse == card;
 }
 
+bool Player::hasEquip() const{
+    return weapon || armor || defensive_horse || offensive_horse;
+}
+
 const Weapon *Player::getWeapon() const{
     return weapon;
 }
@@ -387,10 +350,10 @@ QList<const Card *> Player::getEquips() const{
         equips << weapon;
     if(armor)
         equips << armor;
-    if(offensive_horse)
-        equips << offensive_horse;
     if(defensive_horse)
         equips << defensive_horse;
+    if(offensive_horse)
+        equips << offensive_horse;
 
     return equips;
 }
@@ -416,7 +379,7 @@ bool Player::hasArmorEffect(const QString &armor_name) const{
     return armor && getMark("qinggang") == 0 && armor->objectName() == armor_name;
 }
 
-QStack<const Card *> Player::getJudgingArea() const{
+QList<const Card *> Player::getJudgingArea() const{
     return judging_area;
 }
 
@@ -460,7 +423,10 @@ int Player::getXueyi() const{
 }
 
 QString Player::getKingdom() const{
-    return kingdom;
+    if(kingdom.isEmpty() && general)
+        return general->getKingdom();
+    else
+        return kingdom;
 }
 
 void Player::setKingdom(const QString &kingdom){
@@ -478,8 +444,12 @@ QString Player::getKingdomFrame() const{
     return QString("image/kingdom/frame/%1.png").arg(kingdom);
 }
 
-void Player::setXueyi(int xueyi){
-    this->xueyi = xueyi;
+void Player::setXueyi(int xueyi, bool superimpose){
+    if(superimpose)
+        this->xueyi += xueyi;
+    else{
+        this->xueyi = xueyi;
+    }
 }
 
 bool Player::isKongcheng() const{
@@ -487,8 +457,7 @@ bool Player::isKongcheng() const{
 }
 
 bool Player::isNude() const{
-    return getHandcardNum() == 0 && getWeapon() == NULL && getArmor() == NULL
-            && getDefensiveHorse() == NULL && getOffensiveHorse() == NULL;
+    return isKongcheng() && !hasEquip();
 }
 
 bool Player::isAllNude() const{
@@ -496,15 +465,15 @@ bool Player::isAllNude() const{
 }
 
 void Player::addDelayedTrick(const Card *trick){
-    judging_area.push(trick);
-    delayed_tricks.push(DelayedTrick::CastFrom(trick));
+    judging_area << trick;
+    delayed_tricks << DelayedTrick::CastFrom(trick);
 }
 
 void Player::removeDelayedTrick(const Card *trick){
     int index = judging_area.indexOf(trick);
     if(index >= 0){
-        judging_area.remove(index);
-        delayed_tricks.remove(index);
+        judging_area.removeAt(index);
+        delayed_tricks.removeAt(index);
     }
 }
 
@@ -512,17 +481,15 @@ const DelayedTrick *Player::topDelayedTrick() const{
     if(delayed_tricks.isEmpty())
         return NULL;
     else
-        return delayed_tricks.top();
+        return delayed_tricks.last();
 }
 
-QStack<const DelayedTrick *> Player::delayedTricks() const{
+QList<const DelayedTrick *> Player::delayedTricks() const{
     return delayed_tricks;
 }
 
 bool Player::containsTrick(const QString &trick_name) const{
-    QVectorIterator<const DelayedTrick *> itor(delayed_tricks);
-    while(itor.hasNext()){      
-        const DelayedTrick *trick = itor.next();
+    foreach(const DelayedTrick *trick, delayed_tricks){
         if(trick->objectName() == trick_name)
             return true;
     }
@@ -597,6 +564,124 @@ int Player::getCardCount(bool include_equip) const{
     return count;
 }
 
-QList<int> &Player::getPile(const QString &pile_name){
+QList<int> Player::getPile(const QString &pile_name) const{
     return piles[pile_name];
+}
+
+QString Player::getPileName(int card_id) const{
+    foreach(QString pile_name, piles.keys()){
+        QList<int> pile = piles[pile_name];
+        if(pile.contains(card_id))
+            return pile_name;
+    }
+
+    return QString();
+}
+
+void Player::addHistory(const QString &name, int times){
+    history[name] += times;
+}
+
+int Player::getSlashCount() const{
+    return history.value("Slash", 0)
+            + history.value("ThunderSlash", 0)
+            + history.value("FireSlash", 0);
+}
+
+void Player::clearHistory(){
+    history.clear();
+}
+
+bool Player::hasUsed(const QString &card_class) const{
+    return history.value(card_class, 0) > 0;
+}
+
+int Player::usedTimes(const QString &card_class) const{
+    return history.value(card_class, 0);
+}
+
+QSet<const TriggerSkill *> Player::getTriggerSkills() const{
+    QSet<const TriggerSkill *> skills;
+    if(general)
+        skills += general->getTriggerSkills();
+
+    if(general2)
+        skills += general2->getTriggerSkills();
+
+    foreach(QString skill_name, acquired_skills){
+        const TriggerSkill *skill = Sanguosha->getTriggerSkill(skill_name);
+        if(skill)
+            skills << skill;
+    }
+
+    return skills;
+}
+
+QSet<const Skill *> Player::getVisibleSkills() const{
+    return getVisibleSkillList().toSet();
+}
+
+QList<const Skill *> Player::getVisibleSkillList() const{
+    QList<const Skill *> skills;
+    if(general)
+        skills << general->getVisibleSkillList();
+
+    if(general2)
+        skills << general2->getVisibleSkillList();
+
+    foreach(QString skill_name, acquired_skills){
+        const Skill *skill = Sanguosha->getSkill(skill_name);
+        if(skill->isVisible())
+            skills << skill;
+    }
+
+    return skills;
+}
+
+bool Player::isProhibited(const Player *to, const Card *card) const{
+    return Sanguosha->isProhibited(this, to, card);
+}
+
+bool Player::canSlashWithoutCrossbow() const{
+    if(hasSkill("paoxiao"))
+        return true;
+
+    int slash_count = getSlashCount();
+    if(hasFlag("tianyi_success"))
+        return slash_count < 2;
+    else
+        return slash_count < 1;
+}
+
+void Player::jilei(const QString &type){
+    if(type == "basic")
+        jilei_set << Card::Basic;
+    else if(type == "equip")
+        jilei_set << Card::Equip;
+    else if(type == "trick")
+        jilei_set << Card::Trick;
+    else
+        jilei_set.clear();
+}
+
+bool Player::isJilei(const Card *card) const{
+    Card::CardType type = card->getTypeId();
+    if(type == Card::Skill){
+        if(!card->willThrow())
+            return false;
+
+        foreach(int card_id, card->getSubcards()){
+            const Card *c = Sanguosha->getCard(card_id);
+            if(jilei_set.contains(c->getTypeId()))
+                return true;
+        }
+
+        return false;
+    }else
+        return jilei_set.contains(type);
+}
+
+bool Player::isCaoCao() const{
+    QString general_name = getGeneralName();
+    return general_name == "caocao" || general_name == "shencaocao" || general_name == "shencc";
 }

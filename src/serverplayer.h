@@ -15,14 +15,16 @@ class ServerPlayer : public Player
 {
     Q_OBJECT
 
+    Q_PROPERTY(QString ip READ getIp)
+
 public:
     explicit ServerPlayer(Room *room);
 
     void setSocket(ClientSocket *socket);
     void invoke(const char *method, const QString &arg = ".");
     QString reportHeader() const;
-    void sendProperty(const char *property_name);
-    void unicast(const QString &message);
+    void sendProperty(const char *property_name, const Player *player = NULL) const;
+    void unicast(const QString &message) const;
     void drawCard(const Card *card);
     Room *getRoom() const;
     void playCardEffect(const Card *card);
@@ -32,6 +34,9 @@ public:
     void throwAllEquips();
     void throwAllHandCards();
     void throwAllCards();
+    void bury();
+    void throwAllMarks();
+    void clearPrivatePiles();
     void drawCards(int n, bool set_emotion = true);
     bool askForSkillInvoke(const QString &skill_name, const QVariant &data = QVariant());
     QList<int> forceToDiscard(int discard_num, bool include_equip);
@@ -39,10 +44,9 @@ public:
     QList<const Card *> getHandcards() const;
     QList<const Card *> getCards(const QString &flags) const;
     DummyCard *wholeHandCards() const;
-    bool isLord() const;
     bool hasNullification() const;
     void kick();
-    bool pindian(ServerPlayer *target, const Card *card1 = NULL);
+    bool pindian(ServerPlayer *target, const QString &reason, const Card *card1 = NULL);
     void turnOver();
     void play();
 
@@ -53,22 +57,38 @@ public:
     void loseMark(const QString &mark, int n = 1);
     void loseAllMarks(const QString &mark_name);
 
-    void addCardToPile(const QString &pile_name, int card_id);
-    void removeCardFromPile(const QString &pile_name, int card_id);
-
     void setAI(AI *ai);
     AI *getAI() const;
+    AI *getSmartAI() const;
 
     virtual int aliveCount() const;
     virtual int getHandcardNum() const;
     virtual void removeCard(const Card *card, Place place);
     virtual void addCard(const Card *card, Place place);
+    virtual bool isLastHandCard(const Card *card) const;
 
     void addVictim(ServerPlayer *victim);
     QList<ServerPlayer *> getVictims() const;
 
     void startRecord();
     void saveRecord(const QString &filename);
+
+    void setNext(ServerPlayer *next);
+    ServerPlayer *getNext() const;
+    ServerPlayer *getNextAlive() const;
+
+    // 3v3 methods
+    void addToSelected(const QString &general);
+    QStringList getSelected() const;
+
+    int getGeneralMaxHP() const;
+    virtual bool hasLordSkill(const QString &skill_name) const;
+
+    QString getIp() const;
+    void introduceTo(ServerPlayer *player);
+    void marshal(ServerPlayer *player) const;
+
+    void addToPile(const QString &pile_name, int card_id, bool open = true);
 
 private:
     ClientSocket *socket;
@@ -79,6 +99,8 @@ private:
     QList<ServerPlayer *> victims;
     Recorder *recorder;
     QList<Phase> phases;
+    ServerPlayer *next;
+    QStringList selected; // 3v3 mode use only
 
 private slots:
     void getMessage(char *message);
@@ -87,7 +109,7 @@ private slots:
 signals:
     void disconnected();
     void request_got(const QString &request);
-    void message_cast(const QString &message);
+    void message_cast(const QString &message) const;
 };
 
 #endif // SERVERPLAYER_H

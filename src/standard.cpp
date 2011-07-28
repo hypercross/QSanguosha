@@ -5,6 +5,7 @@
 #include "maneuvering.h"
 #include "clientplayer.h"
 #include "engine.h"
+#include "client.h"
 
 QString BasicCard::getType() const{
     return "basic";
@@ -117,25 +118,22 @@ QString AOE::getSubtype() const{
     return "aoe";
 }
 
-#include "client.h"
-
-bool AOE::isAvailable() const{
-    QList<const ClientPlayer *> players = ClientInstance->getPlayers();
-    int count = 0;
-    foreach(const ClientPlayer *player, players){
-        if(player == Self)
+bool AOE::isAvailable(const Player *player) const{
+    QList<const Player *> players = player->parent()->findChildren<const Player *>();
+    foreach(const Player *p, players){
+        if(p == player)
             continue;
 
-        if(player->isDead())
+        if(p->isDead())
             continue;
 
-        if(ClientInstance->isProhibited(player, this))
+        if(player->isProhibited(p, this))
             continue;
 
-        count ++;
+        return true;
     }
 
-    return count > 0;
+    return false;
 }
 
 void AOE::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &) const{
@@ -163,12 +161,12 @@ QString SingleTargetTrick::getSubtype() const{
     return "single_target_trick";
 }
 
-bool SingleTargetTrick::targetFilter(const QList<const ClientPlayer *> &targets, const ClientPlayer *to_select) const{
+bool SingleTargetTrick::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const{
     return true;
 }
 
 DelayedTrick::DelayedTrick(Suit suit, int number, bool movable)
-    :TrickCard(suit, number, true), callback(NULL), movable(movable)
+    :TrickCard(suit, number, true), movable(movable)
 {
 }
 
@@ -197,9 +195,11 @@ void DelayedTrick::onEffect(const CardEffectStruct &effect) const{
     log.arg = effect.card->objectName();
     room->sendLog(log);
 
-    Q_ASSERT(callback != NULL);
+    JudgeStruct judge_struct = judge;
+    judge_struct.who = effect.to;
+    room->judge(judge_struct);
 
-    if(room->judge(effect.to, callback) == "bad"){
+    if(judge_struct.isBad()){
         room->throwCard(this);
         takeEffect(effect.to);
     }else if(movable){
@@ -213,7 +213,7 @@ void DelayedTrick::onNullified(ServerPlayer *target) const{
         QList<ServerPlayer *> players = room->getOtherPlayers(target);
         players << target;
 
-        foreach(ServerPlayer *player, players){            
+        foreach(ServerPlayer *player, players){
             if(player->containsTrick(objectName()))
                 continue;
 
@@ -300,6 +300,10 @@ Horse::Horse(Suit suit, int number, int correct)
 {
 }
 
+int Horse::getCorrect() const{
+    return correct;
+}
+
 QString Horse::getEffectPath(bool) const{
     return "audio/card/common/horse.ogg";
 }
@@ -323,8 +327,8 @@ QString Horse::label() const{
     return format.arg(getName()).arg(correct);
 }
 
-OffensiveHorse::OffensiveHorse(Card::Suit suit, int number)
-    :Horse(suit, number, -1)
+OffensiveHorse::OffensiveHorse(Card::Suit suit, int number, int correct)
+    :Horse(suit, number, correct)
 {
 
 }
@@ -333,8 +337,8 @@ QString OffensiveHorse::getSubtype() const{
     return "offensive_horse";
 }
 
-DefensiveHorse::DefensiveHorse(Card::Suit suit, int number)
-    :Horse(suit, number, +1)
+DefensiveHorse::DefensiveHorse(Card::Suit suit, int number, int correct)
+    :Horse(suit, number, correct)
 {
 
 }
@@ -350,11 +354,76 @@ EquipCard::Location Horse::location() const{
         return OffensiveHorseLocation;
 }
 
+class HandcardPattern: public CardPattern{
+public:
+    virtual bool match(const Player *player, const Card *card) const{
+        return ! player->hasEquip(card);
+    }
+};
+
+class SuitPattern: public CardPattern{
+public:
+    SuitPattern(Card::Suit suit)
+        :suit(suit)
+    {
+    }
+
+    virtual bool match(const Player *player, const Card *card) const{
+        return ! player->hasEquip(card) && card->getSuit() == suit;
+    }
+
+private:
+    Card::Suit suit;
+};
+
+class SlashPattern: public CardPattern{
+public:
+    virtual bool match(const Player *player, const Card *card) const{
+        return ! player->hasEquip(card) && card->inherits("Slash");
+    }
+};
+
+class NamePattern: public CardPattern{
+public:
+    NamePattern(const QString &name)
+        :name(name)
+    {
+
+    }
+
+    virtual bool match(const Player *player, const Card *card) const{
+        return ! player->hasEquip(card) && card->objectName() == name;
+    }
+
+private:
+    QString name;
+};
+
+class PAPattern: public CardPattern{
+public:
+    virtual bool match(const Player *player, const Card *card) const{
+        return ! player->hasEquip(card) &&
+                (card->objectName() == "peach" || card->objectName() == "analeptic");
+    }
+};
+
 StandardPackage::StandardPackage()
     :Package("standard")
 {
     addCards();
     addGenerals();
+
+    patterns["."] = new HandcardPattern;
+    patterns[".S"] = new SuitPattern(Card::Spade);
+    patterns[".C"] = new SuitPattern(Card::Club);
+    patterns[".H"] = new SuitPattern(Card::Heart);
+    patterns[".D"] = new SuitPattern(Card::Diamond);
+
+    patterns["slash"] = new SlashPattern;
+    patterns["jink"] = new NamePattern("jink");
+    patterns["peach"] = new NamePattern("peach");
+    patterns["nullification"] = new NamePattern("nullification");
+    patterns["peach+analeptic"] = new PAPattern;
 }
 
 ADD_PACKAGE(Standard)

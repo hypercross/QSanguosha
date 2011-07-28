@@ -5,7 +5,10 @@
 #include "general.h"
 #include "skill.h"
 #include "package.h"
+
+#ifdef AUDIO_SUPPORT
 #include "irrKlang.h"
+#endif
 
 #include <QHash>
 #include <QStringList>
@@ -40,13 +43,16 @@ public:
     QString getVersion() const;
     QStringList getExtensions() const;
     QStringList getKingdoms() const;
-    QString getSetupString() const;    
+    QString getSetupString() const;
 
     QMap<QString, QString> getAvailableModes() const;
     QString getModeName(const QString &mode) const;
     int getPlayerCount(const QString &mode) const;
     void getRoles(const QString &mode, char *roles) const;
     int getRoleIndex() const;
+
+    const CardPattern *getPattern(const QString &name) const;
+    QList<const Skill *> getRelatedSkills(const QString &skill_name) const;
 
     QStringList getScenarioNames() const;
     void addScenario(Scenario *scenario);
@@ -59,6 +65,9 @@ public:
     int getGeneralCount(bool include_banned = false) const;
     const Skill *getSkill(const QString &skill_name) const;
     const TriggerSkill *getTriggerSkill(const QString &skill_name) const;
+    const ViewAsSkill *getViewAsSkill(const QString &skill_name) const;
+    QList<const DistanceSkill *> getDistanceSkills() const;
+    void addSkills(const QList<const Skill *> &skills);
 
     int getCardCount() const;
     const Card *getCard(int index) const;
@@ -75,12 +84,21 @@ public:
     void playSkillEffect(const QString &skill_name, int index) const;
     void playCardEffect(const QString &card_name, bool is_male) const;
 
+    const ProhibitSkill *isProhibited(const Player *from, const Player *to, const Card *card) const;
+    int correctDistance(const Player *from, const Player *to) const;
+
 private:
     QHash<QString, QString> translations;
     QHash<QString, const General *> generals, hidden_generals;
     QHash<QString, const QMetaObject *> metaobjects;
-    QHash<QString, const Skill *> skills;    
+    QHash<QString, const Skill *> skills;
     QMap<QString, QString> modes;
+    QMap<QString, const CardPattern *> patterns;
+    QMultiMap<QString, QString> related_skills;
+
+    // special skills
+    QList<const ProhibitSkill *> prohibit_skills;
+    QList<const DistanceSkill *> distance_skills;
 
     QHash<QString, const Scenario *> scenarios;
     ChallengeModeSet *challenge_mode_set;
@@ -98,7 +116,7 @@ template<typename T>
 void qShuffle(QList<T> &list){
     int i, n = list.length();
     for(i=0; i<n; i++){
-        int r = qrand() % n;
+        int r = qrand() % (n - i) + i;
         list.swap(i, r);
     }
 }

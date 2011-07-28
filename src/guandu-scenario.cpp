@@ -9,7 +9,7 @@ ZhanShuangxiongCard::ZhanShuangxiongCard(){
     once = true;
 }
 
-bool ZhanShuangxiongCard::targetFilter(const QList<const ClientPlayer *> &targets, const ClientPlayer *to_select) const{
+bool ZhanShuangxiongCard::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const{
     return targets.isEmpty() && to_select->getGeneralName() == "shuangxiong" && !to_select->isKongcheng();
 }
 
@@ -20,7 +20,7 @@ void ZhanShuangxiongCard::use(Room *room, ServerPlayer *source, const QList<Serv
     damage.from = source;
     damage.to = shuangxiong;
 
-    bool success = source->pindian(shuangxiong);
+    bool success = source->pindian(shuangxiong, "zhanshuangxiong");
     if(!success)
         qSwap(damage.from, damage.to);
 
@@ -70,8 +70,8 @@ public:
     ZhanShuangxiong():ZeroCardViewAsSkill("zhanshuangxiong"){
     }
 
-    virtual bool isEnabledAtPlay() const{
-        return !Self->isKongcheng() && !ClientInstance->hasUsed("ZhanShuangxiongCard");
+    virtual bool isEnabledAtPlay(const Player *player) const{
+        return !player->isKongcheng() && !player->hasUsed("ZhanShuangxiongCard");
     }
 
     virtual const Card *viewAs() const{
@@ -82,7 +82,7 @@ public:
 SmallTuxiCard::SmallTuxiCard(){
 }
 
-bool SmallTuxiCard::targetFilter(const QList<const ClientPlayer *> &targets, const ClientPlayer *to_select) const{
+bool SmallTuxiCard::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const{
     if(!targets.isEmpty())
         return false;
 
@@ -108,12 +108,12 @@ public:
     }
 
 protected:
-    virtual bool isEnabledAtPlay() const{
+    virtual bool isEnabledAtPlay(const Player *player) const{
         return false;
     }
 
-    virtual bool isEnabledAtResponse() const{
-        return ClientInstance->card_pattern == "@@smalltuxi";
+    virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const{
+        return  pattern == "@@smalltuxi";
     }
 };
 
@@ -155,7 +155,7 @@ public:
     GuanduRule(Scenario *scenario)
         :ScenarioRule(scenario)
     {
-        events << GameStart << PhaseChange << Damaged << Death;
+        events << GameStart << PhaseChange << Damaged << GameOverJudge;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const{
@@ -232,14 +232,14 @@ public:
                 break;
             }
 
-        case Death:{
-                if(player->getRoleEnum() == Player::Lord){
+        case GameOverJudge:{
+                if(player->isLord()){
                     QStringList roles = room->aliveRoles(player);
                     if(roles.length() == 2){
                         QString first = roles.at(0);
                         QString second = roles.at(1);
                         if(first == "renegade" && second == "renegade"){
-                            player->throwAllCards();
+                            player->bury();
                             room->gameOver("renegade");
                             return true;
                         }
@@ -274,6 +274,13 @@ GuanduScenario::GuanduScenario()
 
     addMetaObject<ZhanShuangxiongCard>();
     addMetaObject<SmallTuxiCard>();
+}
+
+AI::Relation GuanduScenario::relationTo(const ServerPlayer *a, const ServerPlayer *b) const{
+    if(a->getRole() == "renegade" && b->getRole() == "renegade")
+        return AI::Friend;
+    else
+        return AI::GetRelation(a, b);
 }
 
 void GuanduScenario::onTagSet(Room *room, const QString &key) const{

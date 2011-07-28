@@ -11,13 +11,18 @@ public:
     Pixmap(const QString &filename, bool center_as_origin = true);
     Pixmap();
     virtual QRectF boundingRect() const;
-    void changePixmap(const QString &name);
+    bool changePixmap(const QString &name);
+    void setPixmap(const QPixmap &pixmap);
     void shift();
+    void makeGray();
+    void scaleSmoothly(qreal ratio);
 
     bool isMarked() const;
     bool isMarkable() const;
     void mark(bool marked = true);
     void setMarkable(bool markable);
+
+    static void MakeGray(QPixmap &pixmap);
 
 protected:
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);

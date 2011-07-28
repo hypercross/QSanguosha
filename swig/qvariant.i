@@ -1,11 +1,20 @@
 class QVariant{
+public:
+	QVariant();
 	QVariant(int);
 	QVariant(const char *);
+	QVariant(bool);
 	int toInt() const;
 	QString toString() const;
+	bool toBool() const;
 };
 
 %extend QVariant {
+
+	void setValue(int value){
+		$self->setValue(QVariant::fromValue(value));
+	}
+
 	DamageStruct toDamage() const{
 		return $self->value<DamageStruct>();
 	}
@@ -38,12 +47,12 @@ class QVariant{
 		$self->setValue(QVariant::fromValue(*use));
 	}
 	
-	CardMoveStruct toCardMove() const{
-		return $self->value<CardMoveStruct>();
+	const CardMoveStruct *toCardMove() const{
+		return $self->value<CardMoveStar>();
 	}
 	
-	void setValue(CardMoveStruct *move){
-		$self->setValue(QVariant::fromValue(*move));
+	void setValue(const CardMoveStruct *move){
+		$self->setValue(move);
 	}
 	
 	const Card *toCard() const{
@@ -68,5 +77,29 @@ class QVariant{
 	
 	void setValue(DyingStruct *dying){
 		$self->setValue(QVariant::fromValue(*dying));
+	}
+
+	DamageStar toDamageStar() const{
+		return $self->value<DamageStar>();
+	}
+
+	void setValue(RecoverStruct *recover){
+		$self->setValue(QVariant::fromValue(*recover));
+	}
+
+	RecoverStruct toRecover() const{
+		return $self->value<RecoverStruct>();
+	}
+
+	JudgeStruct *toJudge() const{
+		return $self->value<JudgeStar>();
+	}
+
+	void setValue(PindianStruct *pindian){
+		$self->setValue(QVariant::fromValue(pindian));
+	}
+
+	PindianStruct *toPindian() const{
+		return $self->value<PindianStar>();
 	}
 };

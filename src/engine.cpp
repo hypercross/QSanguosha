@@ -5,11 +5,20 @@
 #include "settings.h"
 #include "scenario.h"
 #include "challengemode.h"
-#include "irrKlang.h"
 #include "lua.hpp"
 #include "banpairdialog.h"
 
-typedef irrklang::ISound SoundType;
+#ifdef AUDIO_SUPPORT
+
+#ifdef  Q_OS_WIN32
+    extern irrklang::ISoundEngine *SoundEngine;
+#else
+    #include <phonon/MediaObject>
+    #include <phonon/AudioOutput>
+    extern Phonon::MediaObject *SoundEngine;
+    extern Phonon::AudioOutput *SoundOutput;
+#endif
+#endif
 
 #include <QFile>
 #include <QStringList>
@@ -25,6 +34,7 @@ extern "C" {
     Package *NewWind();
     Package *NewFire();
     Package *NewThicket();
+    Package *NewMountain();
     Package *NewManeuvering();
     Package *NewGod();
     Package *NewYitian();
@@ -37,9 +47,10 @@ extern "C" {
     Scenario *NewFanchengScenario();
     Scenario *NewCoupleScenario();
     Scenario *NewHongyanScenario();
+    Scenario *NewZombieScenario();
+    Scenario *NewLegendScenario();
+    Scenario *NewImpasseScenario();
 }
-
-extern irrklang::ISoundEngine *SoundEngine;
 
 extern "C" {
     int luaopen_sgs(lua_State *);
@@ -53,6 +64,7 @@ Engine::Engine()
     addPackage(NewWind());
     addPackage(NewFire());
     addPackage(NewThicket());
+    addPackage(NewMountain());
     addPackage(NewManeuvering());
     addPackage(NewGod());
     addPackage(NewYitian());
@@ -72,23 +84,32 @@ Engine::Engine()
     addScenario(NewFanchengScenario());
     addScenario(NewCoupleScenario());
     addScenario(NewHongyanScenario());
+    addScenario(NewZombieScenario());
+    addScenario(NewLegendScenario());
+    addScenario(NewImpasseScenario());
 
     // available game modes
     modes["02p"] = tr("2 players");
+    //modes["02pbb"] = tr("2 players (using blance beam)");
+    modes["02_1v1"] = tr("2 players (KOF style)");
     modes["03p"] = tr("3 players");
     modes["04p"] = tr("4 players");
+    modes["04_1v3"] = tr("4 players (Hulao Pass)");
     modes["05p"] = tr("5 players");
     modes["06p"] = tr("6 players");
     modes["06pd"] = tr("6 players (2 renegades)");
+    modes["06_3v3"] = tr("6 players (3v3)");
     modes["07p"] = tr("7 players");
     modes["08p"] = tr("8 players");
     modes["08pd"] = tr("8 players (2 renegades)");
     modes["08boss"] = tr("8 players (boss mode)");
+    modes["08same"] = tr("8 players (same mode)");
     modes["09p"] = tr("9 players");
     modes["10p"] = tr("10 players");
 
+    //challenge_mode_set = NULL;
     challenge_mode_set = new ChallengeModeSet(this);
-    addPackage(challenge_mode_set);
+    //addPackage(challenge_mode_set);
 
     translations.insert("bossmode", tr("Boss mode"));
 
@@ -136,8 +157,17 @@ void Engine::addTranslationEntry(const char *key, const char *value){
 Engine::~Engine(){
     lua_close(lua);
 
-    if(SoundEngine)
+#ifdef AUDIO_SUPPORT
+    if(SoundEngine) {
+#ifdef  Q_OS_WIN32
         SoundEngine->drop();
+        SoundEngine = NULL;
+#else
+        delete SoundEngine;
+#endif
+    }
+#endif
+
 }
 
 QStringList Engine::getScenarioNames() const{
@@ -145,7 +175,6 @@ QStringList Engine::getScenarioNames() const{
 }
 
 void Engine::addScenario(Scenario *scenario){
-    scenario->setParent(this);
     scenarios.insert(scenario->objectName(), scenario);
 
     addPackage(scenario);
@@ -163,7 +192,28 @@ const ChallengeMode *Engine::getChallengeMode(const QString &name) const{
     return challenge_mode_set->getMode(name);
 }
 
+void Engine::addSkills(const QList<const Skill *> &all_skills){
+    foreach(const Skill *skill, all_skills){
+        if(skills.contains(skill->objectName()))
+            QMessageBox::warning(NULL, "", tr("Duplicated skill : %1").arg(skill->objectName()));
+
+        skills.insert(skill->objectName(), skill);
+
+        if(skill->inherits("ProhibitSkill"))
+            prohibit_skills << qobject_cast<const ProhibitSkill *>(skill);
+        else if(skill->inherits("DistanceSkill"))
+            distance_skills << qobject_cast<const DistanceSkill *>(skill);
+    }
+}
+
+QList<const DistanceSkill *> Engine::getDistanceSkills() const{
+    return distance_skills;
+}
+
 void Engine::addPackage(Package *package){
+    if(findChild<const Package *>(package->objectName()))
+        return;
+
     package->setParent(this);
 
     QList<Card *> all_cards = package->findChildren<Card *>();
@@ -175,11 +225,11 @@ void Engine::addPackage(Package *package){
         metaobjects.insert(card_name, card->metaObject());
     }
 
+    addSkills(package->getSkills());
+
     QList<General *> all_generals = package->findChildren<General *>();
     foreach(General *general, all_generals){
-        QList<const Skill *> all_skills = general->findChildren<const Skill *>();
-        foreach(const Skill *skill, all_skills)
-            skills.insert(skill->objectName(), skill);
+        addSkills(general->findChildren<const Skill *>());
 
         if(general->isHidden()){
             hidden_generals.insert(general->objectName(), general);
@@ -198,9 +248,8 @@ void Engine::addPackage(Package *package){
     foreach(const QMetaObject *meta, metas)
         metaobjects.insert(meta->className(), meta);
 
-    QList<const Skill *> extra_skills = package->getSkills();
-    foreach(const Skill *skill, extra_skills)
-        skills.insert(skill->objectName(), skill);
+    patterns.unite(package->getPatterns());
+    related_skills.unite(package->getRelatedSkills());
 }
 
 void Engine::addBanPackage(const QString &package_name){
@@ -224,6 +273,18 @@ int Engine::getRoleIndex() const{
         return 4;
     }else
         return 1;
+}
+
+const CardPattern *Engine::getPattern(const QString &name) const{
+    return patterns.value(name, NULL);
+}
+
+QList<const Skill *> Engine::getRelatedSkills(const QString &skill_name) const{
+    QList<const Skill *> skills;
+    foreach(QString skill_name, related_skills.values(skill_name))
+        skills << getSkill(skill_name);
+
+    return skills;
 }
 
 const General *Engine::getGeneral(const QString &name) const{
@@ -266,7 +327,7 @@ Card *Engine::cloneCard(const QString &name, Card::Suit suit, int number) const{
         card_obj->setObjectName(name);
         return qobject_cast<Card *>(card_obj);
     }else
-        return NULL;    
+        return NULL;
 }
 
 SkillCard *Engine::cloneSkillCard(const QString &name) const{
@@ -280,7 +341,7 @@ SkillCard *Engine::cloneSkillCard(const QString &name) const{
 }
 
 QString Engine::getVersion() const{
-    return "20110405";
+    return "20110718";
 }
 
 QStringList Engine::getExtensions() const{
@@ -372,6 +433,14 @@ int Engine::getPlayerCount(const QString &mode) const{
 
 void Engine::getRoles(const QString &mode, char *roles) const{
     int n = getPlayerCount(mode);
+
+    if(mode == "02_1v1"){
+        qstrcpy(roles, "ZN");
+        return;
+    }else if(mode == "04_1v3"){
+        qstrcpy(roles, "ZFFF");
+        return;
+    }
 
     if(modes.contains(mode)){
         static const char *table1[] = {
@@ -493,8 +562,30 @@ QStringList Engine::getRandomGenerals(int count, const QSet<QString> &ban_set) c
 }
 
 QList<int> Engine::getRandomCards() const{
+    if(Config.GameMode == "04_1v3"){
+        const Package *stdpack = findChild<const Package *>("standard");
+        QList<const Card *> stdcards = stdpack->findChildren<const Card *>();
+        QList<int> card_ids;
+
+        foreach(const Card *card, stdcards){
+            if(card->inherits("Disaster"))
+                continue;
+
+            card_ids << card->getId();
+        }
+
+        qShuffle(card_ids);
+        return card_ids;
+    }
+
+    bool exclude_disaters = Config.GameMode == "06_3v3"
+                            && Config.value("3v3/ExcludeDisasters", true).toBool();
+
     QList<int> list;
     foreach(Card *card, cards){
+        if(exclude_disaters && card->inherits("Disaster"))
+            continue;
+
         if(!ban_package.contains(card->getPackage()))
             list << card->getId();
     }
@@ -513,19 +604,31 @@ void Engine::playAudio(const QString &name) const{
 }
 
 void Engine::playEffect(const QString &filename) const{
+#ifdef AUDIO_SUPPORT
+
     if(!Config.EnableEffects)
         return;
 
     if(filename.isNull())
         return;
 
+#ifdef  Q_OS_WIN32
     if(SoundEngine == NULL)
         return;
 
     if(SoundEngine->isCurrentlyPlaying(filename.toAscii()))
         return;
-
     SoundEngine->play2D(filename.toAscii());
+#else
+    if(SoundEngine->currentSource().fileName() == filename.toAscii()) {
+        return;
+    }
+    SoundEngine->setCurrentSource(Phonon::MediaSource(filename));
+    SoundEngine->play();
+#endif
+
+
+#endif
 }
 
 void Engine::playSkillEffect(const QString &skill_name, int index) const{
@@ -558,4 +661,37 @@ const TriggerSkill *Engine::getTriggerSkill(const QString &skill_name) const{
         return qobject_cast<const TriggerSkill *>(skill);
     else
         return NULL;
+}
+
+const ViewAsSkill *Engine::getViewAsSkill(const QString &skill_name) const{
+    const Skill *skill = getSkill(skill_name);
+    if(skill == NULL)
+        return NULL;
+
+    if(skill->inherits("ViewAsSkill"))
+        return qobject_cast<const ViewAsSkill *>(skill);
+    else if(skill->inherits("TriggerSkill")){
+        const TriggerSkill *trigger_skill = qobject_cast<const TriggerSkill *>(skill);
+        return trigger_skill->getViewAsSkill();
+    }else
+        return NULL;
+}
+
+const ProhibitSkill *Engine::isProhibited(const Player *from, const Player *to, const Card *card) const{
+    foreach(const ProhibitSkill *skill, prohibit_skills){
+        if(to->hasSkill(skill->objectName()) && skill->isProhibited(from, to, card))
+            return skill;
+    }
+
+    return NULL;
+}
+
+int Engine::correctDistance(const Player *from, const Player *to) const{
+    int correct = 0;
+
+    foreach(const DistanceSkill *skill, distance_skills){
+        correct += skill->getCorrect(from, to);
+    }
+
+    return correct;
 }

@@ -4,15 +4,23 @@
 #include "gamerule.h"
 #include "ai.h"
 
-bool TriggerSkillSorter::operator ()(const TriggerSkill *a, const TriggerSkill *b){
-    int x = a->getPriority();
-    int y = b->getPriority();
+#include <QTime>
 
-    return x > y;
+LogMessage::LogMessage()
+    :from(NULL)
+{
 }
 
-void TriggerSkillSorter::sort(QList<const TriggerSkill *> &skills){
-    qStableSort(skills.begin(), skills.end(), *this);
+QString LogMessage::toString() const{
+    QStringList tos;
+    foreach(ServerPlayer *player, to)
+        tos << player->objectName();
+
+    return QString("%1:%2->%3:%4:%5:%6")
+            .arg(type)
+            .arg(from ? from->objectName() : "")
+            .arg(tos.join("+"))
+            .arg(card_str).arg(arg).arg(arg2);
 }
 
 DamageStruct::DamageStruct()
@@ -26,7 +34,7 @@ CardEffectStruct::CardEffectStruct()
 }
 
 SlashEffectStruct::SlashEffectStruct()
-    :slash(NULL), from(NULL), to(NULL), drank(false), nature(DamageStruct::Normal)
+    :slash(NULL), jink(NULL), from(NULL), to(NULL), drank(false), nature(DamageStruct::Normal)
 {
 }
 
@@ -39,6 +47,40 @@ RecoverStruct::RecoverStruct()
     :recover(1), who(NULL), card(NULL)
 {
 
+}
+
+PindianStruct::PindianStruct()
+    :from(NULL), to(NULL), from_card(NULL), to_card(NULL)
+{
+
+}
+
+JudgeStruct::JudgeStruct()
+    :who(NULL), card(NULL), good(true)
+{
+
+}
+
+bool JudgeStruct::isGood(const Card *card) const{
+    if(card == NULL)
+        card = this->card;
+
+    QString class_name = card->metaObject()->className();
+    Card::Suit suit = card->getSuit();
+    if(who->hasSkill("hongyan") && suit == Card::Spade)
+        suit = Card::Heart;
+
+    QString number = card->getNumberString();
+    QString card_str = QString("%1:%2:%3").arg(class_name).arg(Card::Suit2String(suit)).arg(number);
+
+    if(good)
+        return pattern.exactMatch(card_str);
+    else
+        return !pattern.exactMatch(card_str);
+}
+
+bool JudgeStruct::isBad() const{
+    return ! isGood();
 }
 
 CardUseStruct::CardUseStruct()
@@ -70,15 +112,13 @@ RoomThread::RoomThread(Room *room)
 }
 
 void RoomThread::addPlayerSkills(ServerPlayer *player, bool invoke_game_start){
-    const General *general = player->getGeneral();
-
-    Q_ASSERT(general);
     QVariant void_data;
 
-    QList<const TriggerSkill *> skills = general->findChildren<const TriggerSkill *>();
-    foreach(const TriggerSkill *skill, skills){
-        if(skill->isLordSkill() && !player->isLord())
-            continue;
+    foreach(const TriggerSkill *skill, player->getTriggerSkills()){
+        if(skill->isLordSkill()){
+            if(!player->isLord() || room->mode == "06_3v3")
+                continue;
+        }
 
         addTriggerSkill(skill);
 
@@ -88,84 +128,203 @@ void RoomThread::addPlayerSkills(ServerPlayer *player, bool invoke_game_start){
 }
 
 void RoomThread::removePlayerSkills(ServerPlayer *player){
-    const General *general = player->getGeneral();
-
-    Q_ASSERT(general);
-
-    QList<const TriggerSkill *> skills = general->findChildren<const TriggerSkill *>();
-    foreach(const TriggerSkill *skill, skills){
-        if(skill->isLordSkill() && !player->isLord())
-            continue;
+    foreach(const TriggerSkill *skill, player->getTriggerSkills()){
+        if(skill->isLordSkill()){
+            if(!player->isLord() || room->mode == "06_3v3")
+                continue;
+        }
 
         removeTriggerSkill(skill);
     }
 }
 
+int RoomThread::getRefCount(const TriggerSkill *skill) const{
+    return refcount.value(skill, 0);
+}
+
 void RoomThread::constructTriggerTable(const GameRule *rule){
     foreach(ServerPlayer *player, room->players){
-        addPlayerSkills(player);
-    }   
+        addPlayerSkills(player, false);
+    }
 
     addTriggerSkill(rule);
+}
 
+static const int GameOver = 1;
+
+void RoomThread::run3v3(){
+    QList<ServerPlayer *> warm, cool;
     foreach(ServerPlayer *player, room->players){
-        const General *general2 = player->getGeneral2();
-        if(general2){
-            QList<const Skill *> skills = general2->findChildren<const Skill *>();
+        switch(player->getRoleEnum()){
+        case Player::Lord: warm.prepend(player); break;
+        case Player::Loyalist: warm.append(player); break;
+        case Player::Renegade: cool.prepend(player); break;
+        case Player::Rebel: cool.append(player); break;
+        }
+    }
 
-            foreach(const Skill *skill, skills){
-                if(!player->hasSkill(skill->objectName())){
-                    if(player->getRoleEnum() != Player::Lord && skill->isLordSkill())
-                        continue;
+    QString order = room->askForOrder(cool.first());
+    QList<ServerPlayer *> *first, *second;
 
-                    room->acquireSkill(player, skill);
-                }
+    if(order == "warm"){
+        first = &warm;
+        second = &cool;
+    }else{
+        first = &cool;
+        second = &warm;
+    }
+
+    action3v3(first->first());
+
+    forever{
+        qSwap(first, second);
+
+        QList<ServerPlayer *> targets;
+        foreach(ServerPlayer *player, *first){
+            if(!player->hasFlag("actioned") && player->isAlive())
+                targets << player;
+        }
+
+        ServerPlayer *to_action = room->askForPlayerChosen(first->first(), targets, "3v3-action");
+        if(to_action){
+            action3v3(to_action);
+
+            if(to_action != first->first()){
+                ServerPlayer *another;
+                if(to_action == first->last())
+                    another = first->at(1);
+                else
+                    another = first->last();
+
+                if(!another->hasFlag("actioned") && another->isAlive())
+                    action3v3(another);
             }
         }
     }
 }
 
-static const int GameOver = 1;
+void RoomThread::action3v3(ServerPlayer *player){
+    room->setCurrent(player);
+    trigger(TurnStart, room->getCurrent());
+    room->setPlayerFlag(player, "actioned");
+
+    bool all_actioned = true;
+    foreach(ServerPlayer *player, room->alive_players){
+        if(!player->hasFlag("actioned")){
+            all_actioned = false;
+            break;
+        }
+    }
+
+    if(all_actioned){
+        foreach(ServerPlayer *player, room->alive_players){
+            room->setPlayerFlag(player, "-actioned");
+        }
+    }
+}
 
 void RoomThread::run(){
+    qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
+
+    if(setjmp(env) == GameOver){
+        quit();
+        return;
+    }
+
     // start game, draw initial 4 cards
     foreach(ServerPlayer *player, room->players){
         trigger(GameStart, player);
     }
 
-    if(setjmp(env) == GameOver)
-        return;
+    if(room->mode == "06_3v3"){
+        run3v3();
+    }else if(room->getMode() == "04_1v3"){
+        ServerPlayer *shenlvbu = room->getLord();
+        if(shenlvbu->getGeneralName() == "shenlvbu1"){
+            QList<ServerPlayer *> league = room->players;
+            league.removeOne(shenlvbu);
 
-    forever{
-        trigger(TurnStart, room->getCurrent());
-        room->setCurrent(room->nextPlayer());
+            forever{
+                foreach(ServerPlayer *player, league){
+                    if(player->hasFlag("actioned"))
+                        room->setPlayerFlag(player, "-actioned");
+                }
+
+                foreach(ServerPlayer *player, league){
+                    room->setCurrent(player);
+                    trigger(TurnStart, room->getCurrent());
+
+                    if(!player->hasFlag("actioned"))
+                        room->setPlayerFlag(player, "actioned");
+
+                    if(shenlvbu->getGeneralName() == "shenlvbu2")
+                        goto second_phase;
+
+                    if(player->isAlive()){
+                        room->setCurrent(shenlvbu);
+                        trigger(TurnStart, room->getCurrent());
+
+                        if(shenlvbu->getGeneralName() == "shenlvbu2")
+                            goto second_phase;
+                    }
+                }
+            }
+
+        }else{
+            second_phase:
+
+            foreach(ServerPlayer *player, room->players){
+                if(player != shenlvbu){
+                    if(player->hasFlag("actioned"))
+                        room->setPlayerFlag(player, "-actioned");
+
+                    if(player->getPhase() != Player::NotActive){
+                        room->setPlayerProperty(player, "phase", "not_active");
+                        trigger(PhaseChange, player);
+                    }
+                }
+            }
+
+            room->setCurrent(shenlvbu);
+
+            forever{
+                trigger(TurnStart, room->getCurrent());
+                room->setCurrent(room->getCurrent()->getNext());
+            }
+        }
+
+
+    }else{
+        if(room->getMode() == "02_1v1")
+            room->setCurrent(room->players.at(1));
+
+        forever{
+            trigger(TurnStart, room->getCurrent());
+            room->setCurrent(room->getCurrent()->getNextAlive());
+        }
     }
+}
+
+static bool CompareByPriority(const TriggerSkill *a, const TriggerSkill *b){
+    return a->getPriority() > b->getPriority();
 }
 
 bool RoomThread::trigger(TriggerEvent event, ServerPlayer *target, QVariant &data){
     Q_ASSERT(QThread::currentThread() == this);
 
-    QList<const TriggerSkill *> skills = skill_table[event];
-    QMutableListIterator<const TriggerSkill *> itor(skills);
-    while(itor.hasNext()){
-        const TriggerSkill *skill = itor.next();
-        if(!skill->triggerable(target))
-            itor.remove();
-    }
-
-    TriggerSkillSorter sorter;
-    sorter.sort(skills);
-
     bool broken = false;
-    foreach(const TriggerSkill *skill, skills){
-        if(skill->trigger(event, target, data)){
-            broken = true;
-            break;
+    foreach(const TriggerSkill *skill, skill_table[event]){
+        if(skill->triggerable(target)){
+            broken = skill->trigger(event, target, data);
+            if(broken)
+                break;
         }
     }
 
-    foreach(AI *ai, room->ais)
-        ai->filterEvent(event, target, data);
+    if(target){
+        foreach(AI *ai, room->ais)
+            ai->filterEvent(event, target, data);
+    }
 
     return broken;
 }
@@ -186,6 +345,9 @@ void RoomThread::addTriggerSkill(const TriggerSkill *skill){
     QList<TriggerEvent> events = skill->getTriggerEvents();
     foreach(TriggerEvent event, events){
         skill_table[event] << skill;
+        qStableSort(skill_table[event].begin(),
+                    skill_table[event].end(),
+                    CompareByPriority);
     }
 }
 
@@ -210,7 +372,8 @@ void RoomThread::removeTriggerSkill(const TriggerSkill *skill){
 }
 
 void RoomThread::delay(unsigned long secs){
-    msleep(secs);
+    if(room->property("to_test").toString().isEmpty())
+        msleep(secs);
 }
 
 void RoomThread::end(){

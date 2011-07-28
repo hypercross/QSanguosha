@@ -40,12 +40,14 @@ QString Skill::getText() const{
     case Skill::Frequent: break;
     case Skill::Limited: skill_name.append(tr(" [Limited]")); break;
     case Skill::Compulsory: skill_name.append(tr(" [Compulsory]")); break;
+    case Skill::Wake: skill_name.append(tr(" [Wake]")); break;
     }
 
-    if(isLordSkill())
-        skill_name.append(tr(" [Lord Skill]"));
-
     return skill_name;
+}
+
+bool Skill::isVisible() const{
+    return ! objectName().startsWith("#");
 }
 
 QString Skill::getDefaultChoice(ServerPlayer *) const{
@@ -113,6 +115,10 @@ QStringList Skill::getSources() const{
     return sources;
 }
 
+QDialog *Skill::getDialog() const{
+    return NULL;
+}
+
 ViewAsSkill::ViewAsSkill(const QString &name)
     :Skill(name)
 {
@@ -121,18 +127,18 @@ ViewAsSkill::ViewAsSkill(const QString &name)
 
 bool ViewAsSkill::isAvailable() const{
     switch(ClientInstance->getStatus()){
-    case Client::Playing: return isEnabledAtPlay();
-    case Client::Responsing: return isEnabledAtResponse();
+    case Client::Playing: return isEnabledAtPlay(Self);
+    case Client::Responsing: return isEnabledAtResponse(Self, ClientInstance->getPattern());
     default:
         return false;
     }
 }
 
-bool ViewAsSkill::isEnabledAtPlay() const{
+bool ViewAsSkill::isEnabledAtPlay(const Player *) const{
     return true;
 }
 
-bool ViewAsSkill::isEnabledAtResponse() const{
+bool ViewAsSkill::isEnabledAtResponse(const Player *, const QString &) const{
     return false;
 }
 
@@ -241,7 +247,11 @@ PhaseChangeSkill::PhaseChangeSkill(const QString &name)
 }
 
 bool PhaseChangeSkill::trigger(TriggerEvent, ServerPlayer *player, QVariant &) const{
-    return onPhaseChange(player);
+    bool skipped = onPhaseChange(player);
+    if(skipped)
+        player->skip(player->getPhase());
+
+    return skipped;
 }
 
 DrawCardsSkill::DrawCardsSkill(const QString &name)
@@ -285,13 +295,14 @@ bool GameStartSkill::trigger(TriggerEvent, ServerPlayer *player, QVariant &) con
 }
 
 ProhibitSkill::ProhibitSkill(const QString &name)
-    :GameStartSkill(name)
+    :Skill(name, Skill::Compulsory)
 {
-    frequency = Compulsory;
 }
 
-void ProhibitSkill::onGameStart(ServerPlayer *player) const{
-    player->getRoom()->addProhibitSkill(this);
+DistanceSkill::DistanceSkill(const QString &name)
+    :Skill(name, Skill::Compulsory)
+{
+
 }
 
 WeaponSkill::WeaponSkill(const QString &name)

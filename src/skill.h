@@ -5,6 +5,7 @@ class Player;
 class CardItem;
 class Card;
 class ServerPlayer;
+class QDialog;
 
 #include "room.h"
 
@@ -20,16 +21,19 @@ public:
         Frequent,
         NotFrequent,
         Compulsory,
-        Limited
+        Limited,
+        Wake
     };
 
     explicit Skill(const QString &name, Frequency frequent = NotFrequent);
     bool isLordSkill() const;
     QString getDescription() const;
     QString getText() const;
+    bool isVisible() const;
 
     virtual QString getDefaultChoice(ServerPlayer *player) const;
     virtual int getEffectIndex(ServerPlayer *player, const Card *card) const;
+    virtual QDialog *getDialog() const;
 
     void initMediaSource();
     void playEffect(int index = -1) const;
@@ -57,10 +61,8 @@ public:
     virtual const Card *viewAs(const QList<CardItem *> &cards) const = 0;
 
     bool isAvailable() const;
-
-protected:
-    virtual bool isEnabledAtPlay() const;
-    virtual bool isEnabledAtResponse() const;
+    virtual bool isEnabledAtPlay(const Player *player) const;
+    virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const;
 };
 
 class ZeroCardViewAsSkill: public ViewAsSkill{
@@ -70,7 +72,7 @@ public:
     ZeroCardViewAsSkill(const QString &name);
 
     virtual bool viewFilter(const QList<CardItem *> &selected, const CardItem *to_select) const;
-    virtual const Card *viewAs(const QList<CardItem *> &cards) const;    
+    virtual const Card *viewAs(const QList<CardItem *> &cards) const;
 
     virtual const Card *viewAs() const = 0;
 };
@@ -104,7 +106,7 @@ public:
     QList<TriggerEvent> getTriggerEvents() const;
 
     virtual int getPriority() const;
-    virtual bool triggerable(const ServerPlayer *target) const;    
+    virtual bool triggerable(const ServerPlayer *target) const;
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const = 0;
 
 protected:
@@ -175,14 +177,22 @@ public:
     virtual void onGameStart(ServerPlayer *player) const = 0;
 };
 
-class ProhibitSkill: public GameStartSkill{
+class ProhibitSkill: public Skill{
     Q_OBJECT
 
 public:
     ProhibitSkill(const QString &name);
 
-    virtual void onGameStart(ServerPlayer *player) const;
     virtual bool isProhibited(const Player *from, const Player *to, const Card *card) const = 0;
+};
+
+class DistanceSkill: public Skill{
+    Q_OBJECT
+
+public:
+    DistanceSkill(const QString &name);
+
+    virtual int getCorrect(const Player *from, const Player *to) const = 0;
 };
 
 class WeaponSkill: public TriggerSkill{

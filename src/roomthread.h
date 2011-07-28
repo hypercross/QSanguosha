@@ -9,9 +9,16 @@
 
 #include "structs.h"
 
-struct TriggerSkillSorter{
-    bool operator()(const TriggerSkill *a, const TriggerSkill *b);
-    void sort(QList<const TriggerSkill *> &skills);
+struct LogMessage{
+    LogMessage();
+    QString toString() const;
+
+    QString type;
+    ServerPlayer *from;
+    QList<ServerPlayer *> to;
+    QString card_str;
+    QString arg;
+    QString arg2;
 };
 
 class RoomThread : public QThread{
@@ -25,12 +32,15 @@ public:
 
     void addPlayerSkills(ServerPlayer *player, bool invoke_game_start = false);
     void removePlayerSkills(ServerPlayer *player);
+    int getRefCount(const TriggerSkill *skill) const;
 
     void addTriggerSkill(const TriggerSkill *skill);
     void removeTriggerSkill(const TriggerSkill *skill);
     void removeTriggerSkill(const QString &skill_name);
     void delay(unsigned long msecs = 1000);
     void end();
+    void run3v3();
+    void action3v3(ServerPlayer *player);
 
 protected:
     virtual void run();
@@ -38,8 +48,9 @@ protected:
 private:
     Room *room;
     jmp_buf env;
+    QString order;
 
-    QMap<TriggerEvent, QList<const TriggerSkill *> > skill_table;
+    QList<const TriggerSkill *> skill_table[NumOfEvents];
     QMap<const TriggerSkill *, int> refcount;
 };
 

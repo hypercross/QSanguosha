@@ -50,19 +50,14 @@ bool Shit::HasShit(const Card *card){
 
 // -----------  Deluge -----------------
 
-static QString DelugeCallback(const Card *card, Room *){
-    int number = card->getNumber();
-    if(number == 1 || number == 13)
-        return "bad";
-    else
-        return "good";
-}
-
 Deluge::Deluge(Card::Suit suit, int number)
     :Disaster(suit, number)
 {
-    callback = DelugeCallback;
     setObjectName("deluge");
+
+    judge.pattern = QRegExp("(.*):(.*):([AK])");
+    judge.good = false;
+    judge.reason = objectName();
 }
 
 void Deluge::takeEffect(ServerPlayer *target) const{
@@ -89,7 +84,7 @@ void Deluge::takeEffect(ServerPlayer *target) const{
     players = players.mid(0, n);
     foreach(ServerPlayer *player, players){
         if(player->isAlive()){
-            int card_id = room->askForAG(player, card_ids);
+            int card_id = room->askForAG(player, card_ids, false, "deluge");
             card_ids.removeOne(card_id);
 
             room->takeAG(player, card_id);
@@ -104,20 +99,14 @@ void Deluge::takeEffect(ServerPlayer *target) const{
 
 // -----------  Typhoon -----------------
 
-static QString TyphoonCallback(const Card *card, Room *)
-{
-    int number = card->getNumber();
-    if(card->getSuit() == Card::Diamond && number >= 2 && number <= 9)
-        return "bad";
-    else
-        return "good";
-}
-
 Typhoon::Typhoon(Card::Suit suit, int number)
     :Disaster(suit, number)
 {
-    callback = TyphoonCallback;
     setObjectName("typhoon");
+
+    judge.pattern = QRegExp("(.*):(diamond):([2-9])");
+    judge.good = false;
+    judge.reason = objectName();
 }
 
 void Typhoon::takeEffect(ServerPlayer *target) const{
@@ -128,9 +117,9 @@ void Typhoon::takeEffect(ServerPlayer *target) const{
         if(target->distanceTo(player) == 1){
             int discard_num = qMin(6, player->getHandcardNum());
             if(discard_num == 0)
-                room->setEmotion(player, Room::Good);
+                room->setEmotion(player, "good");
             else{
-                room->setEmotion(player, Room::Bad);
+                room->setEmotion(player, "bad");
                 room->broadcastInvoke("animate", "typhoon:" + player->objectName());
                 room->broadcastInvoke("playAudio", "typhoon");
 
@@ -144,20 +133,14 @@ void Typhoon::takeEffect(ServerPlayer *target) const{
 
 // -----------  Earthquake -----------------
 
-static QString EarthquakeCallback(const Card *card, Room *)
-{
-    int number = card->getNumber();
-    if(card->getSuit() == Card::Club && number >= 2 && number <= 9)
-        return "bad";
-    else
-        return "good";
-}
-
 Earthquake::Earthquake(Card::Suit suit, int number)
     :Disaster(suit, number)
 {
-    callback = EarthquakeCallback;
     setObjectName("earthquake");
+
+    judge.pattern = QRegExp("(.*):(club):([2-9])");
+    judge.good = false;
+    judge.reason = objectName();
 }
 
 void Earthquake::takeEffect(ServerPlayer *target) const{
@@ -166,9 +149,9 @@ void Earthquake::takeEffect(ServerPlayer *target) const{
     foreach(ServerPlayer *player, players){
         if(target->distanceTo(player) <= 1){
             if(player->getEquips().isEmpty()){
-                room->setEmotion(player, Room::Good);
+                room->setEmotion(player, "good");
             }else{
-                room->setEmotion(player, Room::Bad);
+                room->setEmotion(player, "bad");
                 room->broadcastInvoke("playAudio", "earthquake");
                 player->throwAllEquips();
             }
@@ -180,20 +163,14 @@ void Earthquake::takeEffect(ServerPlayer *target) const{
 
 // -----------  Volcano -----------------
 
-static QString VolcanoCallback(const Card *card, Room *)
-{
-    int number = card->getNumber();
-    if(card->getSuit() == Card::Heart && number >= 2 && number <= 9){
-        return "bad";
-    }else
-        return "good";
-}
-
 Volcano::Volcano(Card::Suit suit, int number)
     :Disaster(suit, number)
 {
-    callback = VolcanoCallback;
     setObjectName("volcano");
+
+    judge.pattern = QRegExp("(.*):(heart):([2-9])");
+    judge.good = false;
+    judge.reason = objectName();
 }
 
 void Volcano::takeEffect(ServerPlayer *target) const{
@@ -216,27 +193,15 @@ void Volcano::takeEffect(ServerPlayer *target) const{
     }
 }
 
-static QString MudSlideCallback(const Card *card, Room *){
-    if(!card->isBlack())
-        return "good";
-
-    switch(card->getNumber()){
-    case 1:
-    case 4:
-    case 7:
-    case 13: return "bad";
-    default:
-        return "good";
-    }
-}
-
 // -----------  MudSlide -----------------
 MudSlide::MudSlide(Card::Suit suit, int number)
     :Disaster(suit, number)
 {
-    callback = MudSlideCallback;
     setObjectName("mudslide");
-    target_fixed = true;
+
+    judge.pattern = QRegExp("(.*):(spade|club):([AK47])");
+    judge.good = false;
+    judge.reason = objectName();
 }
 
 void MudSlide::takeEffect(ServerPlayer *target) const{
@@ -319,6 +284,50 @@ QString Monkey::getEffectPath(bool ) const{
     return "audio/card/common/monkey.ogg";
 }
 
+class GaleShellSkill: public ArmorSkill{
+public:
+    GaleShellSkill():ArmorSkill("gale-shell"){
+        events << Predamaged;
+    }
+
+    virtual bool trigger(TriggerEvent, ServerPlayer *player, QVariant &data) const{
+        DamageStruct damage = data.value<DamageStruct>();
+        if(damage.nature == DamageStruct::Fire){
+            LogMessage log;
+            log.type = "#GaleShellDamage";
+            log.from = player;
+            log.arg = QString::number(damage.damage);
+            log.arg2 = QString::number(damage.damage + 1);
+            player->getRoom()->sendLog(log);
+
+            damage.damage ++;
+            data = QVariant::fromValue(damage);
+        }
+        return false;
+    }
+};
+
+GaleShell::GaleShell(Suit suit, int number) :Armor(suit, number){
+    setObjectName("gale-shell");
+    skill = new GaleShellSkill;
+
+    target_fixed = false;
+}
+
+bool GaleShell::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const{
+    return targets.isEmpty() && Self->distanceTo(to_select) <= 1;
+}
+
+void GaleShell::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const{
+    ServerPlayer *target = targets.value(0, source);
+
+    if(target->getArmor())
+        room->throwCard(target->getArmor());
+
+    room->moveCardTo(this, target, Player::Equip, true);
+}
+
+
 JoyPackage::JoyPackage()
     :Package("joy")
 {
@@ -334,10 +343,13 @@ JoyPackage::JoyPackage()
             << new Volcano(Card::Heart, 13)
             << new MudSlide(Card::Heart, 7);
 
-    cards << new Monkey(Card::Diamond, 13);
+    cards << new Monkey(Card::Diamond, 5)
+            << new GaleShell(Card::Heart, 1);
 
     foreach(Card *card, cards)
         card->setParent(this);
+
+    type = CardPack;
 }
 
 ADD_PACKAGE(Joy);

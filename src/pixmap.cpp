@@ -30,13 +30,49 @@ QRectF Pixmap::boundingRect() const{
     return QRectF(0, 0, pixmap.width(), pixmap.height());
 }
 
-void Pixmap::changePixmap(const QString &filename){
-    pixmap.load(filename);
+bool Pixmap::changePixmap(const QString &filename){
+    bool success = pixmap.load(filename);
+    if(success)
+        prepareGeometryChange();
+
+    return success;
+}
+
+void Pixmap::setPixmap(const QPixmap &pixmap){
+    this->pixmap = pixmap;
     prepareGeometryChange();
 }
 
 void Pixmap::shift(){
     moveBy(-pixmap.width()/2, -pixmap.height()/2);
+}
+
+void Pixmap::MakeGray(QPixmap &pixmap){
+    QImage img = pixmap.toImage();
+
+    int i,j;
+    for(i=0; i<img.width(); i++){
+        for(j=0; j<img.height(); j++){
+            QRgb color = img.pixel(i, j);
+            int gray = qGray(color);
+            color = qRgb(gray, gray, gray);
+            img.setPixel(i, j, color);
+        }
+    }
+
+    pixmap = QPixmap::fromImage(img);
+}
+
+void Pixmap::makeGray(){
+    MakeGray(pixmap);
+}
+
+void Pixmap::scaleSmoothly(qreal ratio){
+    qreal width = pixmap.width() * ratio;
+    qreal height = pixmap.height() * ratio;
+    pixmap = pixmap.scaled(width, height, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
+    prepareGeometryChange();
 }
 
 void Pixmap::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget){
@@ -47,13 +83,13 @@ QVariant Pixmap::itemChange(GraphicsItemChange change, const QVariant &value){
     if(change == ItemSelectedHasChanged){
         if(value.toBool()){
             QGraphicsColorizeEffect *effect = new QGraphicsColorizeEffect(this);
-            effect->setColor(QColor(0xCC, 0x00, 0x00));            
+            effect->setColor(QColor(0xCC, 0x00, 0x00));
             setGraphicsEffect(effect);
         }else
             setGraphicsEffect(NULL);
 
         emit selected_changed();
-    }else if(change == ItemEnabledChange){
+    }else if(change == ItemEnabledHasChanged){
         if(value.toBool()){
             setOpacity(1.0);
         }else{

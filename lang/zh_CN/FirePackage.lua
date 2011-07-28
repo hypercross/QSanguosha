@@ -67,7 +67,7 @@ return {
 	
 	["~pangtong"] = "落凤坡？此地不利于吾。",
 	["~wolong"] = "悠悠苍天，曷此其极",
-	["~dianwei"] = "丞相，我就到这啦",
+	["~dianwei"] = "主公，我就到这了",
 	["~xunyu"] = "身为汉臣，至死不渝",
 	["~yuanshao"] = "天不助袁哪！",
 	["~taishici"] = "今所志未遂，奈何死乎",
@@ -85,5 +85,7 @@ return {
 	["cv:yuanshao"] = "耗子王",
 	["cv:pangde"] = "Glory",
 	["cv:shuangxiong"] = "墨染の飞猫，霸气爷们",
+	
+	["#QuhuNoWolf"] = "%from 驱虎拼点成功，但是由于 %to 在其攻击范围内没有攻击的目标，所以不能造成伤害",
 }
 

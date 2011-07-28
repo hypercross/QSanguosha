@@ -1,12 +1,20 @@
 #include "button.h"
-#include "irrKlang.h"
 
 #include <QPainter>
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsRotation>
 #include <QPropertyAnimation>
 
-extern irrklang::ISoundEngine *SoundEngine;
+#ifdef AUDIO_SUPPORT
+
+#ifdef  Q_OS_WIN32
+    #include "irrKlang.h"
+    extern irrklang::ISoundEngine *SoundEngine;
+#else
+    #include <phonon/MediaObject>
+    extern Phonon::MediaObject *SoundEngine;
+#endif
+#endif
 
 static QRectF ButtonRect(0, 0, 189, 46);
 
@@ -40,11 +48,19 @@ void Button::setFont(const QFont &font){
     this->font = font;
 }
 
-void Button::hoverEnterEvent(QGraphicsSceneHoverEvent *event){
+void Button::hoverEnterEvent(QGraphicsSceneHoverEvent *){
     setFocus(Qt::MouseFocusReason);
 
-    if(SoundEngine && !mute)
+#ifdef AUDIO_SUPPORT
+    if(SoundEngine && !mute) {
+#ifdef Q_OS_WIN32
         SoundEngine->play2D("audio/system/button-hover.ogg");
+#else
+        SoundEngine->setCurrentSource(Phonon::MediaSource("audio/system/button-hover.ogg"));
+        SoundEngine->play();
+#endif
+    }
+#endif
 }
 
 void Button::mousePressEvent(QGraphicsSceneMouseEvent *event){
@@ -52,8 +68,17 @@ void Button::mousePressEvent(QGraphicsSceneMouseEvent *event){
 }
 
 void Button::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
-    if(SoundEngine && !mute)
+#ifdef AUDIO_SUPPORT
+    if(SoundEngine && !mute) {
+#ifdef Q_OS_WIN32
         SoundEngine->play2D("audio/system/button-down.ogg");
+#else
+        SoundEngine->setCurrentSource(Phonon::MediaSource("audio/system/button-down.ogg"));
+        SoundEngine->play();
+#endif
+    }
+#endif
+
 
     emit clicked();
 }

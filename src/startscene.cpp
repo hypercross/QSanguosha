@@ -52,13 +52,28 @@ void StartScene::setServerLogBackground(){
     }
 }
 
-extern irrklang::ISoundEngine *SoundEngine;
+#ifdef AUDIO_SUPPORT
+#ifdef  Q_OS_WIN32
+    extern irrklang::ISoundEngine *SoundEngine;
+#else
+    #include <phonon/MediaObject>
+    #include <phonon/AudioOutput>
+    extern Phonon::MediaObject *SoundEngine;
+    extern Phonon::AudioOutput *SoundOutput;
+#endif
+#endif
 
-void StartScene::switchToServer(Server *server){
-    if(SoundEngine){
+void StartScene::switchToServer(Server *server){    
+#ifdef AUDIO_SUPPORT
+    if(SoundEngine) {
+#ifdef  Q_OS_WIN32
         SoundEngine->drop();
         SoundEngine = NULL;
+#else
+        delete SoundEngine;
+#endif
     }
+#endif
 
     // performs leaving animation
     QPropertyAnimation *logo_shift = new QPropertyAnimation(logo, "pos");
