@@ -59,6 +59,11 @@
    </column>
    <column>
     <property name="text">
+     <string>MaxMp</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
      <string>Package</string>
     </property>
    </column>

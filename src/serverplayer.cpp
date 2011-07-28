@@ -600,6 +600,10 @@ int ServerPlayer::getGeneralMaxHP() const{
     return max_hp;
 }
 
+int ServerPlayer::getGeneralMaxMP() const{
+    return getGeneral()->getMaxMp();
+}
+
 bool ServerPlayer::hasLordSkill(const QString &skill_name) const{
     if(room->getMode() == "06_3v3" || room->getMode() == "02_1v1")
         return false;
@@ -634,6 +638,8 @@ void ServerPlayer::introduceTo(ServerPlayer *player){
 void ServerPlayer::marshal(ServerPlayer *player) const{
     player->sendProperty("maxhp", this);
     player->sendProperty("hp", this);
+    player->sendProperty("maxmp", this);
+    player->sendProperty("mp", this);
 
     if(getKingdom() != getGeneral()->getKingdom())
         player->sendProperty("kingdom", this);

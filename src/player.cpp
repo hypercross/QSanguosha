@@ -7,8 +7,8 @@
 
 Player::Player(QObject *parent)
     :QObject(parent), owner(false), general(NULL), general2(NULL),
-    hp(-1), max_hp(-1), xueyi(0), state("online"), seat(0), alive(true),
-    attack_range(1), phase(NotActive),
+    hp(-1), max_hp(-1), xueyi(0), mp(-1), max_mp(-1), state("online"),
+    seat(0), alive(true), attack_range(1), phase(NotActive),
     weapon(NULL), armor(NULL), defensive_horse(NULL), offensive_horse(NULL),
     face_up(true), chained(false)
 {
@@ -61,6 +61,36 @@ void Player::setMaxHP(int max_hp){
 
 int Player::getLostHp() const{
     return max_hp - qMax(hp, 0);
+}
+
+void Player::setMp(int mp){
+    if(mp <= max_mp && this->mp != mp){
+        this->mp = mp;
+        emit state_changed();
+    }
+}
+
+int Player::getMp() const{
+    return mp;
+}
+
+int Player::getMaxMP() const{
+    return max_mp;
+}
+
+void Player::setMaxMP(int max_mp){
+    if(this->max_mp == max_mp)
+        return;
+
+    this->max_mp = max_mp;
+    if(mp > max_mp)
+        mp = max_mp;
+
+    emit state_changed();
+}
+
+int Player::getLostMp() const{
+    return max_mp - qMax(mp, 0);
 }
 
 bool Player::isWounded() const{
@@ -698,6 +728,8 @@ void Player::copyFrom(Player* p)
 
     b->hp=a->hp;
     b->max_hp=a->max_hp;
+    b->mp=a->mp;
+    b->max_mp=a->max_mp;
     b->xueyi=a->xueyi;
     b->kingdom=a->kingdom;
     b->role=a->role;

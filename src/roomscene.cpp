@@ -141,6 +141,7 @@ RoomScene::RoomScene(QMainWindow *main_window)
     connect(ClientInstance, SIGNAL(status_changed(Client::Status)), this, SLOT(updateStatus(Client::Status)));
     connect(ClientInstance, SIGNAL(avatars_hiden()), this, SLOT(hideAvatars()));
     connect(ClientInstance, SIGNAL(hp_changed(QString,int,DamageStruct::Nature)), SLOT(changeHp(QString,int,DamageStruct::Nature)));
+    connect(ClientInstance, SIGNAL(mp_changed(QString,int)), SLOT(changeMp(QString,int)));
     connect(ClientInstance, SIGNAL(pile_cleared()), this, SLOT(clearPile()));
     connect(ClientInstance, SIGNAL(player_killed(QString)), this, SLOT(killPlayer(QString)));
     connect(ClientInstance, SIGNAL(player_revived(QString)), this, SLOT(revivePlayer(QString)));
@@ -2135,6 +2136,16 @@ void RoomScene::changeHp(const QString &who, int delta, DamageStruct::Nature nat
 
         log_box->appendLog(type, from_general, QStringList(), QString(), n);
     }
+}
+
+void RoomScene::changeMp(const QString &who, int delta){
+    // update
+    Photo *photo = name2photo.value(who, NULL);
+    if(photo)
+        photo->update();
+    else
+        dashboard->update();
+
 }
 
 void RoomScene::clearPile(){

@@ -656,6 +656,17 @@ void CardScene::setMaxHp(int max_hp){
     Config.setValue("CardEditor/MaxHP", max_hp);
 }
 
+void CardScene::setMaxMp(int max_mp){
+    int n = magatamas.length();
+    max_mp = qBound(0, max_mp, n-1);
+
+    int i;
+    for(i=0; i<n; i++)
+        magatamas.at(i)->setVisible(i < max_mp);
+
+    Config.setValue("CardEditor/MaxMP", max_mp);
+}
+
 void CardScene::makeAvatar(AvatarRectItem *item){
     hideAvatarRects();
 

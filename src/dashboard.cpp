@@ -402,15 +402,22 @@ QProgressBar *Dashboard::addProgressBar(){
 void Dashboard::drawHp(QPainter *painter) const{
     int hp = qMax(0, Self->getHp());
     int max_hp = Self->getMaxHP();
-    QPixmap *magatama, *zero_magatama;
+    int mp = qMax(0, Self->getMp());
+    int max_mp = Self->getMaxMP();
+    QPixmap *magatama, *zero_magatama,*mp_maga, *zero_mp_maga;
     int index = Self->isWounded() ? qMin(hp, 5) : 5;
     if(max_hp > 6){
         magatama = MagatamaWidget::GetSmallMagatama(index);
         zero_magatama = MagatamaWidget::GetSmallMagatama(0);
+        mp_maga = MagatamaWidget::GetSmallMpMagatama(index);
+        zero_mp_maga = MagatamaWidget::GetSmallMpMagatama(0);
     }else{
         magatama = MagatamaWidget::GetMagatama(index);
         zero_magatama = MagatamaWidget::GetMagatama(0);
+        mp_maga=MagatamaWidget::GetMpMagatama(1);
+        zero_mp_maga=MagatamaWidget::GetMpMagatama(0);
     }
+
 
     qreal total_width = magatama->width() * max_hp;
     qreal skip = (121 - total_width)/ (max_hp + 1);
@@ -421,6 +428,11 @@ void Dashboard::drawHp(QPainter *painter) const{
         painter->drawPixmap(start_x + skip *(i+1) + i * magatama->width(), 5, *magatama);
     for(i=hp; i<max_hp; i++)
         painter->drawPixmap(start_x + skip *(i+1) + i * magatama->width(), 5, *zero_magatama);
+
+    for(i=0; i<mp; i++)
+        painter->drawPixmap(start_x + skip *(i+1) + i * mp_maga->width(), 5, *mp_maga);
+    for(i=mp; i<max_mp; i++)
+        painter->drawPixmap(start_x + skip *(i+1) + i * mp_maga->width(), 5, *zero_mp_maga);
 }
 
 void Dashboard::killPlayer(){

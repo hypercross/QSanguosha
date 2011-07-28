@@ -38,6 +38,7 @@ Client::Client(QObject *parent, const QString &filename)
     callbacks["gameOver"] = &Client::gameOver;
 
     callbacks["hpChange"] = &Client::hpChange;
+    callbacks["mpChange"] = &Client::mpChange;
     callbacks["killPlayer"] = &Client::killPlayer;
     callbacks["revivePlayer"] = &Client::revivePlayer;
     callbacks["showCard"] = &Client::showCard;
@@ -519,6 +520,19 @@ void Client::hpChange(const QString &change_str){
         nature = DamageStruct::Normal;
 
     emit hp_changed(who, delta, nature);
+}
+
+void Client::mpChange(const QString &change_str){
+    QRegExp rx("(.+):(-?\\d+)");
+
+    if(!rx.exactMatch(change_str))
+        return;
+
+    QStringList texts = rx.capturedTexts();
+    QString who = texts.at(1);
+    int delta = texts.at(2).toInt();
+
+    emit mp_changed(who, delta);
 }
 
 void Client::setStatus(Status status){

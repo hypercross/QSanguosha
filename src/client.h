@@ -76,6 +76,7 @@ public:
     void activate(const QString &focus_player);
     void startGame(const QString &);
     void hpChange(const QString &change_str);
+    void mpChange(const QString &change_str);
     void playSkillEffect(const QString &play_str);
     void playCardEffect(const QString &play_str);
     void playAudio(const QString &name);
@@ -208,6 +209,7 @@ signals:
     void generals_got(const QStringList &generals);
     void seats_arranged(const QList<const ClientPlayer*> &seats);
     void hp_changed(const QString &who, int delta, DamageStruct::Nature nature);
+    void mp_changed(const QString &who, int delta);
     void status_changed(Client::Status new_status);
     void avatars_hiden();
     void pile_cleared();

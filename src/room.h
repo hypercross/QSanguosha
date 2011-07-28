@@ -58,6 +58,7 @@ public:
     void damage(const DamageStruct &data);
     void sendDamageLog(const DamageStruct &data);
     void loseHp(ServerPlayer *victim, int lose = 1);
+    void changeMp(ServerPlayer *target, int delta);
     void loseMaxHp(ServerPlayer *victim, int lose = 1);
     void applyDamage(ServerPlayer *victim, const DamageStruct &damage);
     void recover(ServerPlayer *player, const RecoverStruct &recover, bool set_emotion = false);

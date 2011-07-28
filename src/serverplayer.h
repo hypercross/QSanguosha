@@ -82,6 +82,7 @@ public:
     QStringList getSelected() const;
 
     int getGeneralMaxHP() const;
+    int getGeneralMaxMP() const;
     virtual bool hasLordSkill(const QString &skill_name) const;
 
     QString getIp() const;

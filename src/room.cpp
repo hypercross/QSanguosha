@@ -948,6 +948,7 @@ void Room::transfigure(ServerPlayer *player, const QString &new_general, bool fu
     thread->addPlayerSkills(player, invoke_start);
 
     player->setMaxHP(player->getGeneralMaxHP());
+    player->setMaxMP(player->getGeneralMaxMP());
     broadcastProperty(player, "maxhp");
 
     if(full_state)
@@ -1641,6 +1642,24 @@ void Room::loseHp(ServerPlayer *victim, int lose){
     thread->trigger(HpLost, victim, data);
 }
 
+void Room::changeMp(ServerPlayer *target, int delta){
+
+    int max=target->getMaxMP()-target->getMp();
+    int min=-target->getMp();
+    delta=qBound(min,delta,max);
+
+    LogMessage log;
+    log.type = delta>0 ? "#increasedMp" : "#decreasedMp";
+    log.from = target;
+    log.arg = QString::number(delta > 0 ? delta : -delta);
+    Room * room=target->getRoom();
+    room->sendLog(log);
+
+    room->setPlayerProperty(target, "mp", target->getMp() + delta);
+    room->broadcastInvoke("mpChange", QString("%1:%2").arg(target->objectName()).arg(delta));
+
+}
+
 void Room::loseMaxHp(ServerPlayer *victim, int lose){
     victim->setMaxHP(qMax(victim->getMaxHP() - lose, 0));
 
@@ -1890,6 +1909,12 @@ void Room::startGame(){
 
         broadcastProperty(player, "maxhp");
         broadcastProperty(player, "hp");
+
+        player->setMaxMP(player->getGeneralMaxMP());
+        player->setMp(player->getMaxMP());
+
+        broadcastProperty(player, "maxmp");
+        broadcastProperty(player, "mp");
 
         if(mode == "06_3v3")
             broadcastProperty(player, "role");

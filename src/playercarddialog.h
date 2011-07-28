@@ -10,10 +10,12 @@ class MagatamaWidget : public QWidget{
     Q_OBJECT
 
 public:
-    explicit MagatamaWidget(int hp, Qt::Orientation orientation);
+    explicit MagatamaWidget(int hp,int mp, Qt::Orientation orientation);
 
     static QPixmap *GetMagatama(int index);
     static QPixmap *GetSmallMagatama(int index);
+    static QPixmap *GetMpMagatama(int index);
+    static QPixmap *GetSmallMpMagatama(int index);
 };
 
 class PlayerCardDialog : public QDialog{

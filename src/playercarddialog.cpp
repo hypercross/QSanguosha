@@ -8,7 +8,7 @@
 #include <QLabel>
 #include <QHBoxLayout>
 
-MagatamaWidget::MagatamaWidget(int hp, Qt::Orientation orientation)
+MagatamaWidget::MagatamaWidget(int hp,int mp, Qt::Orientation orientation)
 {
     QBoxLayout *layout = NULL;
     if(orientation == Qt::Vertical)
@@ -16,12 +16,19 @@ MagatamaWidget::MagatamaWidget(int hp, Qt::Orientation orientation)
     else
         layout = new QHBoxLayout;
 
-    QPixmap pixmap = *GetMagatama(qMin(5, hp));
+    QPixmap pixmap    = *GetMagatama(qMin(5, hp));
+    QPixmap mp_pixmap = *GetMpMagatama(1);
 
     int i;
     for(i=0; i<hp; i++){
         QLabel *label = new QLabel;
         label->setPixmap(pixmap);
+
+        layout->addWidget(label);
+    }
+    for(i=0; i<mp; i++){
+        QLabel *label = new QLabel;
+        label->setPixmap(mp_pixmap);
 
         layout->addWidget(label);
     }
@@ -40,12 +47,34 @@ QPixmap *MagatamaWidget::GetMagatama(int index){
     return &magatamas[index];
 }
 
+QPixmap *MagatamaWidget::GetMpMagatama(int index){
+    static QPixmap magatamas[6];
+    if(magatamas[0].isNull()){
+        int i;
+        for(i=0; i<=1; i++)
+            magatamas[i].load(QString("image/system/magatamas/mana-%1.png").arg(i));
+    }
+
+    return &magatamas[index];
+}
+
 QPixmap *MagatamaWidget::GetSmallMagatama(int index){
     static QPixmap magatamas[6];
     if(magatamas[0].isNull()){
         int i;
         for(i=0; i<=5; i++)
             magatamas[i].load(QString("image/system/magatamas/small-%1.png").arg(i));
+    }
+
+    return &magatamas[index];
+}
+
+QPixmap *MagatamaWidget::GetSmallMpMagatama(int index){
+    static QPixmap magatamas[6];
+    if(magatamas[0].isNull()){
+        int i;
+        for(i=0; i<=1; i++)
+            magatamas[i].load(QString("image/system/magatamas/mana-small-%1.png").arg(i));
     }
 
     return &magatamas[index];
@@ -86,7 +115,7 @@ QWidget *PlayerCardDialog::createAvatar(){
 
     QVBoxLayout *layout = new QVBoxLayout;
     layout->addWidget(avatar);
-    layout->addWidget(new MagatamaWidget(player->getHp(), Qt::Horizontal));
+    layout->addWidget(new MagatamaWidget(player->getHp(),player->getMp(),Qt::Horizontal));
 
     box->setLayout(layout);
 

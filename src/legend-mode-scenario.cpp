@@ -216,6 +216,8 @@ void ChuanqiCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer
 
         if(amap.value(kingdom)!=suit)room->throwCard(this);
         else room->showCard(source,this->subcards.first());
+
+        room->changeMp(source,-1);
 }
 
 QMap<QString,int> ArcChuanqiCard::card_map;
@@ -258,6 +260,8 @@ void ArcChuanqiCard::use(Room *room, ServerPlayer *source, const QList<ServerPla
 
         if(amap.value(kingdom)!=suit)room->throwCard(this);
         else room->showCard(source,this->subcards.first());
+
+        room->changeMp(source,-1);
 }
 
 class ChuanqiViewAs: public OneCardViewAsSkill{

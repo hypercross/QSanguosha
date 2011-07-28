@@ -6,8 +6,8 @@
 
 #include <QSize>
 
-General::General(Package *package, const QString &name, const QString &kingdom, int max_hp, bool male, bool hidden)
-    :QObject(package), kingdom(kingdom), max_hp(max_hp), male(male), hidden(hidden)
+General::General(Package *package, const QString &name, const QString &kingdom, int max_hp, bool male, bool hidden, int max_mp)
+    :QObject(package), kingdom(kingdom), max_hp(max_hp), max_mp(max_mp), male(male), hidden(hidden)
 {
     static QChar lord_symbol('$');
     if(name.contains(lord_symbol)){
@@ -23,6 +23,10 @@ General::General(Package *package, const QString &name, const QString &kingdom, 
 
 int General::getMaxHp() const{
     return max_hp;
+}
+
+int General::getMaxMp() const{
+    return max_mp;
 }
 
 QString General::getKingdom() const{

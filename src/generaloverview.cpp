@@ -32,13 +32,14 @@ void GeneralOverview::fillGenerals(const QList<const General *> &generals){
     for(i=0; i<generals.length(); i++){
         const General *general = generals[i];
 
-        QString name, kingdom, gender, max_hp, package;
+        QString name, kingdom, gender, max_hp, package, max_mp;
 
         name = Sanguosha->translate(general->objectName());
 
         kingdom = Sanguosha->translate(general->getKingdom());
         gender = general->isMale() ? tr("Male") : tr("Female");
         max_hp = QString::number(general->getMaxHp());
+        max_mp = QString::number(general->getMaxMp());
         package = Sanguosha->translate(general->getPackage());
 
         QTableWidgetItem *name_item = new QTableWidgetItem(name);
@@ -61,6 +62,9 @@ void GeneralOverview::fillGenerals(const QList<const General *> &generals){
         QTableWidgetItem *max_hp_item = new QTableWidgetItem(max_hp);
         max_hp_item->setTextAlignment(Qt::AlignCenter);
 
+        QTableWidgetItem *max_mp_item = new QTableWidgetItem(max_mp);
+        max_mp_item->setTextAlignment(Qt::AlignCenter);
+
         QTableWidgetItem *package_item = new QTableWidgetItem(package);
         package_item->setTextAlignment(Qt::AlignCenter);
 
@@ -68,13 +72,15 @@ void GeneralOverview::fillGenerals(const QList<const General *> &generals){
         ui->tableWidget->setItem(i, 1, kingdom_item);
         ui->tableWidget->setItem(i, 2, gender_item);
         ui->tableWidget->setItem(i, 3, max_hp_item);
-        ui->tableWidget->setItem(i, 4, package_item);
+        ui->tableWidget->setItem(i, 4, max_mp_item);
+        ui->tableWidget->setItem(i, 5, package_item);
     }
 
     ui->tableWidget->setColumnWidth(0, 80);
     ui->tableWidget->setColumnWidth(1, 50);
     ui->tableWidget->setColumnWidth(2, 50);
     ui->tableWidget->setColumnWidth(3, 60);
+    ui->tableWidget->setColumnWidth(4, 60);
 
     ui->tableWidget->setCurrentItem(ui->tableWidget->item(0,0));
 }

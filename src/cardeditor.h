@@ -123,6 +123,7 @@ public:
 public slots:
     void setRatio(int ratio);
     void setMaxHp(int max_hp);
+    void setMaxMp(int max_mp);
     void makeBigAvatar();
     void makeSmallAvatar();
     void makeTinyAvatar();

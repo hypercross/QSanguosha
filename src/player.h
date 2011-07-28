@@ -22,6 +22,8 @@ class Player : public QObject
     Q_PROPERTY(QString screenname READ screenName WRITE setScreenName)
     Q_PROPERTY(int hp READ getHp WRITE setHp)
     Q_PROPERTY(int maxhp READ getMaxHP WRITE setMaxHP)
+    Q_PROPERTY(int mp READ getMp WRITE setMp)
+    Q_PROPERTY(int maxmp READ getMaxMP WRITE setMaxMP)
     Q_PROPERTY(QString kingdom READ getKingdom WRITE setKingdom)
     Q_PROPERTY(int xueyi READ getXueyi WRITE setXueyi)
     Q_PROPERTY(bool wounded READ isWounded STORED false)
@@ -65,6 +67,12 @@ public:
     void setMaxHP(int max_hp);
     int getLostHp() const;
     bool isWounded() const;
+
+    int getMp() const;
+    void setMp(int mp);
+    int getMaxMP() const;
+    void setMaxMP(int max_mp);
+    int getLostMp() const;
 
     bool isOwner() const;
     void setOwner(bool owner);
@@ -208,6 +216,7 @@ private:
     bool owner;
     const General *general, *general2;
     int hp, max_hp, xueyi;
+    int mp, max_mp;
     QString kingdom;
     QString role;
     QString state;

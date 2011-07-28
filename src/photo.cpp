@@ -440,6 +440,7 @@ void Photo::drawMagatama(QPainter *painter, int index, const QPixmap &pixmap){
 
 void Photo::drawHp(QPainter *painter){
     int hp = qMax(0, player->getHp());
+    int mp = qMax(0, player->getMp());
 
     int index = 5;
     if(player->isWounded())
@@ -448,12 +449,21 @@ void Photo::drawHp(QPainter *painter){
     QPixmap *magatama = MagatamaWidget::GetSmallMagatama(index);
     QPixmap *zero_magatama = MagatamaWidget::GetSmallMagatama(0);
 
+    QPixmap *mp_magatama = MagatamaWidget::GetSmallMpMagatama(1);
+    QPixmap *mp_zero_magatama = MagatamaWidget::GetSmallMpMagatama(0);
+
     int max_hp = player->getMaxHP();
+    int max_mp = player->getMaxMP();
     int i;
     for(i=0; i< hp; i++)
         drawMagatama(painter, i, *magatama);
     for(i=hp; i< max_hp; i++)
         drawMagatama(painter, i, *zero_magatama);
+
+    for(i=0; i< mp; i++)
+        drawMagatama(painter, i+5, *mp_magatama);
+    for(i=mp; i< max_mp; i++)
+        drawMagatama(painter, i+5, *mp_zero_magatama);
 }
 
 void Photo::setFrame(FrameType type){

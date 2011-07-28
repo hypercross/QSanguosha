@@ -15,16 +15,18 @@ class General : public QObject
     Q_OBJECT
     Q_PROPERTY(QString kingdom READ getKingdom CONSTANT)
     Q_PROPERTY(int maxhp READ getMaxHp CONSTANT)
+    Q_PROPERTY(int maxmp READ getMaxMp CONSTANT)
     Q_PROPERTY(bool male READ isMale STORED false CONSTANT)
     Q_PROPERTY(bool female READ isFemale STORED false CONSTANT)
     Q_PROPERTY(bool lord READ isLord CONSTANT)
     Q_PROPERTY(bool hidden READ isHidden CONSTANT)
 
 public:
-    explicit General(Package *package, const QString &name, const QString &kingdom, int max_hp = 4, bool male = true, bool hidden = false);
+    explicit General(Package *package, const QString &name, const QString &kingdom, int max_hp = 4, bool male = true, bool hidden = false,int max_mp = 3);
 
     // property getters/setters
     int getMaxHp() const;
+    int getMaxMp() const;
     QString getKingdom() const;
     bool isMale() const;
     bool isFemale() const;
@@ -52,6 +54,7 @@ public slots:
 private:
     QString kingdom;
     int max_hp;
+    int max_mp;
     bool male;
     bool lord;
     QSet<QString> skill_set;
