@@ -476,7 +476,6 @@ public:
     QString getPackage() const;    
     QIcon getSuitIcon() const;
     QString getFullName(bool include_suit = false) const;
-    QString getLogName() const;
     QString getName() const;
     QString getSkillName() const;   
     void setSkillName(const char *skill_name);
@@ -494,6 +493,7 @@ public:
     void addSubcards(const QList<CardItem *> &card_items);
     int subcardsLength() const;
 
+	QString getLogName() const;
     virtual QString getType() const = 0;
     virtual QString getSubtype() const = 0;
     virtual CardType getTypeId() const = 0;

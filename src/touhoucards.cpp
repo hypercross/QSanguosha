@@ -1,6 +1,13 @@
 #include "touhoucards.h"
 #include "engine.h"
 
+
+QString CombatCard::getLogName() const
+{
+    return "combat";
+}
+
+
 CombatCard::CombatCard(Card::Suit suit, int number):BasicCard(suit,number)
 {
     will_throw = false;

@@ -17,7 +17,7 @@ public:
     virtual bool targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const;
     virtual bool isAvailable(const Player *player) const;
     //virtual void onHit(const CardEffectStruct &effect) const;
-
+    virtual QString getLogName() const;
     virtual bool canbeBlocked(const Card* card) const;
 };
 
