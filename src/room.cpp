@@ -350,6 +350,22 @@ void Room::slashEffect(const SlashEffectStruct &effect){
         thread->trigger(SlashEffected, effect.to, data);
 }
 
+void Room::combatEffect(const CombatStruct &effect){
+    effect.from->addMark("SlashCount");
+
+    if(effect.from->getMark("SlashCount") > 1 && effect.from->hasSkill("paoxiao"))
+        playSkillEffect("paoxiao");
+
+    QVariant data = QVariant::fromValue(effect);
+
+    setEmotion(effect.from, "killer");
+    setEmotion(effect.to, "victim");
+
+    bool broken = thread->trigger(CombatTargetDeclare, effect.from, data);
+    if(!broken)
+        thread->trigger(CombatTargetDeclared, effect.to, data);
+}
+
 void Room::slashResult(const SlashEffectStruct &effect, const Card *jink){
     SlashEffectStruct result_effect = effect;
     result_effect.jink = jink;

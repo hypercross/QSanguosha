@@ -38,6 +38,11 @@ SlashEffectStruct::SlashEffectStruct()
 {
 }
 
+CombatStruct::CombatStruct()
+    :combat(NULL) ,block(NULL) ,from(NULL), to(NULL)
+{
+}
+
 DyingStruct::DyingStruct()
     :who(NULL), damage(NULL)
 {

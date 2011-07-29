@@ -6,6 +6,7 @@ class TriggerSkill;
 class ServerPlayer;
 class Card;
 class Slash;
+class CombatCard;
 class GameRule;
 
 #include "player.h"
@@ -52,6 +53,17 @@ struct SlashEffectStruct{
     bool drank;
 
     DamageStruct::Nature nature;
+};
+
+struct CombatStruct{
+    CombatStruct();
+
+    const CombatCard *combat;
+    const Card *block;
+
+    ServerPlayer *from;
+    ServerPlayer *to;
+
 };
 
 struct CardUseStruct{
@@ -157,6 +169,16 @@ enum TriggerEvent{
 
     ChoiceMade,
 
+    //Touhou Mod Events
+    CombatTargetDeclare,
+    CombatTargetDeclared,
+    BlockDeclare,
+    BlockDeclared,
+    CombatReveal,
+    CombatRevealed,
+    CombatFinish,
+    CombatFinished,
+
     NumOfEvents,
 };
 
@@ -170,6 +192,7 @@ typedef const CardMoveStruct *CardMoveStar;
 Q_DECLARE_METATYPE(DamageStruct);
 Q_DECLARE_METATYPE(CardEffectStruct);
 Q_DECLARE_METATYPE(SlashEffectStruct);
+Q_DECLARE_METATYPE(CombatStruct);
 Q_DECLARE_METATYPE(CardUseStruct);
 Q_DECLARE_METATYPE(CardMoveStar);
 Q_DECLARE_METATYPE(CardStar);

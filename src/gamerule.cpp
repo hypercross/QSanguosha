@@ -16,7 +16,8 @@ GameRule::GameRule(QObject *parent)
             << AskForPeaches << Death << Dying << GameOverJudge
             << SlashHit << SlashMissed << SlashEffected << SlashProceed
             << DamageDone << DamageComplete
-            << StartJudge << FinishJudge << Pindian;
+            << StartJudge << FinishJudge << Pindian
+            << CombatTargetDeclared;
 }
 
 bool GameRule::triggerable(const ServerPlayer *) const{
@@ -414,6 +415,22 @@ bool GameRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data)
     case SlashMissed:{
             SlashEffectStruct effect = data.value<SlashEffectStruct>();
             effect.to->removeMark("qinggang");
+
+            break;
+        }
+
+    case CombatTargetDeclared:{
+            CombatStruct effect = data.value<CombatStruct>();
+
+            bool broken = room->getThread()->trigger(BlockDeclare, effect.from, data);
+            if(!broken){
+                const Card* block=room->askForCard(effect.to,".","blockCard",false);
+                effect.block=block;
+                QVariant data = QVariant::fromValue(effect);
+                effect.to->tag["chosenBlock"]=QVariant::fromValue(block);
+                effect.to->tag["combatEffective"]=true;
+                room->getThread()->trigger(BlockDeclared, effect.from, data);
+            }
 
             break;
         }

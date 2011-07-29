@@ -316,6 +316,17 @@ struct SlashEffectStruct{
     DamageStruct::Nature nature;
 };
 
+struct CombatStruct{
+    CombatStruct();
+
+    const CombatCard *combat;
+    const Card *block;
+
+    ServerPlayer *from;
+    ServerPlayer *to;
+
+};
+
 struct CardUseStruct{
     CardUseStruct();
     bool isValid() const;
