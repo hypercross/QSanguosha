@@ -1139,6 +1139,10 @@ public:
                 || pattern == "nullification";
     }
 
+    virtual bool isEnabledAtPlay(const Player *player) const{
+        return player->isWounded() || Slash::IsAvailable(player);
+    }
+
     virtual bool viewFilter(const QList<CardItem *> &selected, const CardItem *to_select) const{
         const Card *card = to_select->getFilteredCard();
         int n = qMax(1, Self->getHp());
@@ -1146,10 +1150,19 @@ public:
         if(selected.length() >= n)
             return false;
 
+        if(n > 1 && !selected.isEmpty()){
+            Card::Suit suit = selected.first()->getFilteredCard()->getSuit();
+            return card->getSuit() == suit;
+        }
+
         switch(ClientInstance->getStatus()){
         case Client::Playing:{
-                // diamond as fire slash
-                return card->getSuit() == Card::Diamond;
+                if(Self->isWounded() && card->getSuit() == Card::Heart)
+                    return true;
+                else if(Slash::IsAvailable(Self) && card->getSuit() == Card::Diamond)
+                    return true;
+                else
+                    return false;
             }
 
         case Client::Responsing:{
@@ -1160,6 +1173,8 @@ public:
                     return card->getSuit() == Card::Spade;
                 else if(pattern == "peach" || pattern == "peach+analeptic")
                     return card->getSuit() == Card::Heart;
+                else if(pattern == "slash")
+                    return card->getSuit() == Card::Diamond;
             }
 
         default:
