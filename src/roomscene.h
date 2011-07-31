@@ -29,6 +29,15 @@ class QGroupBox;
 #include <QGraphicsProxyWidget>
 #include <QThread>
 
+class AnimatedGraphicsItem : public QObject, public QGraphicsItem
+{
+    Q_OBJECT
+    Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity)
+public:
+    void fadeTo(qreal op,int duration = 300);
+    static void FadeItemTo(QGraphicsItem* item,qreal op, int duration = 300);
+};
+
 class DeathNoteDialog: public QDialog{
     Q_OBJECT
 
@@ -326,5 +335,7 @@ private slots:
 signals:
     void restart();
 };
+
+
 
 #endif // ROOMSCENE_H

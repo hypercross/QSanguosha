@@ -82,8 +82,8 @@ void CardItem::goBack(bool kieru){
 
     QPropertyAnimation *goback = new QPropertyAnimation(this, "pos");
     goback->setEndValue(home_pos);
-    goback->setEasingCurve(QEasingCurve::OutCubic);
-    goback->setDuration(500);
+    goback->setEasingCurve(QEasingCurve::OutQuart);
+    goback->setDuration(300);
 
     if(kieru){
         QParallelAnimationGroup *group = new QParallelAnimationGroup;

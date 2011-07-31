@@ -658,7 +658,7 @@ void RoomScene::drawNCards(ClientPlayer *player, int n){
         QPropertyAnimation *ugoku = new QPropertyAnimation(pixmap, "pos");
         ugoku->setStartValue(DrawPilePos);
         ugoku->setDuration(1000);
-        ugoku->setEasingCurve(QEasingCurve::OutCubic);
+        ugoku->setEasingCurve(QEasingCurve::OutQuart);
         ugoku->setEndValue(photo->pos() + QPointF(20 *i, 0));
 
         QPropertyAnimation *kieru = new QPropertyAnimation(pixmap, "opacity");
@@ -1069,7 +1069,8 @@ void RoomScene::moveCard(const CardMoveStructForClient &move){
     if(card_item == NULL)
         return;
 
-    card_item->setOpacity(1.0);
+    //card_item->setOpacity(1.0);
+    AnimatedGraphicsItem::FadeItemTo(card_item,1);
 
     if(card_item->scene() == NULL)
         addItem(card_item);
@@ -1376,7 +1377,8 @@ void RoomScene::enableTargets(const Card *card){
 
     if(card == NULL){
         foreach(QGraphicsItem *item, item2player.keys()){
-            item->setOpacity(0.7);
+            //item->setOpacity(0.7);
+            AnimatedGraphicsItem::FadeItemTo(item,0.7);
             item->setFlag(QGraphicsItem::ItemIsSelectable, false);
         }
 
@@ -1386,7 +1388,8 @@ void RoomScene::enableTargets(const Card *card){
 
     if(card->targetFixed() || ClientInstance->noTargetResponsing()){
         foreach(QGraphicsItem *item, item2player.keys()){
-            item->setOpacity(1.0);
+            //item->setOpacity(1.0);
+            AnimatedGraphicsItem::FadeItemTo(item,1.0);
             item->setFlag(QGraphicsItem::ItemIsSelectable, false);
         }
 
@@ -1407,7 +1410,7 @@ void RoomScene::updateTargetsEnablity(const Card *card){
     while(itor.hasNext()){
         itor.next();
 
-        QGraphicsItem *item = itor.key();
+        AnimatedGraphicsItem *item = qgraphicsitem_cast <AnimatedGraphicsItem *> (itor.key());
         const ClientPlayer *player = itor.value();
 
         if(item->isSelected())
@@ -1416,7 +1419,8 @@ void RoomScene::updateTargetsEnablity(const Card *card){
         bool enabled = !Sanguosha->isProhibited(Self, player, card)
                        && card->targetFilter(selected_targets, player, Self);
 
-        item->setOpacity(enabled ? 1.0 : 0.7);
+        item->fadeTo(enabled ? 1.0 : 0.7);
+        //item->setOpacity(enabled ? 1.0 : 0.7);
         item->setFlag(QGraphicsItem::ItemIsSelectable, enabled);
     }
 }
@@ -1781,7 +1785,8 @@ void RoomScene::updateStatus(Client::Status status){
                 dashboard->stopPending();
 
             foreach(Photo *photo, photos){
-                photo->setOpacity(photo->getPlayer()->isAlive() ? 1.0 : 0.7);
+                AnimatedGraphicsItem::FadeItemTo(photo,
+                                                 photo->getPlayer()->isAlive() ? 1.0 : 0.7);
             }
 
             break;
@@ -2510,7 +2515,8 @@ void RoomScene::killPlayer(const QString &who){
         Photo *photo = name2photo[who];
         photo->killPlayer();
         photo->setFrame(Photo::NoFrame);
-        photo->setOpacity(0.7);
+        //photo->setOpacity(0.7);
+        AnimatedGraphicsItem::FadeItemTo(photo,0.7);
         photo->update();
         item2player.remove(photo);
 
@@ -3475,4 +3481,19 @@ void RoomScene::finishArrange(){
         names << item->objectName();
 
     ClientInstance->request("arrange " + names.join("+"));
+}
+
+void AnimatedGraphicsItem::fadeTo(qreal op,int duration)
+{
+    QPropertyAnimation *fade=new QPropertyAnimation(this,"opacity");
+    fade->setDuration(duration);
+    fade->setEndValue(op);
+
+    fade->start(QAbstractAnimation::DeleteWhenStopped);
+}
+
+void AnimatedGraphicsItem::FadeItemTo(QGraphicsItem *item, qreal op, int duration)
+{
+    AnimatedGraphicsItem *aItem=qgraphicsitem_cast<AnimatedGraphicsItem *>(item);
+    aItem->fadeTo(op,duration);
 }

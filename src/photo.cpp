@@ -167,7 +167,7 @@ void Photo::tremble(){
     vibrate->setKeyValueAt(0.5, x() - offset);
     vibrate->setEndValue(x());
 
-    vibrate->setEasingCurve(QEasingCurve::OutCubic);
+    vibrate->setEasingCurve(QEasingCurve::OutQuart);
 
     vibrate->start(QAbstractAnimation::DeleteWhenStopped);
 }
