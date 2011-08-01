@@ -97,12 +97,22 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
                 broken=room->getThread()->trigger(CombatFinish,player,data);
                 if(!broken)
                 {
-                    if(!combat.combat->canbeBlocked(card))
-                       combat.combat->resolveAttack(combat);
-                    else
+                    if(combat.combat->canbeBlocked(card))
                     {
                         const CombatCard * ccard=qobject_cast<const CombatCard*>(card);
                         ccard->resolveDefense(combat);
+                    }else if(combat.combat->objectName()==card->objectName())
+                    {
+                        combat.from = player;
+                        combat.to   = source;
+                        combat.combat->resolveDefense(combat);
+
+                        combat.from = source;
+                        combat.to   = player;
+                        const CombatCard * ccard=qobject_cast<const CombatCard*>(card);
+                        ccard->resolveDefense(combat);
+                    }else{
+                        combat.combat->resolveAttack(combat);
                      }
 
                     room->getThread()->trigger(CombatFinished,source,data);
