@@ -77,45 +77,56 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
                 data = player->tag["chosenBlock"];
                 CardStar card = data.value<CardStar>();
 
-                log.type = "$revealResult";
-                log.from = player;
-                log.card_str = card->getEffectIdString();
-                room->sendLog(log);
-
-                room->throwCard(card);
-                room->getThread()->trigger(CombatRevealed,player,data);
-                room->getThread()->delay();
-
-                CombatStruct combat;
-                combat.from   = source;
-                combat.to     = player;
-                combat.combat = qobject_cast<const CombatCard*>(attackCard);
-                combat.block  = card;
-
-                data=QVariant::fromValue(combat);
-
-                broken=room->getThread()->trigger(CombatFinish,player,data);
-                if(!broken)
+                if(!card)
                 {
-                    if(combat.combat->canbeBlocked(card))
-                    {
-                        const CombatCard * ccard=qobject_cast<const CombatCard*>(card);
-                        ccard->resolveDefense(combat);
-                    }else if(combat.combat->objectName()==card->objectName())
-                    {
-                        combat.from = player;
-                        combat.to   = source;
-                        combat.combat->resolveDefense(combat);
+                    CombatStruct combat;
+                    combat.from   = source;
+                    combat.to     = player;
+                    combat.combat = qobject_cast<const CombatCard*>(attackCard);
+                    combat.block  = card;
 
-                        combat.from = source;
-                        combat.to   = player;
-                        const CombatCard * ccard=qobject_cast<const CombatCard*>(card);
-                        ccard->resolveDefense(combat);
-                    }else{
-                        combat.combat->resolveAttack(combat);
-                     }
+                    combat.combat->resolveAttack(combat);
+                }else{
+                    log.type = "$revealResult";
+                    log.from = player;
+                    log.card_str = card->getEffectIdString();
+                    room->sendLog(log);
 
-                    room->getThread()->trigger(CombatFinished,source,data);
+                    room->throwCard(card);
+                    room->getThread()->trigger(CombatRevealed,player,data);
+                    room->getThread()->delay();
+
+                    CombatStruct combat;
+                    combat.from   = source;
+                    combat.to     = player;
+                    combat.combat = qobject_cast<const CombatCard*>(attackCard);
+                    combat.block  = card;
+
+                    data=QVariant::fromValue(combat);
+
+                    broken=room->getThread()->trigger(CombatFinish,player,data);
+                    if(!broken)
+                    {
+                        if(combat.combat->canbeBlocked(card))
+                        {
+                            const CombatCard * ccard=qobject_cast<const CombatCard*>(card);
+                            ccard->resolveDefense(combat);
+                        }else if(combat.combat->objectName()==card->objectName())
+                        {
+                            combat.from = player;
+                            combat.to   = source;
+                            combat.combat->resolveDefense(combat);
+
+                            combat.from = source;
+                            combat.to   = player;
+                            const CombatCard * ccard=qobject_cast<const CombatCard*>(card);
+                            ccard->resolveDefense(combat);
+                        }else{
+                            combat.combat->resolveAttack(combat);
+                        }
+
+                        room->getThread()->trigger(CombatFinished,source,data);
+                    }
                 }
             }
         }
