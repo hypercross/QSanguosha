@@ -15,6 +15,7 @@ Card::CardType BasicCard::getTypeId() const{
     return Basic;
 }
 
+
 TrickCard::TrickCard(Suit suit, int number, bool aggressive)
     :Card(suit, number), aggressive(aggressive),
     cancelable(true)

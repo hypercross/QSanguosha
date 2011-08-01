@@ -1070,7 +1070,7 @@ void RoomScene::moveCard(const CardMoveStructForClient &move){
         return;
 
     //card_item->setOpacity(1.0);
-    AnimatedGraphicsItem::FadeItemTo(card_item,1);
+    AnimatedGraphicsItem::FadeItemTo(card_item,1.0);
 
     if(card_item->scene() == NULL)
         addItem(card_item);
@@ -1149,6 +1149,7 @@ void RoomScene::putCardItem(const ClientPlayer *dest, Player::Place dest_place, 
             }
 
         case Player::Hand:{
+                card_item->setEnabled(false);
                 dashboard->addCardItem(card_item);
                 break;
             }

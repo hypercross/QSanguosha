@@ -1673,6 +1673,7 @@ void Room::changeMp(ServerPlayer *target, int delta){
     int max=target->getMaxMP()-target->getMp();
     int min=-target->getMp();
     delta=qBound(min,delta,max);
+    if(delta==0)return;
 
     LogMessage log;
     log.type = delta>0 ? "#increasedMp" : "#decreasedMp";
@@ -1937,7 +1938,7 @@ void Room::startGame(){
         broadcastProperty(player, "hp");
 
         player->setMaxMP(player->getGeneralMaxMP());
-        player->setMp(player->getMaxMP());
+        player->setMp(0);
 
         broadcastProperty(player, "maxmp");
         broadcastProperty(player, "mp");

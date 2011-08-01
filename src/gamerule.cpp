@@ -36,6 +36,7 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
             break;
         }
     case Player::Judge: {
+            room->changeMp(player,1);
             QList<const DelayedTrick *> tricks = player->delayedTricks();
             while(!tricks.isEmpty() && player->isAlive()){
                 const DelayedTrick *trick = tricks.takeLast();
@@ -429,6 +430,12 @@ bool GameRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data)
                 QVariant data = QVariant::fromValue(effect);
                 effect.to->tag["chosenBlock"]=QVariant::fromValue(block);
                 effect.to->tag["combatEffective"]=true;
+
+                LogMessage log;
+                log.type = "#chosenBlock";
+                log.from = effect.to;
+                room->sendLog(log);
+
                 room->getThread()->trigger(BlockDeclared, effect.from, data);
             }
 
