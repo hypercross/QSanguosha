@@ -5,6 +5,7 @@
 #include "room.h"
 #include "carditem.h"
 #include "lua-wrapper.h"
+#include <QDir>
 
 const Card::Suit Card::AllSuits[4] = {
     Card::Spade,
@@ -149,10 +150,16 @@ bool Card::CompareByType(const Card *a, const Card *b){
 }
 
 QString Card::getPixmapPath() const{
+    static QDir *dir=new QDir("image/card");
+    if(!dir->exists(QString("%1.jpg").arg(objectName())))
+        return QString("image/card/not_found.jpg");
     return QString("image/card/%1.jpg").arg(objectName());
 }
 
 QString Card::getIconPath() const{
+    static QDir *dir=new QDir("image/icon/");
+    if(!dir->exists(QString("%1.png").arg(objectName())))
+        return QString("image/icon/not_found.png");
     return QString("image/icon/%1.png").arg(objectName());
 }
 

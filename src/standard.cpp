@@ -425,6 +425,9 @@ StandardPackage::StandardPackage()
     patterns["peach"] = new NamePattern("peach");
     patterns["nullification"] = new NamePattern("nullification");
     patterns["peach+analeptic"] = new PAPattern;
+
+    patterns["barrage"] = new NamePattern("barrage");
+    patterns["strike"] = new NamePattern("strike");
 }
 
 ADD_PACKAGE(Standard)

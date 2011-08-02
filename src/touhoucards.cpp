@@ -42,7 +42,12 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     QVariant data = QVariant::fromValue(cs);
     source->tag["chosenAttack"] = data;
 
-
+    int farthest = 1;
+    foreach(ServerPlayer *player,targets)
+        if(source->distanceTo(player)>farthest)
+            farthest = source->distanceTo(player);
+    if(farthest > source->getAttackRange())
+        room->changeMp(source,source->getAttackRange() - farthest);
 
     BasicCard::use(room,source,targets);
     room->getThread()->delay();
@@ -159,28 +164,28 @@ bool CombatCard::targetsFeasible(const QList<const Player *> &targets, const Pla
 
 bool CombatCard::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const{
     int slash_targets = 1;
-    if(Self->hasWeapon("halberd") && Self->isLastHandCard(this)){
-        slash_targets = 3;
-    }
+//    if(Self->hasWeapon("halberd") && Self->isLastHandCard(this)){
+//        slash_targets = 3;
+//    }
 
     bool distance_limit = true;
 
-    if(Self->hasFlag("tianyi_success")){
-        distance_limit = false;
-        slash_targets ++;
-    }
+//    if(Self->hasFlag("tianyi_success")){
+//        distance_limit = false;
+//        slash_targets ++;
+//    }
 
-    if(Self->hasSkill("shenji") && Self->getWeapon() == NULL)
-        slash_targets = 3;
+//    if(Self->hasSkill("shenji") && Self->getWeapon() == NULL)
+//        slash_targets = 3;
 
     if(targets.length() >= slash_targets)
         return false;
 
-    if(inherits("WushenSlash")){
-        distance_limit = false;
-    }
+//    if(inherits("WushenSlash")){
+//        distance_limit = false;
+//    }
 
-    return Self->canSlash(to_select, distance_limit);
+    return Self->canCombat(to_select, distance_limit);
 }
 
 bool CombatCard::canbeBlocked(const Card *card) const
@@ -279,46 +284,157 @@ void Moutama::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> 
     room->drawCards(source,1);
 }
 
+ExSpell::ExSpell(Card::Suit suit, int number)
+    :AOE(suit,number)
+{
+    setObjectName("ex_spell");
+}
+
+void ExSpell::onEffect(const CardEffectStruct &effect) const{
+    Room *room = effect.to->getRoom();
+    const Card *slash = room->askForCard(effect.to, "barrage", "ex-spell-barrage:" + effect.from->objectName());
+    if(slash == NULL){
+        DamageStruct damage;
+        damage.card = this;
+        damage.damage = 1;
+        damage.to = effect.to;
+
+        damage.from = effect.from;
+        room->damage(damage);
+    }
+}
+
+FullscreanBarrage::FullscreanBarrage(Card::Suit suit, int number)
+    :AOE(suit,number)
+{
+    setObjectName("fullscrean_barrage");
+}
+
+void FullscreanBarrage::onEffect(const CardEffectStruct &effect) const{
+    Room *room = effect.to->getRoom();
+    const Card *slash = room->askForCard(effect.to, "strike", "full-scre-strike:" + effect.from->objectName());
+    if(slash == NULL){
+        DamageStruct damage;
+        damage.card = this;
+        damage.damage = 1;
+        damage.to = effect.to;
+
+        damage.from = effect.from;
+        room->damage(damage);
+    }
+}
+
+Dannatu::Dannatu(Card::Suit suit, int number)
+    :SingleTargetTrick(suit, number, true)
+{
+    setObjectName("dannatu");
+}
+
+bool Dannatu::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const{
+//    if(to_select->hasSkill("kongcheng") && to_select->isKongcheng())
+//        return false;
+
+    if(to_select == Self)
+        return false;
+
+    return targets.isEmpty();
+}
+
+
+void Dannatu::onEffect(const CardEffectStruct &effect) const{
+    ServerPlayer *first = effect.to;
+    ServerPlayer *second = effect.from;
+    Room *room = first->getRoom();
+
+    room->setEmotion(first, "duel-a");
+    room->setEmotion(second, "duel-b");
+
+    forever{
+        const Card *slash = room->askForCard(first, "barrage", "dannatu-barrage:" + second->objectName());
+        if(slash == NULL)break;
+        qSwap(first, second);
+    }
+
+    DamageStruct damage;
+    damage.card = this;
+    damage.from = second;
+    damage.to = first;
+
+    room->damage(damage);
+}
+
 TouhouPackage::TouhouPackage()
     :Package("touhou")
 {
     QList<Card *> cards;
-    cards<< new Barrage(Card::Spade,1)
-         << new Barrage(Card::Spade,2)
-         << new Barrage(Card::Spade,3)
-         << new Barrage(Card::Spade,4)
-         << new Barrage(Card::Spade,5)
-         << new Barrage(Card::Spade,6)
-         << new Barrage(Card::Spade,7)
-         << new Barrage(Card::Spade,8)
-         << new Barrage(Card::Spade,9)
-         << new Barrage(Card::Spade,10)
-         << new Barrage(Card::Spade,11);
+    int i=0;
+    for(;i<104;i++)
+        if(i<30)
+            cards<<new Barrage((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<42)
+            cards<<new Strike((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<50)
+            cards<<new Rune((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<58)
+            cards<<new Peach((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<61)
+            cards<<new Indulgence((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<67)
+            cards<<new Dismantlement((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<72)
+            cards<<new Snatch((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<75)
+            cards<<new ExNihilo((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<78)
+            cards<<new Dannatu((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<81)
+            cards<<new ExSpell((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<82)
+            cards<<new FullscreanBarrage((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<85)
+            cards<<new Nullification((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<87)
+            cards<<new AmazingGrace((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<88)
+            cards<<new GodSalvation((Card::Suit)(i/26),(i%26)/2+1);
 
-    cards<< new Strike(Card::Club,1)
-         << new Strike(Card::Club,2)
-         << new Strike(Card::Club,3)
-         << new Strike(Card::Club,4)
-         << new Strike(Card::Club,5)
-         << new Strike(Card::Club,6);
 
-    cards<< new Rune(Card::Heart,1)
-         << new Rune(Card::Heart,2)
-         << new Rune(Card::Heart,3)
-         << new Rune(Card::Heart,4)
-         << new Rune(Card::Heart,5)
-         << new Rune(Card::Heart,6)
-         << new Rune(Card::Heart,7)
-         << new Rune(Card::Heart,8);
+//    cards<< new Barrage(Card::Spade,1)
+//         << new Barrage(Card::Spade,2)
+//         << new Barrage(Card::Spade,3)
+//         << new Barrage(Card::Spade,4)
+//         << new Barrage(Card::Spade,5)
+//         << new Barrage(Card::Spade,6)
+//         << new Barrage(Card::Spade,7)
+//         << new Barrage(Card::Spade,8)
+//         << new Barrage(Card::Spade,9)
+//         << new Barrage(Card::Spade,10)
+//         << new Barrage(Card::Spade,11);
 
-    cards<< new Moutama(Card::Diamond,1)
-         << new Moutama(Card::Diamond,2)
-         << new Moutama(Card::Diamond,3)
-         << new Moutama(Card::Diamond,4)
-         << new Moutama(Card::Diamond,5)
-         << new Moutama(Card::Diamond,6)
-         << new Moutama(Card::Diamond,7)
-         << new Moutama(Card::Diamond,8);
+//    cards<< new Strike(Card::Club,1)
+//         << new Strike(Card::Club,2)
+//         << new Strike(Card::Club,3)
+//         << new Strike(Card::Club,4)
+//         << new Strike(Card::Club,5)
+//         << new Strike(Card::Club,6);
+
+//    cards<< new Rune(Card::Heart,1)
+//         << new Rune(Card::Heart,2)
+//         << new Rune(Card::Heart,3)
+//         << new Rune(Card::Heart,4)
+//         << new Rune(Card::Heart,5)
+//         << new Rune(Card::Heart,6)
+//         << new Rune(Card::Heart,7)
+//         << new Rune(Card::Heart,8);
+
+//    cards<< new Moutama(Card::Diamond,1)
+//         << new Moutama(Card::Diamond,2)
+//         << new Moutama(Card::Diamond,3)
+//         << new Moutama(Card::Diamond,4)
+//         << new Moutama(Card::Diamond,5)
+//         << new Moutama(Card::Diamond,6)
+//         << new Moutama(Card::Diamond,7)
+//         << new Moutama(Card::Diamond,8);
 
     foreach(Card *card, cards)
         card->setParent(this);

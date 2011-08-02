@@ -576,6 +576,16 @@ bool Player::canSlash(const Player *other, bool distance_limit) const{
         return true;
 }
 
+bool Player::canCombat(const Player *other, bool distance_limit) const{
+    if(other == this)
+        return false;
+
+    if(distance_limit)
+        return distanceTo(other) <= getAttackRange() + mp;
+    else
+        return true;
+}
+
 int Player::getCardCount(bool include_equip) const{
     int count = getHandcardNum();
 
@@ -617,7 +627,11 @@ void Player::addHistory(const QString &name, int times){
 int Player::getSlashCount() const{
     return history.value("Slash", 0)
             + history.value("ThunderSlash", 0)
-            + history.value("FireSlash", 0);
+            + history.value("FireSlash", 0)
+            + history.value("Barrage",0)
+            + history.value("Strike",0)
+            + history.value("Rune",0);
+
 }
 
 void Player::clearHistory(){
@@ -691,30 +705,43 @@ bool Player::canSlashWithoutCrossbow() const{
 
 void Player::jilei(const QString &type){
     if(type == "basic")
-        jilei_set << Card::Basic;
+        jilei_set << -1;
     else if(type == "equip")
-        jilei_set << Card::Equip;
+        jilei_set << -2;
     else if(type == "trick")
-        jilei_set << Card::Trick;
-    else
+        jilei_set << -3;
+    else if(type.isNull())
         jilei_set.clear();
+    else{
+        jilei_set << type.toInt();
+    }
 }
 
 bool Player::isJilei(const Card *card) const{
     Card::CardType type = card->getTypeId();
+    int typeint, cardId;
+
+    if(type==Card::Basic)typeint=-1;
+    else if(type==Card::Equip)typeint=-2;
+    else if(type==Card::Trick)typeint=-3;
+    else typeint=-4;
+
+    cardId=card->getEffectiveId();
+
     if(type == Card::Skill){
         if(!card->willThrow())
             return false;
 
         foreach(int card_id, card->getSubcards()){
             const Card *c = Sanguosha->getCard(card_id);
-            if(jilei_set.contains(c->getTypeId()))
+            if(isJilei(c))
                 return true;
         }
 
         return false;
     }else
-        return jilei_set.contains(type);
+        return jilei_set.contains(typeint) ||
+               jilei_set.contains(cardId);
 }
 
 bool Player::isCaoCao() const{
@@ -754,7 +781,7 @@ void Player::copyFrom(Player* p)
     b->judging_area     = QList<const Card *> (a->judging_area);
     b->delayed_tricks   = QList<const DelayedTrick *> (a->delayed_tricks);
     b->fixed_distance   = QHash<const Player *, int> (a->fixed_distance);
-    b->jilei_set        = QSet<Card::CardType> (a->jilei_set);
+    b->jilei_set        = QSet<int> (a->jilei_set);
 
     b->tag              = QVariantMap(a->tag);
 

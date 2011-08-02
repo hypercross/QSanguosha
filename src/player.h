@@ -177,6 +177,7 @@ public:
     bool isChained() const;
 
     bool canSlash(const Player *other, bool distance_limit = true) const;
+    bool canCombat(const Player *other, bool distance_limit = true) const;
     int getCardCount(bool include_equip) const;
 
     QList<int> getPile(const QString &pile_name) const;
@@ -235,7 +236,7 @@ private:
     QList<const DelayedTrick *> delayed_tricks;
     QHash<const Player *, int> fixed_distance;
 
-    QSet<Card::CardType> jilei_set;
+    QSet<int> jilei_set;
 
 signals:
     void general_changed();
