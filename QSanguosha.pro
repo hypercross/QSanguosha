@@ -79,7 +79,8 @@ SOURCES += src/main.cpp \
     src/legend-mode-scenario.cpp \
     src/mountainpackage.cpp \
     src/scenerule.cpp \
-    src/touhoucards.cpp
+    src/touhoucards.cpp \
+    src/touhou-generals.cpp
 HEADERS += src/mainwindow.h \
     src/button.h \
     src/settings.h \
@@ -154,7 +155,8 @@ HEADERS += src/mainwindow.h \
     src/legend-mode-scenario.h \
     src/mountainpackage.h \
     src/scenerule.h \
-    src/touhoucards.h
+    src/touhoucards.h \
+    src/touhou-generals.h
 
 FORMS += src/mainwindow.ui \
     src/connectiondialog.ui \

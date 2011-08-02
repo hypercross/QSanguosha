@@ -113,6 +113,16 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
                 room->setPlayerFlag(player, "-drank");
             }
 
+            if(player->hasFlag("jilei")){
+                player->jilei(".");
+                player->invoke("jilei");
+
+                LogMessage log;
+                log.type = "#JileiClear";
+                log.from = player;
+                room->sendLog(log);
+            }
+
             player->clearFlags();
             player->clearHistory();
 
