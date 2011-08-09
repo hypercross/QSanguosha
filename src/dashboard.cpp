@@ -144,13 +144,11 @@ void Dashboard::setTrust(bool trust){
 
 void Dashboard::addCardItem(CardItem *card_item){
     card_item->filter(filter);
+    card_item->setEnabled(true);
+    card_item->setEnabled(false);
 
-    if(ClientInstance->getStatus() == Client::Playing)
-        card_item->setEnabled(card_item->getFilteredCard()->isAvailable(Self));
-    else{
-        card_item->setEnabled(true);
-        card_item->setEnabled(false);
-    }
+    if(ClientInstance->getStatus() == Client::Playing)card_item->setEnabled(card_item->getFilteredCard()->isAvailable(Self));
+
 
     card_item->setPos(mapFromScene(card_item->pos()));
     card_item->setParentItem(this);

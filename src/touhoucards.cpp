@@ -84,9 +84,11 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
 
                 //data = player->tag["chosenBlock"];
                 //CardStar card = data.value<CardStar>();
-                CardStar card = Sanguosha->getCard(player->getPile("Defense").first());
+                QList<int> pile=player->getPile("Defense");
 
-                if(!card)
+                CardStar card ;
+
+                if(pile.length()<1)
                 {
                     CombatStruct combat;
                     combat.from   = source;
@@ -96,6 +98,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
 
                     combat.combat->resolveAttack(combat);
                 }else{
+                    card = Sanguosha->getCard(pile.first());
                     LogMessage log;
                     log.type = "$revealResult";
                     log.from = player;
@@ -228,11 +231,24 @@ Strike::Strike(Card::Suit suit, int number):CombatCard(suit,number)
 void Strike::resolveAttack(CombatStruct &combat) const
 {
     combat.to->getRoom()->changeMp(combat.to,-1);
+    if(combat.from->getRoom()->obtainable(this,combat.from))
+    {
+        combat.from->getRoom()->obtainCard(combat.from,this->getEffectiveId());
+        combat.from->jilei(QString(this->getEffectiveId()));
+        combat.from->invoke("jilei",this->getEffectIdString());
+        combat.to->setFlags("jilei");
+    }
 }
 
 void Strike::resolveDefense(CombatStruct &combat) const
 {
-    combat.to->getRoom()->obtainCard(combat.to,this->getEffectiveId());
+    if(combat.to->getRoom()->obtainable(this,combat.to))
+    {
+        combat.to->getRoom()->obtainCard(combat.to,this->getEffectiveId());
+        combat.to->jilei(QString(this->getEffectiveId()));
+        combat.to->invoke("jilei",this->getEffectIdString());
+        combat.to->setFlags("jilei");
+    }
 }
 
 Rune::Rune(Card::Suit suit, int number):CombatCard(suit,number)
@@ -288,6 +304,19 @@ ExSpell::ExSpell(Card::Suit suit, int number)
     setObjectName("ex_spell");
 }
 
+void ExSpell::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    if(source->hasFlag("dying"))
+    {
+        RecoverStruct recover;
+        recover.card = this;
+        recover.who = source;
+        recover.recover=1-source->getHp();
+        room->recover(source, recover);
+    }
+    if(source->getHp() > 0)AOE::use(room,source,targets);
+}
+
 void ExSpell::onEffect(const CardEffectStruct &effect) const{
     Room *room = effect.to->getRoom();
     const Card *slash = room->askForCard(effect.to, "barrage", "ex-spell-barrage:" + effect.from->objectName());
@@ -306,6 +335,19 @@ FullscreanBarrage::FullscreanBarrage(Card::Suit suit, int number)
     :AOE(suit,number)
 {
     setObjectName("fullscrean_barrage");
+}
+
+void FullscreanBarrage::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    if(source->hasFlag("dying"))
+    {
+        RecoverStruct recover;
+        recover.card = this;
+        recover.who = source;
+        recover.recover=1-source->getHp();
+        room->recover(source, recover);
+    }
+    if(source->getHp() > 0)AOE::use(room,source,targets);
 }
 
 void FullscreanBarrage::onEffect(const CardEffectStruct &effect) const{
@@ -361,6 +403,33 @@ void Dannatu::onEffect(const CardEffectStruct &effect) const{
     room->damage(damage);
 }
 
+Surprise::Surprise(Card::Suit suit, int number)
+    :SingleTargetTrick(suit,number,true)
+{
+    setObjectName("surprise");
+}
+
+bool Surprise::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const
+{
+    return (to_select != Self) && targets.isEmpty();
+}
+
+void Surprise::onEffect(const CardEffectStruct &effect) const
+{
+    Room* room=effect.to->getRoom();
+    QList<int> hand=effect.to->handCards();
+    room->fillAG(hand,effect.from);
+    int cid=room->askForAG(effect.from,hand,true,"surprise");
+    if(cid>=0)
+    {
+        QString js=QString("%1").arg(cid);
+        effect.to->jilei(js);
+        effect.to->invoke("jilei",js);
+        effect.to->setFlags("jilei");
+    }
+    effect.from->invoke("clearAG");
+}
+
 TouhouPackage::TouhouPackage()
     :Package("touhou")
 {
@@ -395,6 +464,8 @@ TouhouPackage::TouhouPackage()
             cards<<new AmazingGrace((Card::Suit)(i/26),(i%26)/2+1);
         else if(i<88)
             cards<<new GodSalvation((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<89)
+            cards<<new Surprise((Card::Suit)(i/26),(i%26)/2+1);
 
 
 //    cards<< new Barrage(Card::Spade,1)

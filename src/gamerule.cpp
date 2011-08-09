@@ -36,7 +36,7 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
             break;
         }
     case Player::Judge: {
-            room->changeMp(player,1);
+
             QList<const DelayedTrick *> tricks = player->delayedTricks();
             while(!tricks.isEmpty() && player->isAlive()){
                 const DelayedTrick *trick = tricks.takeLast();
@@ -126,6 +126,7 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
             player->clearFlags();
             player->clearHistory();
 
+            room->changeMp(player,1);
             return;
         }
     }
@@ -437,6 +438,7 @@ bool GameRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data)
             if(!broken){
                 const Card* block=room->askForCard(effect.to,".","blockCard",false);
                 effect.block=block;
+                if(!block)break;
                 //QVariant data = QVariant::fromValue(effect);
                 //effect.to->tag["chosenBlock"]=QVariant::fromValue(block);
                 effect.to->addToPile("Defense",block->getId(),false);
