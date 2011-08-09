@@ -3506,6 +3506,7 @@ void AnimatedGraphicsItem::FadeItemTo(QGraphicsItem *item, qreal op, int duratio
 {
     AnimatedGraphicsItem *aItem=qgraphicsitem_cast<AnimatedGraphicsItem *>(item);
     aItem->fadeTo(op,duration);
+}
 
 void RoomScene::startAssign(){
 

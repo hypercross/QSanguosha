@@ -437,8 +437,9 @@ bool GameRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data)
             if(!broken){
                 const Card* block=room->askForCard(effect.to,".","blockCard",false);
                 effect.block=block;
-                QVariant data = QVariant::fromValue(effect);
-                effect.to->tag["chosenBlock"]=QVariant::fromValue(block);
+                //QVariant data = QVariant::fromValue(effect);
+                //effect.to->tag["chosenBlock"]=QVariant::fromValue(block);
+                effect.to->addToPile("Defense",block->getId(),false);
                 effect.to->tag["combatEffective"]=true;
 
                 LogMessage log;
@@ -446,7 +447,7 @@ bool GameRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data)
                 log.from = effect.to;
                 room->sendLog(log);
 
-                room->getThread()->trigger(BlockDeclared, effect.from, data);
+                room->getThread()->trigger(BlockDeclared, effect.from);
             }
 
             break;

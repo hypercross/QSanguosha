@@ -38,9 +38,9 @@ QString CombatCard::getSubtype() const
 
 void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
 {
-    CardStar cs=this;
-    QVariant data = QVariant::fromValue(cs);
-    source->tag["chosenAttack"] = data;
+    //CardStar cs=this;
+    //QVariant data = QVariant::fromValue(cs);
+    //source->tag["chosenAttack"] = data;
 
     int farthest = 1;
     foreach(ServerPlayer *player,targets)
@@ -49,16 +49,18 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     if(farthest > source->getAttackRange())
         room->changeMp(source,source->getAttackRange() - farthest);
 
+    source->addToPile("Attack",this->getEffectiveId(),false);
+
     BasicCard::use(room,source,targets);
     room->getThread()->delay();
 
-    bool broken=room->getThread()->trigger(CombatReveal,source,data);
+    bool broken=room->getThread()->trigger(CombatReveal,source);
     const Card* attackCard;
 
     if(!broken){
-        QVariant data = source->tag["chosenAttack"];
-        const Card* card=data.value<CardStar>();
-        attackCard=card;
+//        QVariant data = source->tag["chosenAttack"];
+//        const Card* card=data.value<CardStar>();
+        attackCard=Sanguosha->getCard(source->getPile("Attack").first());
 
         LogMessage log;
         log.type = "$revealResult";
@@ -66,21 +68,23 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
         log.card_str = attackCard->getEffectIdString();
         room->sendLog(log);
 
-        room->throwCard(card);
+        room->throwCard(attackCard);
 
-        room->getThread()->trigger(CombatRevealed,source,data);
+        room->getThread()->trigger(CombatRevealed,source);
         room->getThread()->delay();
-
+    }
+    if(!attackCard)return;
 
         foreach(ServerPlayer* player,targets)
         {
             if(!player->tag["combatEffective"].toBool())continue;
-            QVariant data = player->tag["chosenBlock"];
-            broken=room->getThread()->trigger(CombatReveal,player,data);
+//            QVariant data = player->tag["chosenBlock"];
+            broken=room->getThread()->trigger(CombatReveal,player);
             if(!broken){
 
-                data = player->tag["chosenBlock"];
-                CardStar card = data.value<CardStar>();
+                //data = player->tag["chosenBlock"];
+                //CardStar card = data.value<CardStar>();
+                CardStar card = Sanguosha->getCard(player->getPile("Defense").first());
 
                 if(!card)
                 {
@@ -92,13 +96,14 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
 
                     combat.combat->resolveAttack(combat);
                 }else{
+                    LogMessage log;
                     log.type = "$revealResult";
                     log.from = player;
                     log.card_str = card->getEffectIdString();
                     room->sendLog(log);
 
                     room->throwCard(card);
-                    room->getThread()->trigger(CombatRevealed,player,data);
+                    room->getThread()->trigger(CombatRevealed,player);
                     room->getThread()->delay();
 
                     CombatStruct combat;
@@ -107,43 +112,35 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
                     combat.combat = qobject_cast<const CombatCard*>(attackCard);
                     combat.block  = card;
 
-                    data=QVariant::fromValue(combat);
+                    QVariant data=QVariant::fromValue(combat);
 
                     broken=room->getThread()->trigger(CombatFinish,player,data);
+
                     if(!broken)
                     {
-                        if(combat.combat->canbeBlocked(card))
+                        const CombatCard * ccard=qobject_cast<const CombatCard*>(card);
+                        if((!card->inherits("CombatCard")) || ccard->canbeBlocked(combat.combat))
                         {
-                            const CombatCard * ccard=qobject_cast<const CombatCard*>(card);
-                            ccard->resolveDefense(combat);
-                        }else if(combat.combat->objectName()==card->objectName())
-                        {
-                            combat.from = player;
-                            combat.to   = source;
-                            combat.combat->resolveDefense(combat);
-
-                            combat.from = source;
-                            combat.to   = player;
-                            const CombatCard * ccard=qobject_cast<const CombatCard*>(card);
-                            ccard->resolveDefense(combat);
-                        }else{
                             combat.combat->resolveAttack(combat);
                         }
-
+                        if(combat.combat->canbeBlocked(card))
+                        {
+                            ccard->resolveDefense(combat);
+                        }
                         room->getThread()->trigger(CombatFinished,source,data);
                     }
                 }
             }
-        }
+
 
         }
 
     foreach(ServerPlayer* player,targets)
     {
         player->tag["combatEffective"]=QVariant();
-        player->tag["chosenBlock"] =QVariant();
+//        player->tag["chosenBlock"] =QVariant();
     }
-        source->tag["chosenAttack"]=QVariant();
+//        source->tag["chosenAttack"]=QVariant();
 }
 
 void CombatCard::onEffect(const CardEffectStruct &effect) const
@@ -192,6 +189,7 @@ bool CombatCard::canbeBlocked(const Card *card) const
 {
     bool a = false;
     if(!card)return false;
+    if(card->objectName()==this->objectName())return this->getNumber()<=card->getNumber();
     a=a || (this->inherits("Barrage") && card->inherits("Strike"));
     a=a || (this->inherits("Rune") && card->inherits("Barrage"));
     a=a || (this->inherits("Strike") && card->inherits("Rune"));
