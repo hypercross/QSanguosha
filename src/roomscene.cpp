@@ -164,6 +164,8 @@ RoomScene::RoomScene(QMainWindow *main_window)
     connect(ClientInstance, SIGNAL(cards_drawed(QList<const Card*>)), this, SLOT(drawCards(QList<const Card*>)));
     connect(ClientInstance, SIGNAL(n_cards_drawed(ClientPlayer*,int)), SLOT(drawNCards(ClientPlayer*,int)));
 
+    connect(ClientInstance, SIGNAL(assign_asked()), this, SLOT(startAssign()));
+
     {
         guanxing_box = new GuanxingBox;
         guanxing_box->hide();
@@ -1377,9 +1379,12 @@ void RoomScene::enableTargets(const Card *card){
     }
 
     if(card == NULL){
+        bool inactive = ClientInstance->getStatus() == Client::NotActive;
         foreach(QGraphicsItem *item, item2player.keys()){
+
             //item->setOpacity(0.7);
-            AnimatedGraphicsItem::FadeItemTo(item,0.7);
+            if(!inactive)AnimatedGraphicsItem::FadeItemTo(item,0.7);
+
             item->setFlag(QGraphicsItem::ItemIsSelectable, false);
         }
 
@@ -2216,8 +2221,11 @@ void RoomScene::onGameOver(){
         win_effect = "win";
         foreach(const Player *player, ClientInstance->getPlayers()){
             if(player->property("win").toBool() && player->isCaoCao()){
+
+#ifdef Q_OS_WIN
                 if(SoundEngine)
                     SoundEngine->stopAllSounds();
+#endif
 
                 win_effect = "win-cc";
                 break;
@@ -2621,7 +2629,7 @@ void RoomScene::detachSkill(const QString &skill_name){
             button->deleteLater();
             itor.remove();
 
-            return;
+            break;
         }
     }
 
@@ -3484,6 +3492,7 @@ void RoomScene::finishArrange(){
     ClientInstance->request("arrange " + names.join("+"));
 }
 
+
 void AnimatedGraphicsItem::fadeTo(qreal op,int duration)
 {
     QPropertyAnimation *fade=new QPropertyAnimation(this,"opacity");
@@ -3497,4 +3506,12 @@ void AnimatedGraphicsItem::FadeItemTo(QGraphicsItem *item, qreal op, int duratio
 {
     AnimatedGraphicsItem *aItem=qgraphicsitem_cast<AnimatedGraphicsItem *>(item);
     aItem->fadeTo(op,duration);
+
+void RoomScene::startAssign(){
+
+}
+
+void RoomScene::finishAssign(){
+
+
 }
