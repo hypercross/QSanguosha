@@ -2,6 +2,7 @@
 #define TOUHOUCARDS_H
 
 #include<standard.h>
+#include<touhou-generals.h>
 
 class CombatCard : public BasicCard
 {
@@ -109,11 +110,14 @@ public:
     virtual void onMove(const CardMoveStruct &move) const;
 };
 
+
 class TouhouPackage: public Package{
     Q_OBJECT
 
 public:
     TouhouPackage();
+
+    void addGenerals();
 };
 
 #endif // TOUHOUCARDS_H

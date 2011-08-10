@@ -32,7 +32,7 @@ return {
 	["~yuji"] = "竟然被猜到了",
 	
 	["#Jilei"] = "%from 鸡肋了 %to 的 %arg", 
-	["#JileiClear"] = "%from 的鸡肋效果消失",
+	["#JileiClear"] = "%from 的冻结效果消失",
 	["#Guhuo"] = "%from 发动了技能【蛊惑】，蛊惑的牌为 %arg, 指定的目标为 %to",
 	["#GuhuoNoTarget"] = "%from 发动了技能【蛊惑】，蛊惑的牌为 %arg",
 	["guhuo:question"] = "质疑",

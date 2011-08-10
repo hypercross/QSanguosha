@@ -710,10 +710,16 @@ void Player::jilei(const QString &type){
         jilei_set << -2;
     else if(type == "trick")
         jilei_set << -3;
-    else if(type.isNull())
-        jilei_set.clear();
-    else{
-        jilei_set << type.toInt();
+    else {
+        if(type.isNull())
+        {
+            jilei_set.clear();
+            return;
+        }
+        bool ok;
+        int cid=type.toInt(&ok);
+        if(ok)jilei_set << cid;
+        else jilei_set.clear();
     }
 }
 
@@ -786,3 +792,4 @@ void Player::copyFrom(Player* p)
     b->tag              = QVariantMap(a->tag);
 
 }
+

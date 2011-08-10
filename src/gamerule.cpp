@@ -114,8 +114,8 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
             }
 
             if(player->hasFlag("jilei")){
-                player->jilei(".");
-                player->invoke("jilei");
+                player->jilei(NULL);
+                player->invoke("jilei",NULL);
 
                 LogMessage log;
                 log.type = "#JileiClear";
@@ -438,11 +438,11 @@ bool GameRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data)
             if(!broken){
                 const Card* block=room->askForCard(effect.to,".","blockCard",false);
                 effect.block=block;
+                effect.to->tag["combatEffective"]=true;
                 if(!block)break;
                 //QVariant data = QVariant::fromValue(effect);
                 //effect.to->tag["chosenBlock"]=QVariant::fromValue(block);
                 effect.to->addToPile("Defense",block->getId(),false);
-                effect.to->tag["combatEffective"]=true;
 
                 LogMessage log;
                 log.type = "#chosenBlock";

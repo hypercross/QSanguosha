@@ -178,7 +178,7 @@ public:
             QList<ServerPlayer *> players = room->getAllPlayers();
             foreach(ServerPlayer *player, players){
                 if(player->hasFlag("jilei")){
-                    player->jilei(".");
+                    player->jilei(NULL);
                     player->invoke("jilei");
 
                     LogMessage log;

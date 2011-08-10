@@ -402,9 +402,10 @@ void Dashboard::drawHp(QPainter *painter) const{
     int max_hp = Self->getMaxHP();
     int mp = qMax(0, Self->getMp());
     int max_mp = Self->getMaxMP();
+    int total = max_mp > max_hp ? max_mp : max_hp;
     QPixmap *magatama, *zero_magatama,*mp_maga, *zero_mp_maga;
     int index = Self->isWounded() ? qMin(hp, 5) : 5;
-    if(max_hp > 6){
+    if(total > 6){
         magatama = MagatamaWidget::GetSmallMagatama(index);
         zero_magatama = MagatamaWidget::GetSmallMagatama(0);
         mp_maga = MagatamaWidget::GetSmallMpMagatama(index);
@@ -417,8 +418,8 @@ void Dashboard::drawHp(QPainter *painter) const{
     }
 
 
-    qreal total_width = magatama->width() * max_hp;
-    qreal skip = (121 - total_width)/ (max_hp + 1);
+    qreal total_width = magatama->width() * total;
+    qreal skip = (121 - total_width)/ (total + 1);
     qreal start_x = left_pixmap.width() + middle->rect().width();
 
     int i;

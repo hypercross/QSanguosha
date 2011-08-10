@@ -23,6 +23,8 @@ public:
     virtual bool hasLordSkill(const QString &skill_name) const;
     void setHandcardNum(int n);
 
+    QString getSkillDescription() const;
+
     virtual void setFlags(const QString &flag);
     virtual int aliveCount() const;
     virtual int getHandcardNum() const;

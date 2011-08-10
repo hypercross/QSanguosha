@@ -334,3 +334,41 @@ void MarkAssignSkill::onGameStart(ServerPlayer *player) const{
     mark_name.remove("#");
     player->gainMark(mark_name, n);
 }
+
+DetacherSkill::DetacherSkill(const QString &name)
+    :TriggerSkill("#" + name + "_detacher")
+{
+    events << PhaseChange;
+    frequency = Compulsory;
+}
+
+bool DetacherSkill::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+{
+    if(!validPhaseChange(player,data))return false;
+
+    QString name = objectName();
+    name.replace("_detacher","_constraint");
+    name.replace("#","");
+
+    LogMessage log;
+    log.type = "#LoseConstraint";
+    log.from = player;
+
+    player->getRoom()->sendLog(log);
+
+    player->getRoom()->detachSkillFromPlayer(player,name);
+    player->getRoom()->detachSkillFromPlayer(player,objectName());
+
+    return false;
+}
+
+bool DetacherSkill::validPhaseChange(ServerPlayer *player, QVariant &data) const
+{
+    return player->getPhase() == Player::NotActive;
+}
+
+ConstraintSkill::ConstraintSkill(const QString &name)
+    :TriggerSkill(name + "_constraint")
+{
+    frequency = Compulsory;
+}

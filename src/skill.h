@@ -225,4 +225,25 @@ private:
     int n;
 };
 
+class DetacherSkill : public TriggerSkill
+{
+    Q_OBJECT
+
+public:
+    DetacherSkill(const QString &name);
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const;
+    virtual bool validPhaseChange(ServerPlayer* player, QVariant & data) const;
+
+};
+
+class ConstraintSkill : public TriggerSkill
+{
+    Q_OBJECT
+
+public:
+    ConstraintSkill(const QString &name);
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const = 0;
+};
 #endif // SKILL_H

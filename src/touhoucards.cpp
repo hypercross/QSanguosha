@@ -1,5 +1,12 @@
-#include "touhoucards.h"
+#include "standard.h"
+#include "serverplayer.h"
+#include "room.h"
+#include "skill.h"
+#include "maneuvering.h"
+#include "clientplayer.h"
 #include "engine.h"
+#include "client.h"
+#include "touhoucards.h"
 
 void CombatCard::onUse(Room *room, const CardUseStruct &card_use) const
 {
@@ -47,7 +54,10 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
         if(source->distanceTo(player)>farthest)
             farthest = source->distanceTo(player);
     if(farthest > source->getAttackRange())
+    {
+        if(source->getMp()< (farthest - source->getAttackRange()) )return;
         room->changeMp(source,source->getAttackRange() - farthest);
+    }
 
     source->addToPile("Attack",this->getEffectiveId(),false);
 
@@ -90,15 +100,10 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
 
                 if(pile.length()<1)
                 {
-                    CombatStruct combat;
-                    combat.from   = source;
-                    combat.to     = player;
-                    combat.combat = qobject_cast<const CombatCard*>(attackCard);
-                    combat.block  = card;
-
-                    combat.combat->resolveAttack(combat);
+                        card= new DummyCard;
                 }else{
                     card = Sanguosha->getCard(pile.first());
+
                     LogMessage log;
                     log.type = "$revealResult";
                     log.from = player;
@@ -108,7 +113,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
                     room->throwCard(card);
                     room->getThread()->trigger(CombatRevealed,player);
                     room->getThread()->delay();
-
+                }
                     CombatStruct combat;
                     combat.from   = source;
                     combat.to     = player;
@@ -132,7 +137,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
                         }
                         room->getThread()->trigger(CombatFinished,source,data);
                     }
-                }
+
             }
 
 
@@ -236,7 +241,7 @@ void Strike::resolveAttack(CombatStruct &combat) const
         combat.from->getRoom()->obtainCard(combat.from,this->getEffectiveId());
         combat.from->jilei(QString(this->getEffectiveId()));
         combat.from->invoke("jilei",this->getEffectIdString());
-        combat.to->setFlags("jilei");
+        combat.from->setFlags("jilei");
     }
 }
 
@@ -245,9 +250,9 @@ void Strike::resolveDefense(CombatStruct &combat) const
     if(combat.to->getRoom()->obtainable(this,combat.to))
     {
         combat.to->getRoom()->obtainCard(combat.to,this->getEffectiveId());
-        combat.to->jilei(QString(this->getEffectiveId()));
-        combat.to->invoke("jilei",this->getEffectIdString());
-        combat.to->setFlags("jilei");
+//        combat.to->jilei(QString(this->getEffectiveId()));
+//        combat.to->invoke("jilei",this->getEffectIdString());
+//        combat.to->setFlags("jilei");
     }
 }
 
@@ -458,6 +463,7 @@ void NiceGuyCard::onMove(const CardMoveStruct &move) const
     }
 }
 
+
 TouhouPackage::TouhouPackage()
     :Package("touhou")
 {
@@ -498,47 +504,13 @@ TouhouPackage::TouhouPackage()
             cards<<new NiceGuyCard((Card::Suit)(i/26),(i%26)/2+1);
 
 
-//    cards<< new Barrage(Card::Spade,1)
-//         << new Barrage(Card::Spade,2)
-//         << new Barrage(Card::Spade,3)
-//         << new Barrage(Card::Spade,4)
-//         << new Barrage(Card::Spade,5)
-//         << new Barrage(Card::Spade,6)
-//         << new Barrage(Card::Spade,7)
-//         << new Barrage(Card::Spade,8)
-//         << new Barrage(Card::Spade,9)
-//         << new Barrage(Card::Spade,10)
-//         << new Barrage(Card::Spade,11);
-
-//    cards<< new Strike(Card::Club,1)
-//         << new Strike(Card::Club,2)
-//         << new Strike(Card::Club,3)
-//         << new Strike(Card::Club,4)
-//         << new Strike(Card::Club,5)
-//         << new Strike(Card::Club,6);
-
-//    cards<< new Rune(Card::Heart,1)
-//         << new Rune(Card::Heart,2)
-//         << new Rune(Card::Heart,3)
-//         << new Rune(Card::Heart,4)
-//         << new Rune(Card::Heart,5)
-//         << new Rune(Card::Heart,6)
-//         << new Rune(Card::Heart,7)
-//         << new Rune(Card::Heart,8);
-
-//    cards<< new Moutama(Card::Diamond,1)
-//         << new Moutama(Card::Diamond,2)
-//         << new Moutama(Card::Diamond,3)
-//         << new Moutama(Card::Diamond,4)
-//         << new Moutama(Card::Diamond,5)
-//         << new Moutama(Card::Diamond,6)
-//         << new Moutama(Card::Diamond,7)
-//         << new Moutama(Card::Diamond,8);
-
     foreach(Card *card, cards)
         card->setParent(this);
 
-    type = CardPack;
+    addGenerals();
+
+
+    //type = CardPack;
 }
 
 ADD_PACKAGE(Touhou)

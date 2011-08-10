@@ -177,3 +177,17 @@ void ClientPlayer::setMark(const QString &mark, int value){
 
     mark_doc->setHtml(text);
 }
+
+QString ClientPlayer::getSkillDescription() const
+{
+    QString description;
+
+    foreach(const Skill *skill, getVisibleSkillList()){
+        QString skill_name = Sanguosha->translate(skill->objectName());
+        QString desc = skill->getDescription();
+        desc.replace("\n", "<br/>");
+        description.append(QString("<b>%1</b>: %2 <br/> <br/>").arg(skill_name).arg(desc));
+    }
+
+    return description;
+}
