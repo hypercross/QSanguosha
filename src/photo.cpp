@@ -230,6 +230,7 @@ void Photo::setPlayer(const ClientPlayer *player)
         connect(player, SIGNAL(drank_changed()), this, SLOT(setDrankState()));
         connect(player, SIGNAL(action_taken()), this, SLOT(setActionState()));
         connect(player, SIGNAL(pile_changed(QString)), this, SLOT(updatePile(QString)));
+        connect(player, SIGNAL(skill_acquired()), this, SLOT(updateAvatar()));
 
         mark_item->setDocument(player->getMarkDoc());
     }

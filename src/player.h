@@ -246,6 +246,7 @@ signals:
     void kingdom_changed();
     void phase_changed();
     void owner_changed(bool owner);
+    void skill_acquired();
 };
 
 #endif // PLAYER_H

@@ -1325,8 +1325,18 @@ void Client::attachSkill(const QString &skill_name){
 }
 
 void Client::detachSkill(const QString &skill_name){
-    Self->loseSkill(skill_name);
-    emit skill_detached(skill_name);
+    QRegExp rx("(\\w+):(\\w+)");
+
+    if(!rx.exactMatch(skill_name))
+        return;
+
+    QStringList texts = rx.capturedTexts();
+    ClientPlayer *who = getPlayer(texts.at(1));
+    QString sname = texts.at(2);
+
+    who->loseSkill(sname);
+
+    if(who==Self)emit skill_detached(skill_name);
 }
 
 void Client::askForAssign(const QString &){

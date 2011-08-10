@@ -15,7 +15,13 @@ return
 	["#decreasedMp"]    ="%from 损失了%arg点灵力",
 	
 	["#SetConstraint"]  ="%from给%arg施加了束缚",
-	["#LoseConstraint"] ="%from的束缚失去作用" ,
+	["#LoseConstraint"] ="%from的束缚%arg失去作用" ,
+	
+	["guifu"] = "八方鬼缚阵",
+	[":guifu"]= "每回一次，你可束缚一名玩家直到其回合结束：每当其使用一张牌，在其结算前需弃一张手牌。",
+	
+	["guifu_constraint"] = "束缚：八方鬼缚阵",
+	[":guifu_constraint"] = "你每使用一张牌，须在其结算前弃置一张手牌。",
 	
 	["barrage"]="弹幕",
 	[":barrage"]="主动使用时作为战斗牌背面向上打出。克制符咒，以及点数相同或更小的弹幕。成功进攻的效果为造成一点伤害。",

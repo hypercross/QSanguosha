@@ -353,6 +353,7 @@ bool DetacherSkill::trigger(TriggerEvent event, ServerPlayer *player, QVariant &
     LogMessage log;
     log.type = "#LoseConstraint";
     log.from = player;
+    log.arg  = name;
 
     player->getRoom()->sendLog(log);
 

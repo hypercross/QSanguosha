@@ -178,7 +178,7 @@ void Dashboard::setPlayer(const ClientPlayer *player){
 
 void Dashboard::updateAvatar(){
     const General *general = Self->getAvatarGeneral();
-    avatar->setToolTip(general->getSkillDescription());
+    avatar->setToolTip(Self->getSkillDescription());
     if(!avatar->changePixmap(general->getPixmapPath("big"))){
         QPixmap pixmap(General::BigIconSize);
         pixmap.fill(Qt::black);

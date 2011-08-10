@@ -293,14 +293,17 @@ bool Player::hasSkill(const QString &skill_name) const{
 
 void Player::acquireSkill(const QString &skill_name){
     acquired_skills.insert(skill_name);
+    emit skill_acquired();
 }
 
 void Player::loseSkill(const QString &skill_name){
     acquired_skills.remove(skill_name);
+    emit skill_acquired();
 }
 
 void Player::loseAllSkills(){
     acquired_skills.clear();
+    emit skill_acquired();
 }
 
 QString Player::getPhaseString() const{

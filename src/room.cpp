@@ -388,7 +388,9 @@ void Room::detachSkillFromPlayer(ServerPlayer *player, const QString &skill_name
         return;
 
     player->loseSkill(skill_name);
-    player->invoke("detachSkill", skill_name);
+
+    QString detach_str = QString("%1:%2").arg(player->objectName()).arg(skill_name);
+    broadcastInvoke("detachSkill", detach_str);
 
     const Skill *skill = Sanguosha->getSkill(skill_name);
     if(skill && skill->isVisible()){
