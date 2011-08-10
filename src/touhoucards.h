@@ -97,6 +97,18 @@ public:
     virtual void onEffect(const CardEffectStruct &effect) const;
 };
 
+class NiceGuyCard : public SingleTargetTrick
+{
+    Q_OBJECT
+
+public:
+    Q_INVOKABLE NiceGuyCard(Card::Suit suit, int number);
+
+    virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
+    virtual bool isAvailable(const Player *player) const;
+    virtual void onMove(const CardMoveStruct &move) const;
+};
+
 class TouhouPackage: public Package{
     Q_OBJECT
 

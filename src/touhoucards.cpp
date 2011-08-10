@@ -426,8 +426,36 @@ void Surprise::onEffect(const CardEffectStruct &effect) const
         effect.to->jilei(js);
         effect.to->invoke("jilei",js);
         effect.to->setFlags("jilei");
+
+        room->showCard(effect.to,cid);
     }
     effect.from->invoke("clearAG");
+    room->getThread()->delay();
+}
+
+NiceGuyCard::NiceGuyCard(Card::Suit suit, int number)
+    :SingleTargetTrick(suit, number, false)
+{
+    setObjectName("nice_guy_card");
+}
+
+void NiceGuyCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    room->throwCard(this);
+}
+
+bool NiceGuyCard::isAvailable(const Player *player) const
+{
+    return false;
+}
+
+void NiceGuyCard::onMove(const CardMoveStruct &move) const
+{
+    ServerPlayer *from = move.from;
+    if(from && move.to_place == Player::DiscardedPile)
+    {
+        from->getRoom()->drawCards(from,1);
+    }
 }
 
 TouhouPackage::TouhouPackage()
@@ -466,6 +494,8 @@ TouhouPackage::TouhouPackage()
             cards<<new GodSalvation((Card::Suit)(i/26),(i%26)/2+1);
         else if(i<89)
             cards<<new Surprise((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<93)
+            cards<<new NiceGuyCard((Card::Suit)(i/26),(i%26)/2+1);
 
 
 //    cards<< new Barrage(Card::Spade,1)
