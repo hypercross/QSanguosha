@@ -110,6 +110,41 @@ public:
     virtual void onMove(const CardMoveStruct &move) const;
 };
 
+class Yukkuri : public OffensiveHorse
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE Yukkuri(Card::Suit suit, int number);
+
+    virtual void onInstall(ServerPlayer *player) const;
+    virtual void onUninstall(ServerPlayer *player) const;
+};
+
+class YukkuriCard: public SkillCard
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE YukkuriCard();
+
+    virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
+};
+
+class Pants : public OffensiveHorse
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE Pants(Card::Suit suit, int number);
+
+    virtual void onInstall(ServerPlayer *player) const;
+    virtual void onUninstall(ServerPlayer *player) const;
+};
+
+class Broomstick : public DefensiveHorse
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE Broomstick(Card::Suit suit, int number);
+};
 
 class TouhouPackage: public Package{
     Q_OBJECT

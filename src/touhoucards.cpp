@@ -463,6 +463,83 @@ void NiceGuyCard::onMove(const CardMoveStruct &move) const
     }
 }
 
+YukkuriCard::YukkuriCard()
+{
+}
+
+void YukkuriCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    room->throwCard(source->getOffensiveHorse());
+
+    Dannatu *dannatu = new Dannatu(Card::NoSuit, 0);
+    dannatu->setCancelable(false);
+
+    CardEffectStruct effect;
+    effect.card = dannatu;
+    effect.from = source;
+    effect.to   = targets.first();
+
+    room->cardEffect(effect);
+}
+
+class YukkuriSkill : public ZeroCardViewAsSkill
+{
+public:
+    YukkuriSkill():ZeroCardViewAsSkill("yukkuri")
+    {
+    }
+
+    virtual const Card* viewAs() const{
+        return new YukkuriCard;
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return !player->hasUsed("Yukkuri");
+    }
+};
+
+Yukkuri::Yukkuri(Card::Suit suit, int number)
+    :OffensiveHorse(suit,number)
+{
+    setObjectName("yukkuri");
+}
+
+void Yukkuri::onInstall(ServerPlayer *player) const
+{
+    player->getRoom()->attachSkillToPlayer(player,objectName());
+}
+
+void Yukkuri::onUninstall(ServerPlayer *player) const
+{
+    player->getRoom()->detachSkillFromPlayer(player,objectName());
+}
+
+Pants::Pants(Card::Suit suit, int number)
+    :OffensiveHorse(suit,number)
+{
+    setObjectName("pants");
+}
+
+void Pants::onInstall(ServerPlayer *player) const
+{
+    Room * room = player->getRoom();
+    room->setPlayerProperty(player,"maxmp",player->getMaxMP()+1);
+    room->changeMp(player,1);
+}
+
+void Pants::onUninstall(ServerPlayer *player) const
+{
+    Room * room = player->getRoom();
+    room->setPlayerProperty(player,"maxmp",player->getMaxMP()-1);
+}
+
+Broomstick::Broomstick(Card::Suit suit, int number)
+    :DefensiveHorse(suit,number, +2)
+{
+    setObjectName("broomstick");
+}
+
 
 TouhouPackage::TouhouPackage()
     :Package("touhou")
@@ -502,10 +579,20 @@ TouhouPackage::TouhouPackage()
             cards<<new Surprise((Card::Suit)(i/26),(i%26)/2+1);
         else if(i<93)
             cards<<new NiceGuyCard((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<94)
+            cards<<new Yukkuri((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<95)
+            cards<<new Pants((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<96)
+            cards<<new Broomstick((Card::Suit)(i/26),(i%26)/2+1);
 
 
     foreach(Card *card, cards)
         card->setParent(this);
+
+    addMetaObject<YukkuriCard>();
+
+    skills << new YukkuriSkill;
 
     addGenerals();
 

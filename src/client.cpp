@@ -1336,7 +1336,7 @@ void Client::detachSkill(const QString &skill_name){
 
     who->loseSkill(sname);
 
-    if(who==Self)emit skill_detached(skill_name);
+    if(who == Self)emit skill_detached(sname);
 }
 
 void Client::askForAssign(const QString &){
