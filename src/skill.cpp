@@ -360,6 +360,10 @@ bool DetacherSkill::trigger(TriggerEvent event, ServerPlayer *player, QVariant &
     player->getRoom()->detachSkillFromPlayer(player,name);
     player->getRoom()->detachSkillFromPlayer(player,objectName());
 
+    player->loseMark("Chain");
+    player->setChained(player->getMark("Chain")>0);
+    player->getRoom()->broadcastProperty(player,"chained");
+
     return false;
 }
 

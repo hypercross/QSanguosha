@@ -16,6 +16,8 @@ void GuifuCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *
 {
     foreach(ServerPlayer * sp,targets)
     {
+        if(sp->hasSkill(objectName() + "_constraint"))continue;
+
         LogMessage log;
         log.type = "#SetConstraint";
         log.from = source;
@@ -26,6 +28,9 @@ void GuifuCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *
         //room ->attachSkillToPlayer(sp ,objectName() + "_constraint");
         room ->acquireSkill(sp ,"#" + objectName() + "_detacher");
         room->acquireSkill(sp ,objectName() + "_constraint");
+        sp->addMark("Chain");
+        sp->setChained(true);
+        room->broadcastProperty(sp,"chained");
     }
 }
 
