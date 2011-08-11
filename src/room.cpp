@@ -1691,6 +1691,7 @@ void Room::changeMp(ServerPlayer *target, int delta){
     QVariant data = QVariant::fromValue(mpchange);
     getThread()->trigger(MpChanged,target,data);
 
+    mpchange = data.value<MpChangeStruct>();
     target = mpchange.who;
     delta  = mpchange.delta;
 

@@ -309,12 +309,12 @@ QString Horse::getEffectPath(bool) const{
     return "audio/card/common/horse.ogg";
 }
 
-void Horse::onInstall(ServerPlayer *) const{
-
+void Horse::onInstall(ServerPlayer *player) const{
+    EquipCard::onInstall(player);
 }
 
-void Horse::onUninstall(ServerPlayer *) const{
-
+void Horse::onUninstall(ServerPlayer *player) const{
+    EquipCard::onUninstall(player);
 }
 
 QString Horse::label() const{
@@ -400,6 +400,24 @@ private:
     QString name;
 };
 
+class InheritancePattern : public CardPattern
+{
+public:
+    InheritancePattern(const QString &class_name)
+        :name(class_name)
+    {
+
+    }
+
+    virtual bool match(const Player *player, const Card *card) const
+    {
+        return ! player->hasEquip(card) && card->inherits(name.toAscii());
+    }
+
+private:
+    QString name;
+};
+
 class PAPattern: public CardPattern{
 public:
     virtual bool match(const Player *player, const Card *card) const{
@@ -432,6 +450,7 @@ StandardPackage::StandardPackage()
 
     patterns["barrage"] = new NamePattern("barrage");
     patterns["strike"] = new NamePattern("strike");
+    patterns[".combat"] = new InheritancePattern("CombatCard");
 }
 
 ADD_PACKAGE(Standard)

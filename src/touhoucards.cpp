@@ -70,11 +70,14 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     reveal.revealed = Sanguosha->getCard(source->getPile("Attack").first());
     reveal.who      = source ;
     reveal.attacker = true ;
+    foreach(ServerPlayer* player,room->getAlivePlayers())
+        reveal.opponets << player;
 
     QVariant data = QVariant::fromValue(reveal);
 
     bool broken=room->getThread()->trigger(CombatReveal,source,data);
     if(broken || !reveal.revealed->inherits("CombatCard"))return;
+    reveal = data.value<CombatRevealStruct>();
 
     const Card * attackCard = reveal.revealed;
 
@@ -103,19 +106,19 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
 
             //reveal blocker
             QList<int> pile=player->getPile("Defense");
-            CardStar blocker ;
+            CardStar blocker = new DummyCard;
 
-            if(pile.length()<1)
-                blocker = new DummyCard;
-            else
+            if(pile.length()>0)
             {
                 CombatRevealStruct block_reveal;
                 block_reveal.revealed = Sanguosha->getCard(pile.first());
                 block_reveal.who      = player;
+                block_reveal.opponets << source;
 
                 data = QVariant::fromValue(block_reveal);
                 broken = room->getThread()->trigger(CombatReveal,player,data);
                 if(broken)continue;
+                block_reveal = data.value<CombatRevealStruct>();
 
                 blocker = block_reveal.revealed;
 
@@ -143,8 +146,14 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
 
             data=QVariant::fromValue(combat);
 
-            broken=room->getThread()->trigger(CombatFinish,player,data);
-            if(broken)continue;
+            broken=room->getThread()->trigger(CombatFinish,source,data);
+            broken = broken || room->getThread()->trigger(TargetFinish,player,data);
+            if(broken)
+            {
+                if(combat.block->inherits("DummyCard"))delete combat.block;
+                continue;
+            }
+            combat = data.value<CombatStruct>();
 
             const CombatCard * ccard=qobject_cast<const CombatCard*>(combat.block);
             if((!combat.block->inherits("CombatCard")) || ccard->canbeBlocked(combat.combat))
@@ -153,7 +162,10 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
             if(combat.combat->canbeBlocked(combat.block))
                 ccard->resolveDefense(combat);
 
+            if(combat.block->inherits("DummyCard"))delete combat.block;
+
             room->getThread()->trigger(CombatFinished,source,data);
+            room->getThread()->trigger(TargetFinished,player,data);
 
         }
 }
@@ -176,6 +188,7 @@ bool CombatCard::targetsFeasible(const QList<const Player *> &targets, const Pla
 
 bool CombatCard::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const{
     int slash_targets = 1;
+    if(Self->hasWeapon("tengu_fan"))slash_targets ++;
 //    if(Self->hasWeapon("halberd") && Self->isLastHandCard(this)){
 //        slash_targets = 3;
 //    }
@@ -212,7 +225,7 @@ bool CombatCard::canbeBlocked(const Card *card) const
 }
 
 bool CombatCard::isAvailable(const Player *player) const{
-    return Slash::IsAvailable(player);
+    return Slash::IsAvailable(player) || player->hasWeapon("hakkero");
 }
 
 Barrage::Barrage(Card::Suit suit, int number):CombatCard(suit,number)
@@ -547,6 +560,237 @@ Broomstick::Broomstick(Card::Suit suit, int number)
     setObjectName("broomstick");
 }
 
+class ZunHatSkill : public TriggerSkill
+{
+public:
+    ZunHatSkill():TriggerSkill("zunhat")
+    {
+        events << MpChanged;
+        frequency = Frequent;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return target->getDefensiveHorse() && target->getDefensiveHorse()->objectName() == objectName();
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        MpChangeStruct change = data.value<MpChangeStruct>();
+        if(change.delta<0)return false;
+
+        Room *room = player->getRoom();
+        if(!room->askForSkillInvoke(player,objectName()))return false;
+
+        change.delta++;
+        data = QVariant::fromValue(change);
+
+        LogMessage log;
+        log.type = "#Zunhat" ;
+        log.from = player ;
+        log.arg  = change.delta-1;
+        log.arg2 = change.delta;
+        room->sendLog(log);
+
+        return false;
+    }
+};
+
+ZunHat::ZunHat(Card::Suit suit, int number)
+    :DefensiveHorse(suit,number)
+{
+    setObjectName("zunhat");
+
+    skill = new ZunHatSkill;
+}
+
+class MushroomSkill : public MasochismSkill
+{
+public:
+    MushroomSkill():MasochismSkill("mushroom")
+    {
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return target->getOffensiveHorse() &&
+                target->getOffensiveHorse()->objectName() == objectName();
+    }
+
+    virtual void onDamaged(ServerPlayer *target, const DamageStruct &damage) const
+    {
+        Room * room = target->getRoom();
+        if(!room->askForSkillInvoke(target,objectName()))return;
+        if(!damage.from)return;
+        if(damage.from->isDead())return;
+
+        room->throwCard(target->getOffensiveHorse());
+
+        if(room->askForDiscard(damage.from,objectName(),2,true,true))return;
+        DamageStruct returnDamage;
+        returnDamage.from = target ;
+        returnDamage.to   = damage.from ;
+
+        room->damage(returnDamage);
+    }
+};
+
+Mushroom::Mushroom(Card::Suit suit, int number)
+    :OffensiveHorse(suit,number)
+{
+    setObjectName("mushroom");
+
+    skill = new MushroomSkill;
+}
+
+TeaCard::TeaCard()
+{
+    target_fixed = true;
+}
+
+void TeaCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    room->throwCard(source->getDefensiveHorse());
+    room->changeMp(source,1);
+    room->drawCards(source,1);
+}
+
+class TeaSkill : public ZeroCardViewAsSkill
+{
+public:
+    TeaSkill():ZeroCardViewAsSkill("tea")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return !player->hasUsed("Tea");
+    }
+
+    virtual const Card* viewAs() const
+    {
+        return new TeaCard;
+    }
+
+};
+
+Tea::Tea(Card::Suit suit, int number)
+    :DefensiveHorse(suit,number)
+{
+    setObjectName("tea");
+}
+
+void Tea::onInstall(ServerPlayer *player) const
+{
+    player->getRoom()->attachSkillToPlayer(player,objectName());
+}
+
+void Tea::onUninstall(ServerPlayer *player) const
+{
+    player->getRoom()->detachSkillFromPlayer(player,objectName());
+}
+
+SaisenCard::SaisenCard()
+{
+
+}
+
+bool SaisenCard::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const
+{
+    bool valid = true;
+    valid = valid && targets.isEmpty();
+    valid = valid && to_select != Self;
+    valid = valid && to_select->getHandcardNum() > Self->getHandcardNum();
+    return valid;
+}
+
+void SaisenCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    room->throwCard(source->getOffensiveHorse());
+    int cid = targets.first()->getRandomHandCardId();
+    if(cid<0)return;
+    room->moveCardTo(Sanguosha->getCard(cid),source,Player::Hand,false);
+}
+
+class SaisenSkill : public ZeroCardViewAsSkill
+{
+public:
+    SaisenSkill():ZeroCardViewAsSkill("saisen")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return !player->hasUsed("Saisen");
+    }
+
+    virtual const Card* viewAs() const
+    {
+        return new SaisenCard;
+    }
+
+};
+
+Saisen::Saisen(Card::Suit suit, int number)
+    :OffensiveHorse(suit,number)
+{
+    setObjectName("saisen");
+}
+
+void Saisen::onInstall(ServerPlayer *player) const
+{
+    player->getRoom()->attachSkillToPlayer(player,objectName());
+}
+
+void Saisen::onUninstall(ServerPlayer *player) const
+{
+    player->getRoom()->detachSkillFromPlayer(player,objectName());
+}
+
+class SinbagSkill : public TriggerSkill
+{
+public:
+    SinbagSkill():TriggerSkill("sinbag")
+    {
+        events << CombatFinish << TargetFinish;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return target->getOffensiveHorse() &&
+                target->getOffensiveHorse()->objectName() == objectName();
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        CombatStruct combat = data.value<CombatStruct>();
+        if(event == TargetFinish && !combat.block->inherits("Strike"))return false;
+        if(event == CombatFinish && !combat.combat->inherits("Strike"))return false;
+
+        Room * room = player->getRoom();
+        if(!room->askForSkillInvoke(player,objectName()))return false;
+
+        room->throwCard(player->getOffensiveHorse());
+        ServerPlayer* target = (event == TargetFinish) ? combat.from : combat.to;
+        DamageStruct dmg;
+        dmg.from = player;
+        dmg.to   = target;
+
+        room->damage(dmg);
+        return true;
+
+    }
+};
+
+Sinbag::Sinbag(Card::Suit suit, int number)
+    :OffensiveHorse(suit,number)
+{
+    setObjectName("sinbag");
+
+    skill = new SinbagSkill;
+}
 
 TouhouPackage::TouhouPackage()
     :Package("touhou")
@@ -554,9 +798,9 @@ TouhouPackage::TouhouPackage()
     QList<Card *> cards;
     int i=0;
     for(;i<104;i++)
-        if(i<30)
+        if(i<28)
             cards<<new Barrage((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<42)
+        else if(i<38)
             cards<<new Strike((Card::Suit)(i/26),(i%26)/2+1);
         else if(i<50)
             cards<<new Rune((Card::Suit)(i/26),(i%26)/2+1);
@@ -592,17 +836,29 @@ TouhouPackage::TouhouPackage()
             cards<<new Pants((Card::Suit)(i/26),(i%26)/2+1);
         else if(i<96)
             cards<<new Broomstick((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<97)
+            cards<<new ZunHat((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<98)
+            cards<<new Mushroom((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<99)
+            cards<<new Tea((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<100)
+            cards<<new Sinbag((Card::Suit)(i/26),(i%26)/2+1);
+        else if(i<101)
+            cards<<new Saisen((Card::Suit)(i/26),(i%26)/2+1);
 
 
     foreach(Card *card, cards)
         card->setParent(this);
 
     addMetaObject<YukkuriCard>();
+    addMetaObject<TeaCard>();
+    addMetaObject<SaisenCard>();
 
-    skills << new YukkuriSkill;
+    skills << new YukkuriSkill << new TeaSkill << new SaisenSkill;
 
     addGenerals();
-
+    addEquips();
 
     //type = CardPack;
 }

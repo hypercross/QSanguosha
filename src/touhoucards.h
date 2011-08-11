@@ -146,6 +146,66 @@ public:
     Q_INVOKABLE Broomstick(Card::Suit suit, int number);
 };
 
+class ZunHat : public DefensiveHorse
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE ZunHat(Card::Suit suit, int number);
+};
+
+class Mushroom : public OffensiveHorse
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE Mushroom(Card::Suit suit, int number);
+};
+
+class TeaCard : public SkillCard
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE TeaCard();
+
+    virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
+};
+
+class Tea : public DefensiveHorse
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE Tea(Card::Suit suit,int number);
+
+    virtual void onInstall(ServerPlayer *player) const;
+    virtual void onUninstall(ServerPlayer *player) const;
+};
+
+class SaisenCard : public SkillCard
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE SaisenCard();
+
+    virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
+    virtual bool targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const;
+};
+
+class Saisen : public OffensiveHorse
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE Saisen(Card::Suit suit,int number);
+
+    virtual void onInstall(ServerPlayer *player) const;
+    virtual void onUninstall(ServerPlayer *player) const;
+};
+
+class Sinbag : public OffensiveHorse
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE Sinbag(Card::Suit suit,int number);
+};
+
 class TouhouPackage: public Package{
     Q_OBJECT
 
@@ -153,6 +213,7 @@ public:
     TouhouPackage();
 
     void addGenerals();
+    void addEquips();
 };
 
 #endif // TOUHOUCARDS_H

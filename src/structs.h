@@ -72,6 +72,7 @@ struct CombatRevealStruct{
     const Card *revealed;
     ServerPlayer *who;
     bool attacker;
+    QList<ServerPlayer *> opponets;
 
 };
 
@@ -195,6 +196,8 @@ enum TriggerEvent{
     CombatRevealed,
     CombatFinish,
     CombatFinished,
+    TargetFinish,
+    TargetFinished,
 
     MpChanged,
 
