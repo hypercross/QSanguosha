@@ -66,6 +66,15 @@ struct CombatStruct{
 
 };
 
+struct CombatRevealStruct{
+    CombatRevealStruct();
+
+    const Card *revealed;
+    ServerPlayer *who;
+    bool attacker;
+
+};
+
 struct CardUseStruct{
     CardUseStruct();
     bool isValid() const;
@@ -96,6 +105,14 @@ struct RecoverStruct{
     RecoverStruct();
 
     int recover;
+    ServerPlayer *who;
+    const Card *card;
+};
+
+struct MpChangeStruct{
+    MpChangeStruct();
+
+    int delta;
     ServerPlayer *who;
     const Card *card;
 };
@@ -179,6 +196,8 @@ enum TriggerEvent{
     CombatFinish,
     CombatFinished,
 
+    MpChanged,
+
     NumOfEvents,
 };
 
@@ -193,12 +212,14 @@ Q_DECLARE_METATYPE(DamageStruct);
 Q_DECLARE_METATYPE(CardEffectStruct);
 Q_DECLARE_METATYPE(SlashEffectStruct);
 Q_DECLARE_METATYPE(CombatStruct);
+Q_DECLARE_METATYPE(CombatRevealStruct);
 Q_DECLARE_METATYPE(CardUseStruct);
 Q_DECLARE_METATYPE(CardMoveStar);
 Q_DECLARE_METATYPE(CardStar);
 Q_DECLARE_METATYPE(PlayerStar);
 Q_DECLARE_METATYPE(DyingStruct);
 Q_DECLARE_METATYPE(RecoverStruct);
+Q_DECLARE_METATYPE(MpChangeStruct);
 Q_DECLARE_METATYPE(JudgeStar);
 Q_DECLARE_METATYPE(DamageStar);
 Q_DECLARE_METATYPE(PindianStar);

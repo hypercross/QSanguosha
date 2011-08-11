@@ -1683,6 +1683,17 @@ void Room::loseHp(ServerPlayer *victim, int lose){
 
 void Room::changeMp(ServerPlayer *target, int delta){
 
+    MpChangeStruct mpchange;
+    mpchange.delta = delta;
+    mpchange.who   = target;
+    mpchange.card  = NULL;
+
+    QVariant data = QVariant::fromValue(mpchange);
+    getThread()->trigger(MpChanged,target,data);
+
+    target = mpchange.who;
+    delta  = mpchange.delta;
+
     int max=target->getMaxMP()-target->getMp();
     int min=-target->getMp();
     delta=qBound(min,delta,max);

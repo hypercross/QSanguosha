@@ -43,6 +43,12 @@ CombatStruct::CombatStruct()
 {
 }
 
+CombatRevealStruct::CombatRevealStruct()
+    :revealed(NULL) , who(NULL) , attacker(false)
+{
+
+}
+
 DyingStruct::DyingStruct()
     :who(NULL), damage(NULL)
 {
@@ -50,6 +56,12 @@ DyingStruct::DyingStruct()
 
 RecoverStruct::RecoverStruct()
     :recover(1), who(NULL), card(NULL)
+{
+
+}
+
+MpChangeStruct::MpChangeStruct()
+    :delta(1), who(NULL), card(NULL)
 {
 
 }
