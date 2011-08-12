@@ -408,7 +408,7 @@ void Dashboard::drawHp(QPainter *painter) const{
     if(total > 6){
         magatama = MagatamaWidget::GetSmallMagatama(index);
         zero_magatama = MagatamaWidget::GetSmallMagatama(0);
-        mp_maga = MagatamaWidget::GetSmallMpMagatama(index);
+        mp_maga = MagatamaWidget::GetSmallMpMagatama(1);
         zero_mp_maga = MagatamaWidget::GetSmallMpMagatama(0);
     }else{
         magatama = MagatamaWidget::GetMagatama(index);

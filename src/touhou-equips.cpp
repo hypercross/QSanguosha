@@ -286,12 +286,22 @@ void TouhouPackage::addEquips()
 {
     QList<Card*> cards;
 
-    cards << new Hisonoken(Card::Club,2)
-          << new Gungnir(Card::Heart,3)
-          << new MagicBook(Card::Spade,2)
-          << new Umbrella(Card::Diamond,2)
-          << new Pad(Card::Club,4)
-          << new Doll(Card::Club,5);
+    cards << new Tea(Card::Diamond,5);
+    cards << new Broomstick(Card::Diamond,13);
+    cards << new Hakkero(Card::Diamond,1);
+    cards << new Mushroom(Card::Club,11);
+    cards << new Sinbag(Card::Club,12);
+    cards << new Pants(Card::Club,6);
+    cards << new Hakkero(Card::Club,1);
+    cards << new ZunHat(Card::Heart,12);
+    cards << new Doll(Card::Heart,2);
+    cards << new Gungnir(Card::Heart,3);
+    cards << new MagicBook(Card::Spade,12);
+    cards << new Yukkuri(Card::Spade,13);
+    cards << new TenguFan(Card::Spade,1);
+    cards << new Pad(Card::Spade,2);
+    cards << new Umbrella(Card::Spade,2);
+    cards << new Hisonoken(Card::Spade,5);
 
     foreach(Card *card, cards)
         card->setParent(this);

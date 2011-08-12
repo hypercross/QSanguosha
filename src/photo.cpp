@@ -463,9 +463,9 @@ void Photo::drawHp(QPainter *painter){
         drawMagatama(painter, i, *zero_magatama);
 
     for(i=0; i< mp; i++)
-        drawMagatama(painter, i+5, *mp_magatama);
+        drawMagatama(painter, i, *mp_magatama);
     for(i=mp; i< max_mp; i++)
-        drawMagatama(painter, i+5, *mp_zero_magatama);
+        drawMagatama(painter, i, *mp_zero_magatama);
 }
 
 void Photo::setFrame(FrameType type){

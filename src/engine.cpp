@@ -30,16 +30,16 @@
 Engine *Sanguosha = NULL;
 
 extern "C" {
-    Package *NewStandard();
+    //Package *NewStandard();
     Package *NewWind();
     Package *NewFire();
     Package *NewThicket();
     Package *NewMountain();
-    Package *NewManeuvering();
+    //Package *NewManeuvering();
     Package *NewGod();
-    Package *NewYitian();
-    Package *NewNostalgia();
-    Package *NewJoy();
+    //Package *NewYitian();
+    //Package *NewNostalgia();
+    //Package *NewJoy();
     Package *NewSP();
     Package *NewYJCM();
     Package *NewTouhou();
@@ -61,16 +61,16 @@ Engine::Engine()
 {
     Sanguosha = this;
 
-    addPackage(NewStandard());
+    //addPackage(NewStandard());
     addPackage(NewWind());
     addPackage(NewFire());
     addPackage(NewThicket());
     addPackage(NewMountain());
-    addPackage(NewManeuvering());
+    //addPackage(NewManeuvering());
     addPackage(NewGod());
-    addPackage(NewYitian());
-    addPackage(NewNostalgia());
-    addPackage(NewJoy());
+    //addPackage(NewYitian());
+    //addPackage(NewNostalgia());
+    //addPackage(NewJoy());
     addPackage(NewSP());
     addPackage(NewYJCM());
     addPackage(NewTouhou());

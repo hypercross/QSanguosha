@@ -588,8 +588,8 @@ public:
         LogMessage log;
         log.type = "#Zunhat" ;
         log.from = player ;
-        log.arg  = change.delta-1;
-        log.arg2 = change.delta;
+        log.arg  = QString("%1").arg(change.delta-1);
+        log.arg2 = QString("%1").arg(change.delta);
         room->sendLog(log);
 
         return false;
@@ -773,6 +773,12 @@ public:
         if(!room->askForSkillInvoke(player,objectName()))return false;
 
         room->throwCard(player->getOffensiveHorse());
+
+        LogMessage log;
+        log.type = "#Sinbag";
+        log.from = player ;
+        room->sendLog(log);
+
         ServerPlayer* target = (event == TargetFinish) ? combat.from : combat.to;
         DamageStruct dmg;
         dmg.from = player;
@@ -796,56 +802,114 @@ TouhouPackage::TouhouPackage()
     :Package("touhou")
 {
     QList<Card *> cards;
-    int i=0;
-    for(;i<104;i++)
-        if(i<28)
-            cards<<new Barrage((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<38)
-            cards<<new Strike((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<50)
-            cards<<new Rune((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<58)
-            cards<<new Peach((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<61)
-            cards<<new Indulgence((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<67)
-            cards<<new Dismantlement((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<72)
-            cards<<new Snatch((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<75)
-            cards<<new ExNihilo((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<78)
-            cards<<new Dannatu((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<81)
-            cards<<new ExSpell((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<82)
-            cards<<new FullscreanBarrage((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<85)
-            cards<<new Nullification((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<87)
-            cards<<new AmazingGrace((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<88)
-            cards<<new GodSalvation((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<89)
-            cards<<new Surprise((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<93)
-            cards<<new NiceGuyCard((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<94)
-            cards<<new Yukkuri((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<95)
-            cards<<new Pants((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<96)
-            cards<<new Broomstick((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<97)
-            cards<<new ZunHat((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<98)
-            cards<<new Mushroom((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<99)
-            cards<<new Tea((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<100)
-            cards<<new Sinbag((Card::Suit)(i/26),(i%26)/2+1);
-        else if(i<101)
-            cards<<new Saisen((Card::Suit)(i/26),(i%26)/2+1);
+
+    cards << new Dannatu(Card::Spade,1);
+
+    cards << new Surprise(Card::Spade,3);
+    cards << new Snatch(Card::Spade,4);
+
+    cards << new ExSpell(Card::Spade,6);
+    cards << new Barrage(Card::Spade,7);
+    cards << new Barrage(Card::Spade,8);
+    cards << new Barrage(Card::Spade,9);
+    cards << new Barrage(Card::Spade,10);
+    cards << new Dismantlement(Card::Spade,11);
+    cards << new Nullification(Card::Spade,12);
+    cards << new ExSpell(Card::Spade,13);
+
+
+    cards << new Surprise(Card::Spade,3);
+    cards << new FullscreanBarrage(Card::Spade,4);
+    cards << new Barrage(Card::Spade,5);
+    cards << new Indulgence(Card::Spade,6);
+    cards << new Rune(Card::Spade,7);
+    cards << new Rune(Card::Spade,8);
+    cards << new Rune(Card::Spade,9);
+    cards << new Rune(Card::Spade,10);
+    cards << new SupplyShortage(Card::Spade,11);
+
+    cards << new GodSalvation(Card::Heart,1);
+    cards << new Strike(Card::Heart,2);
+    cards << new Dismantlement(Card::Heart,3);
+    cards << new Peach(Card::Heart,4);
+    cards << new Peach(Card::Heart,5);
+    cards << new Peach(Card::Heart,6);
+    cards << new Peach(Card::Heart,7);
+    cards << new Peach(Card::Heart,8);
+    cards << new Peach(Card::Heart,9);
+    cards << new Barrage(Card::Heart,10);
+    cards << new Barrage(Card::Heart,11);
+    cards << new Peach(Card::Heart,12);
+    cards << new Strike(Card::Heart,13);
+
+    cards << new FullscreanBarrage(Card::Heart,1);
+
+    cards << new AmazingGrace(Card::Heart,4);
+    cards << new AmazingGrace(Card::Heart,5);
+    cards << new Dismantlement(Card::Heart,6);
+    cards << new Dismantlement(Card::Heart,7);
+    cards << new ExNihilo(Card::Heart,8);
+    cards << new Indulgence(Card::Heart,9);
+    cards << new Barrage(Card::Heart,10);
+    cards << new ExNihilo(Card::Heart,11);
+
+    cards << new NiceGuyCard(Card::Heart,13);
+
+    cards << new Dannatu(Card::Club,1);
+    cards << new Barrage(Card::Club,2);
+    cards << new Barrage(Card::Club,3);
+    cards << new Barrage(Card::Club,4);
+    cards << new Barrage(Card::Club,5);
+    cards << new Barrage(Card::Club,6);
+    cards << new Barrage(Card::Club,7);
+    cards << new Barrage(Card::Club,8);
+    cards << new Barrage(Card::Club,9);
+    cards << new Barrage(Card::Club,10);
+    cards << new Barrage(Card::Club,11);
+    cards << new Collateral(Card::Club,12);
+    cards << new Nullification(Card::Club,13);
+
+
+    cards << new Rune(Card::Club,2);
+    cards << new Rune(Card::Club,3);
+    cards << new Rune(Card::Club,4);
+    cards << new SupplyShortage(Card::Club,5);
+
+    cards << new Rune(Card::Club,7);
+    cards << new Rune(Card::Club,8);
+    cards << new Rune(Card::Club,9);
+    cards << new Rune(Card::Club,10);
+
+    cards << new Rune(Card::Club,13);
+
+
+    cards << new Dismantlement(Card::Diamond,2);
+    cards << new Barrage(Card::Diamond,3);
+    cards << new Barrage(Card::Diamond,4);
+    cards << new Barrage(Card::Diamond,5);
+    cards << new Barrage(Card::Diamond,6);
+    cards << new Barrage(Card::Diamond,7);
+    cards << new Snatch(Card::Diamond,8);
+    cards << new Snatch(Card::Diamond,9);
+    cards << new ExSpell(Card::Diamond,10);
+    cards << new NiceGuyCard(Card::Diamond,11);
+    cards << new Nullification(Card::Diamond,12);
+
+
+    cards << new Surprise(Card::Diamond,1);
+    cards << new Strike(Card::Diamond,2);
+    cards << new Strike(Card::Diamond,3);
+    cards << new Strike(Card::Diamond,4);
+
+    cards << new Indulgence(Card::Diamond,6);
+    cards << new Strike(Card::Diamond,7);
+    cards << new Strike(Card::Diamond,8);
+    cards << new Strike(Card::Diamond,9);
+    cards << new Strike(Card::Diamond,10);
+    cards << new Surprise(Card::Diamond,11);
+    cards << new Peach(Card::Diamond,12);
+    cards << new Barrage(Card::Diamond,13);
+
 
 
     foreach(Card *card, cards)
