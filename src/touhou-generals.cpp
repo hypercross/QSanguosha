@@ -147,8 +147,8 @@ public:
         }
         else if(player->getPhase() == Player::Discard)
         {
-            int value = qBound(-10,3 - player->getMaxCards(),0);
-            player->setXueyi(value);
+            int value = qBound(-10,3 - player->getHp(),0);
+            player->setXueyi(value,false);
         }
         return false;
     }
