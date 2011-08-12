@@ -125,7 +125,7 @@ class Baka : public TriggerSkill
 public:
     Baka():TriggerSkill("baka")
     {
-        events << AttackDeclared << BlockDeclared;
+        events << AttackDeclared << BlockDeclared << PhaseChange;
 
         frequency = Compulsory;
     }
@@ -141,9 +141,14 @@ public:
         {
             player->getRoom()->showCard(player,data.value<CardStar>()->getEffectiveId());
         }
-        else{
+        else if(event == BlockDeclared){
             int cid = data.value<CombatStruct>().block->getEffectiveId();
             player->getRoom()->showCard(player,cid);
+        }
+        else if(player->getPhase() == Player::Discard)
+        {
+            int value = qBound(-10,3 - player->getMaxCards(),0);
+            player->setXueyi(value);
         }
         return false;
     }
@@ -192,6 +197,184 @@ public:
 
 };
 
+class WindGirl : public FilterSkill
+{
+public:
+    WindGirl():FilterSkill("wind_girl")
+    {
+
+    }
+
+    virtual bool viewFilter(const CardItem *to_select) const{
+        const Card *card = to_select->getCard();
+
+        return card->inherits("CombatCard") && !card->isEquipped();
+    }
+
+    virtual const Card *viewAs(CardItem *card_item) const{
+        const Card *card = card_item->getCard();
+        int number = card->getNumber() + 3 ;
+        if (number > 13) number = 13;
+
+        Card *newCombat;
+        if(card->inherits("Rune")) newCombat = new Rune(card->getSuit(),number);
+        else if(card->inherits("Strike")) newCombat = new Strike(card->getSuit(),number);
+        else if(card->inherits("Barrage")) newCombat = new Barrage(card->getSuit(),number);
+
+        newCombat->addSubcard(card->getId());
+        newCombat->setSkillName(objectName());
+        return newCombat;
+    }
+
+};
+
+class FastshotViewas : public OneCardViewAsSkill
+{
+public:
+    FastshotViewas():OneCardViewAsSkill("fast_shot")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return player->getMp()>0;
+    }
+
+    virtual bool viewFilter(const CardItem *to_select) const
+    {
+        return to_select->getCard()->isBlack();
+    }
+
+    virtual const Card* viewAs(CardItem *card_item) const
+    {
+        const Card* card = card_item->getFilteredCard();
+        Surprise * fscard=new Surprise(card->getSuit(),card->getNumber());
+        fscard->addSubcard(card);
+        fscard->setSkillName(objectName());
+        return fscard;
+    }
+};
+
+class Fastshot : public TriggerSkill
+{
+public:
+    Fastshot():TriggerSkill("fast_shot")
+    {
+        view_as_skill = new FastshotViewas;
+
+        events << CardUsed;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        CardUseStruct use = data.value<CardUseStruct>();
+        if(!use.card->isVirtualCard())return false;
+        if(!use.card->inherits("Surprise"))return false;
+
+        if(player->getMp()<1)return true;
+        player->getRoom()->changeMp(player,-1);
+
+        return false;
+    }
+};
+
+class PhoenixTailViewas : public OneCardViewAsSkill
+{
+public:
+    PhoenixTailViewas():OneCardViewAsSkill("phoenix_tail")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return player->getMp()>1;
+    }
+
+    virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const
+    {
+        return pattern == "peach+analeptic" && player->getMp()>1;
+    }
+
+    virtual bool viewFilter(const CardItem *to_select) const
+    {
+        return to_select->getCard()->isRed();
+    }
+
+    virtual const Card* viewAs(CardItem *card_item) const
+    {
+        const Card* card = card_item->getFilteredCard();
+        ExSpell * fscard=new ExSpell(card->getSuit(),card->getNumber());
+        fscard->addSubcard(card);
+        fscard->setSkillName(objectName());
+        return fscard;
+    }
+};
+
+class PhoenixTail : public TriggerSkill
+{
+public:
+    PhoenixTail():TriggerSkill("phoenix_tail")
+    {
+        view_as_skill = new PhoenixTailViewas;
+
+        events << CardUsed;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        CardUseStruct use = data.value<CardUseStruct>();
+        if(!use.card->isVirtualCard())return false;
+        if(!use.card->inherits("ExSpell"))return false;
+
+        if(player->getMp()<2)return true;
+        player->getRoom()->changeMp(player,-2);
+
+        return false;
+    }
+};
+
+
+class PhoenixSoar : public ZeroCardViewAsSkill
+{
+public:
+    PhoenixSoar():ZeroCardViewAsSkill("phoenix_soar")
+    {
+
+    }
+
+    virtual const Card* viewAs() const
+    {
+        return new PhoenixSoarCard();
+    }
+};
+
+PhoenixSoarCard::PhoenixSoarCard()
+{
+    setObjectName("phoenix_soar");
+
+    target_fixed = true;
+}
+
+void PhoenixSoarCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    room->changeMp(source,2);
+    room->loseHp(source);
+
+
+    source->jilei(NULL);
+    source->invoke("jilei",NULL);
+
+    LogMessage log;
+    log.type = "#JileiClear";
+    log.from = source;
+    room->sendLog(log);
+
+    room->setPlayerFlag(source,"-jilei");
+    room->setPlayerFlag(source,"-jilei_temp");
+}
+
 void TouhouPackage::addGenerals()
 {
     General *lingmeng = new General(this,"reimu","wei", 3, false ,false, 4);
@@ -202,7 +385,16 @@ void TouhouPackage::addGenerals()
     chiruno->addSkill(new Baka);
     chiruno->addSkill(new PerfectFreeze);
 
+    General *aya =new General(this,"aya","wei",3,false,false,3);
+    aya->addSkill(new WindGirl);
+    aya->addSkill(new Fastshot);
+
+    General *mokou = new General(this,"mokou","wei",4,false,false,3);
+    mokou->addSkill(new PhoenixTail);
+    mokou->addSkill(new PhoenixSoar);
+
     skills << new GuifuDetacher << new GuifuConstraint;
     addMetaObject<GuifuCard>();
     addMetaObject<FreezeCard>();
+    addMetaObject<PhoenixSoarCard>();
 }
