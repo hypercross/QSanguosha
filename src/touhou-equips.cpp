@@ -35,7 +35,9 @@ public:
         foreach(ServerPlayer* aplayer, reveal.opponets)
             if(aplayer->getPile("Defense").length() > 0) to << aplayer ;
 
-        if(to.length()<1 || !room -> askForSkillInvoke(player,objectName()))return false;
+        if(to.length()<1 || player->getMp()<1 || !room -> askForSkillInvoke(player,objectName()))return false;
+
+        room->changeMp(player,-1);
 
         ServerPlayer * target = room->askForPlayerChosen(player,to,objectName());
 
@@ -56,7 +58,7 @@ public:
 };
 
 Hisonoken::Hisonoken(Card::Suit suit, int number)
-    :Weapon(suit, number, 1)
+    :Weapon(suit, number, 3)
 {
     setObjectName("hisonoken");
     skill = new HisonokenSkill;
@@ -123,7 +125,7 @@ public:
 
             Room * room = player->getRoom();
 
-            while( room->askForCard(player,"barrage","magic-book-barrage"))player->addMark("MagicBookCount");
+            while( room->askForCard(player,"rune","magic-book-rune"))player->addMark("MagicBookCount");
             return false;
         }
 
@@ -174,7 +176,7 @@ public:
         CombatStruct effect = data.value<CombatStruct>();
         Room *room = player->getRoom();
 
-        if(effect.to->isChained()){
+        if(effect.to->isChained() || effect.to->hasFlag("jilei") || effect.to->hasFlag("jilei_temp")){
             if(effect.from->askForSkillInvoke(objectName())){
                 bool draw_card = false;
 

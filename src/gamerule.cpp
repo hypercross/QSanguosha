@@ -75,7 +75,7 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
 
     case Player::Discard:{
             int discard_num = player->getHandcardNum() - player->getMaxCards();
-            if(player->hasFlag("jilei")){
+            if(player->hasFlag("jilei") || player->hasFlag("jilei_temp")){
                 QSet<const Card *> jilei_cards;
                 QList<const Card *> handcards = player->getHandcards();
                 foreach(const Card *card, handcards){
@@ -113,6 +113,7 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
                 room->setPlayerFlag(player, "-drank");
             }
 
+
             if(player->hasFlag("jilei")){
                 player->jilei(NULL);
                 player->invoke("jilei",NULL);
@@ -121,6 +122,24 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
                 log.type = "#JileiClear";
                 log.from = player;
                 room->sendLog(log);
+
+                room->setPlayerFlag(player,"-jilei");
+            }
+
+            foreach(ServerPlayer* aplayer, room->getAlivePlayers())
+            {
+                if(aplayer->hasFlag("jilei_temp") && !aplayer->hasFlag("jilei"))
+                {
+                    aplayer->jilei(NULL);
+                    aplayer->invoke("jilei",NULL);
+
+                    LogMessage log;
+                    log.type = "#JileiClear";
+                    log.from = aplayer;
+                    room->sendLog(log);
+
+                    room->setPlayerFlag(aplayer,"-jilei_temp");
+                }
             }
 
             player->clearFlags();
@@ -325,7 +344,7 @@ bool GameRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data)
             room->sendDamageLog(damage);
 
             room->applyDamage(player, damage);
-            if(player->getHp() <= 0){
+            if(player->getHp() <= 0 && ! player->hasFlag("dying")){
                 room->enterDying(player, &damage);
             }
 
@@ -434,22 +453,29 @@ bool GameRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data)
     case CombatTargetDeclared:{
             CombatStruct effect = data.value<CombatStruct>();
 
-            bool broken = room->getThread()->trigger(BlockDeclare, effect.from, data);
+            bool broken = room->getThread()->trigger(BlockDeclare, effect.to, data);
             if(!broken){
                 const Card* block=room->askForCard(effect.to,".","blockCard",false);
                 effect.block=block;
                 effect.to->tag["combatEffective"]=true;
                 if(!block)break;
-                //QVariant data = QVariant::fromValue(effect);
-                //effect.to->tag["chosenBlock"]=QVariant::fromValue(block);
-                effect.to->addToPile("Defense",block->getId(),false);
+
+                effect.to->addToPile("Defense",block->getEffectiveId(),false);
+                if(block->getSkillName().length()>0)
+                {
+                    effect.to->tag["Combat_Convert_From"] = block->getEffectiveId();
+                    effect.to->tag["Combat_Convert_To"] = block->toString();
+                }
+
 
                 LogMessage log;
                 log.type = "#chosenBlock";
                 log.from = effect.to;
                 room->sendLog(log);
 
-                room->getThread()->trigger(BlockDeclared, effect.from);
+                QVariant declareData = QVariant::fromValue(effect);
+
+                room->getThread()->trigger(BlockDeclared, effect.to, declareData);
             }
 
             break;

@@ -337,6 +337,15 @@ SupplyShortage::SupplyShortage(Card::Suit suit, int number)
     judge.reason = objectName();
 }
 
+void SupplyShortage::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    int consum = source->distanceTo(targets.first()) - 1 ;
+
+    if(source->getMp()<consum)return;
+    room->changeMp(source,consum);
+    DelayedTrick::use(room,source,targets);
+}
+
 bool SupplyShortage::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const{
     if(!targets.isEmpty())
         return false;
@@ -351,10 +360,8 @@ bool SupplyShortage::targetFilter(const QList<const Player *> &targets, const Pl
         return true;
 
     int distance = Self->distanceTo(to_select);
-    if(Self->hasSkill("duanliang"))
-        return distance <= 2;
-    else
-        return distance <= 1;
+
+        return distance <= 1 + Self->getMp();
 }
 
 void SupplyShortage::takeEffect(ServerPlayer *target) const{
@@ -430,10 +437,10 @@ ManeuveringPackage::ManeuveringPackage()
 
     cards << hualiu;
 
-    foreach(Card *card, cards)
-        card->setParent(this);
+//    foreach(Card *card, cards)
+//        card->setParent(this);
 
-    type = CardPack;
+    type = SpecialPack;
 }
 
 ADD_PACKAGE(Maneuvering)

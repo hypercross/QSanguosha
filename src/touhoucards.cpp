@@ -58,8 +58,20 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
 
 
     //set attacker & ask for blocker
+    CardStar declare = this;
+    QVariant data = QVariant::fromValue(declare);
+    bool broken = room->getThread()->trigger(AttackDeclare,source,data);
+    declare = data.value<CardStar>();
+    if(broken || !declare->inherits("CombatCard"))return;
 
-    source->addToPile("Attack",this->getEffectiveId(),false);
+    source->addToPile("Attack",declare->getEffectiveId(),false);
+    if(declare->getSkillName().length()>0)
+    {
+        source->tag["Combat_Convert_From"] = declare->getEffectiveId();
+        source->tag["Combat_Convert_To"] = declare->toString();
+    }
+
+    room->getThread()->trigger(AttackDeclared,source,data);
 
     BasicCard::use(room,source,targets);
     room->getThread()->delay();
@@ -67,24 +79,33 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
 
     // reveal attacker
     CombatRevealStruct reveal;
+
     reveal.revealed = Sanguosha->getCard(source->getPile("Attack").first());
+    if(reveal.revealed->getEffectiveId() == source->tag["Combat_Convert_From"].toInt())
+        reveal.revealed = Card::Parse(source->tag["Combat_Convert_To"].toString());
+
+    source->tag["Combat_Convert_From"] = QVariant();
+    source->tag["Combat_Convert_To"]   = QVariant();
+
+
     reveal.who      = source ;
     reveal.attacker = true ;
     foreach(ServerPlayer* player,room->getAlivePlayers())
         reveal.opponets << player;
 
-    QVariant data = QVariant::fromValue(reveal);
+    data = QVariant::fromValue(reveal);
 
-    bool broken=room->getThread()->trigger(CombatReveal,source,data);
-    if(broken || !reveal.revealed->inherits("CombatCard"))return;
+    broken=room->getThread()->trigger(CombatReveal,source,data);
     reveal = data.value<CombatRevealStruct>();
+    if(broken || !reveal.revealed->inherits("CombatCard"))return;
+
 
     const Card * attackCard = reveal.revealed;
 
     LogMessage log;
-    log.type = "$revealResult";
+    log.type = QString("%1%2").arg(attackCard->isVirtualCard() ? "#" : "$").arg("revealResult");
     log.from = source;
-    log.card_str = attackCard->getEffectIdString();
+    log.card_str = attackCard->toString();
     room->sendLog(log);
 
     room->throwCard(attackCard);
@@ -111,21 +132,30 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
             if(pile.length()>0)
             {
                 CombatRevealStruct block_reveal;
+
                 block_reveal.revealed = Sanguosha->getCard(pile.first());
+                if(block_reveal.revealed->getEffectiveId() == player->tag["Combat_Convert_From"].toInt())
+                    block_reveal.revealed = Card::Parse(player->tag["Combat_Convert_To"].toString());
+
+
+                player->tag["Combat_Convert_From"] = QVariant();
+                player->tag["Combat_Convert_To"]   = QVariant();
+
+
                 block_reveal.who      = player;
                 block_reveal.opponets << source;
 
                 data = QVariant::fromValue(block_reveal);
                 broken = room->getThread()->trigger(CombatReveal,player,data);
-                if(broken)continue;
                 block_reveal = data.value<CombatRevealStruct>();
+                if(broken)continue;
 
                 blocker = block_reveal.revealed;
 
                 LogMessage log;
-                log.type = "$revealResult";
+                log.type = QString("%1%2").arg(blocker->isVirtualCard() ? "#" : "$").arg("revealResult");
                 log.from = player;
-                log.card_str = blocker->getEffectIdString();
+                log.card_str = blocker->toString();
                 room->sendLog(log);
 
                 room->throwCard(blocker);
@@ -261,7 +291,7 @@ void Strike::resolveAttack(CombatStruct &combat) const
         combat.from->getRoom()->obtainCard(combat.from,this->getEffectiveId());
         combat.from->jilei(QString(this->getEffectiveId()));
         combat.from->invoke("jilei",this->getEffectIdString());
-        combat.from->setFlags("jilei");
+        combat.from->setFlags("jilei_temp");
     }
 }
 
@@ -270,9 +300,9 @@ void Strike::resolveDefense(CombatStruct &combat) const
     if(combat.to->getRoom()->obtainable(this,combat.to))
     {
         combat.to->getRoom()->obtainCard(combat.to,this->getEffectiveId());
-//        combat.to->jilei(QString(this->getEffectiveId()));
-//        combat.to->invoke("jilei",this->getEffectIdString());
-//        combat.to->setFlags("jilei");
+        combat.to->jilei(QString(this->getEffectiveId()));
+        combat.to->invoke("jilei",this->getEffectIdString());
+        combat.to->setFlags("jilei_temp");
     }
 }
 
@@ -436,7 +466,7 @@ Surprise::Surprise(Card::Suit suit, int number)
 
 bool Surprise::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const
 {
-    return (to_select != Self) && targets.isEmpty();
+    return (to_select != Self) && targets.isEmpty() && (to_select->getHandcardNum()>0);
 }
 
 void Surprise::onEffect(const CardEffectStruct &effect) const
@@ -566,7 +596,7 @@ public:
     ZunHatSkill():TriggerSkill("zunhat")
     {
         events << MpChanged;
-        frequency = Frequent;
+        frequency = Compulsory;
     }
 
     virtual bool triggerable(const ServerPlayer *target) const
@@ -580,7 +610,7 @@ public:
         if(change.delta<0)return false;
 
         Room *room = player->getRoom();
-        if(!room->askForSkillInvoke(player,objectName()))return false;
+        //if(!room->askForSkillInvoke(player,objectName()))return false;
 
         change.delta++;
         data = QVariant::fromValue(change);

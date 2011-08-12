@@ -1108,8 +1108,8 @@ void StandardPackage::addCards(){
           << new Lightning(Card::Heart, 12)
           << new Nullification(Card::Diamond, 12);
 
-    foreach(Card *card, cards)
-        card->setParent(this);
+//    foreach(Card *card, cards)
+//        card->setParent(this);
 
     skills << new SpearSkill << new AxeViewAsSkill;
 }

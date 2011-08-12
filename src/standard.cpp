@@ -436,6 +436,8 @@ StandardPackage::StandardPackage()
     addCards();
     addGenerals();
 
+    type =SpecialPack;
+
     patterns["."] = new HandcardPattern;
     patterns[".S"] = new SuitPattern(Card::Spade);
     patterns[".C"] = new SuitPattern(Card::Club);
@@ -450,6 +452,7 @@ StandardPackage::StandardPackage()
 
     patterns["barrage"] = new NamePattern("barrage");
     patterns["strike"] = new NamePattern("strike");
+    patterns["rune"] = new NamePattern("eune");
     patterns[".combat"] = new InheritancePattern("CombatCard");
 }
 

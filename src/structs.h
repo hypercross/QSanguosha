@@ -200,6 +200,8 @@ enum TriggerEvent{
     TargetFinished,
 
     MpChanged,
+    AttackDeclare,
+    AttackDeclared,
 
     NumOfEvents,
 };
