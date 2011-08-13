@@ -31,26 +31,26 @@ Engine *Sanguosha = NULL;
 
 extern "C" {
     Package *NewStandard();
-    Package *NewWind();
-    Package *NewFire();
-    Package *NewThicket();
-    Package *NewMountain();
+    //Package *NewWind();
+    //Package *NewFire();
+    //Package *NewThicket();
+    //Package *NewMountain();
     Package *NewManeuvering();
-    Package *NewGod();
+    //Package *NewGod();
     //Package *NewYitian();
     //Package *NewNostalgia();
     //Package *NewJoy();
-    Package *NewSP();
-    Package *NewYJCM();
+    //Package *NewSP();
+    //Package *NewYJCM();
     Package *NewTouhou();
 
-    Scenario *NewGuanduScenario();
-    Scenario *NewFanchengScenario();
-    Scenario *NewCoupleScenario();
-    Scenario *NewHongyanScenario();
+    //Scenario *NewGuanduScenario();
+//    Scenario *NewFanchengScenario();
+//    Scenario *NewCoupleScenario();
+//    Scenario *NewHongyanScenario();
     Scenario *NewZombieScenario();
     Scenario *NewLegendScenario();
-    Scenario *NewImpasseScenario();
+//    Scenario *NewImpasseScenario();
 }
 
 extern "C" {
@@ -62,33 +62,33 @@ Engine::Engine()
     Sanguosha = this;
 
     addPackage(NewStandard());
-    addPackage(NewWind());
-    addPackage(NewFire());
-    addPackage(NewThicket());
-    addPackage(NewMountain());
+//    addPackage(NewWind());
+//    addPackage(NewFire());
+//    addPackage(NewThicket());
+//    addPackage(NewMountain());
     addPackage(NewManeuvering());
-    addPackage(NewGod());
+//    addPackage(NewGod());
     //addPackage(NewYitian());
     //addPackage(NewNostalgia());
     //addPackage(NewJoy());
-    addPackage(NewSP());
-    addPackage(NewYJCM());
+//    addPackage(NewSP());
+//    addPackage(NewYJCM());
     addPackage(NewTouhou());
 
     {
         Package *test_package = new Package("test");
         (new General(test_package, "sujiang", "god", 5, true, true));
         (new General(test_package, "sujiangf", "god", 5, false, true));
-        addPackage(test_package);
+//        addPackage(test_package);
     }
 
-    addScenario(NewGuanduScenario());
-    addScenario(NewFanchengScenario());
-    addScenario(NewCoupleScenario());
-    addScenario(NewHongyanScenario());
-    addScenario(NewZombieScenario());
+//    addScenario(NewGuanduScenario());
+//    addScenario(NewFanchengScenario());
+//    addScenario(NewCoupleScenario());
+//    addScenario(NewHongyanScenario());
+//    addScenario(NewZombieScenario());
     addScenario(NewLegendScenario());
-    addScenario(NewImpasseScenario());
+//    addScenario(NewImpasseScenario());
 
     // available game modes
     modes["02p"] = tr("2 players");
@@ -355,6 +355,9 @@ QStringList Engine::getExtensions() const{
     QList<const Package *> packages = findChildren<const Package *>();
     foreach(const Package *package, packages){
         if(package->inherits("Scenario"))
+            continue;
+
+        if(package->inherits("StandardPackage") || package->inherits("ManeuveringPackage"))
             continue;
 
         extensions << package->objectName();

@@ -1283,122 +1283,122 @@ public:
 };
 
 void StandardPackage::addGenerals(){
-    General *caocao, *zhangliao, *guojia, *xiahoudun, *simayi, *xuchu, *zhenji;
+//    General *caocao, *zhangliao, *guojia, *xiahoudun, *simayi, *xuchu, *zhenji;
 
-    caocao = new General(this, "caocao$", "wei");
-    caocao->addSkill(new Jianxiong);
-    caocao->addSkill(new Hujia);
+//    caocao = new General(this, "caocao$", "wei");
+//    caocao->addSkill(new Jianxiong);
+//    caocao->addSkill(new Hujia);
 
-    zhangliao = new General(this, "zhangliao", "wei");
-    zhangliao->addSkill(new Tuxi);
+//    zhangliao = new General(this, "zhangliao", "wei");
+//    zhangliao->addSkill(new Tuxi);
 
-    guojia = new General(this, "guojia", "wei", 3);
-    guojia->addSkill(new Tiandu);
-    guojia->addSkill(new Yiji);
+//    guojia = new General(this, "guojia", "wei", 3);
+//    guojia->addSkill(new Tiandu);
+//    guojia->addSkill(new Yiji);
 
-    xiahoudun = new General(this, "xiahoudun", "wei");
-    xiahoudun->addSkill(new Ganglie);
+//    xiahoudun = new General(this, "xiahoudun", "wei");
+//    xiahoudun->addSkill(new Ganglie);
 
-    simayi = new General(this, "simayi", "wei", 3);
-    simayi->addSkill(new Fankui);
-    simayi->addSkill(new Guicai);
+//    simayi = new General(this, "simayi", "wei", 3);
+//    simayi->addSkill(new Fankui);
+//    simayi->addSkill(new Guicai);
 
-    xuchu = new General(this, "xuchu", "wei");
-    xuchu->addSkill(new Luoyi);
-    xuchu->addSkill(new LuoyiBuff);
+//    xuchu = new General(this, "xuchu", "wei");
+//    xuchu->addSkill(new Luoyi);
+//    xuchu->addSkill(new LuoyiBuff);
 
-    related_skills.insertMulti("luoyi", "#luoyi");
+//    related_skills.insertMulti("luoyi", "#luoyi");
 
-    zhenji = new General(this, "zhenji", "wei", 3, false);
-    zhenji->addSkill(new Luoshen);
-    zhenji->addSkill(new Qingguo);
+//    zhenji = new General(this, "zhenji", "wei", 3, false);
+//    zhenji->addSkill(new Luoshen);
+//    zhenji->addSkill(new Qingguo);
 
-    General *liubei, *guanyu, *zhangfei, *zhaoyun, *machao, *zhugeliang, *huangyueying;
-    liubei = new General(this, "liubei$", "shu");
-    liubei->addSkill(new Rende);
-    liubei->addSkill(new Jijiang);
+//    General *liubei, *guanyu, *zhangfei, *zhaoyun, *machao, *zhugeliang, *huangyueying;
+//    liubei = new General(this, "liubei$", "shu");
+//    liubei->addSkill(new Rende);
+//    liubei->addSkill(new Jijiang);
 
-    guanyu = new General(this, "guanyu", "shu");
-    guanyu->addSkill(new Wusheng);
+//    guanyu = new General(this, "guanyu", "shu");
+//    guanyu->addSkill(new Wusheng);
 
-    zhangfei = new General(this, "zhangfei", "shu");
-    zhangfei->addSkill(new Skill("paoxiao"));
+//    zhangfei = new General(this, "zhangfei", "shu");
+//    zhangfei->addSkill(new Skill("paoxiao"));
 
-    zhaoyun = new General(this, "zhaoyun", "shu");
-    zhaoyun->addSkill(new Longdan);
+//    zhaoyun = new General(this, "zhaoyun", "shu");
+//    zhaoyun->addSkill(new Longdan);
 
-    machao = new General(this, "machao", "shu");
-    machao->addSkill(new Tieji);
-    machao->addSkill(new Mashu);
+//    machao = new General(this, "machao", "shu");
+//    machao->addSkill(new Tieji);
+//    machao->addSkill(new Mashu);
 
-    zhugeliang = new General(this, "zhugeliang", "shu", 3);
-    zhugeliang->addSkill(new Guanxing);
-    zhugeliang->addSkill(new Kongcheng);
-    zhugeliang->addSkill(new KongchengEffect);
+//    zhugeliang = new General(this, "zhugeliang", "shu", 3);
+//    zhugeliang->addSkill(new Guanxing);
+//    zhugeliang->addSkill(new Kongcheng);
+//    zhugeliang->addSkill(new KongchengEffect);
 
-    related_skills.insertMulti("kongcheng", "#kongcheng-effect");
+//    related_skills.insertMulti("kongcheng", "#kongcheng-effect");
 
-    huangyueying = new General(this, "huangyueying", "shu", 3, false);
-    huangyueying->addSkill(new Jizhi);
-    huangyueying->addSkill(new Skill("qicai", Skill::Compulsory));
+//    huangyueying = new General(this, "huangyueying", "shu", 3, false);
+//    huangyueying->addSkill(new Jizhi);
+//    huangyueying->addSkill(new Skill("qicai", Skill::Compulsory));
 
-    General *sunquan, *zhouyu, *lumeng, *luxun, *ganning, *huanggai, *daqiao, *sunshangxiang;
-    sunquan = new General(this, "sunquan$", "wu");
-    sunquan->addSkill(new Zhiheng);
-    sunquan->addSkill(new Jiuyuan);
+//    General *sunquan, *zhouyu, *lumeng, *luxun, *ganning, *huanggai, *daqiao, *sunshangxiang;
+//    sunquan = new General(this, "sunquan$", "wu");
+//    sunquan->addSkill(new Zhiheng);
+//    sunquan->addSkill(new Jiuyuan);
 
-    zhouyu = new General(this, "zhouyu", "wu", 3);
-    zhouyu->addSkill(new Yingzi);
-    zhouyu->addSkill(new Fanjian);
+//    zhouyu = new General(this, "zhouyu", "wu", 3);
+//    zhouyu->addSkill(new Yingzi);
+//    zhouyu->addSkill(new Fanjian);
 
-    lumeng = new General(this, "lumeng", "wu");
-    lumeng->addSkill(new Keji);
-    lumeng->addSkill(new KejiSkip);
+//    lumeng = new General(this, "lumeng", "wu");
+//    lumeng->addSkill(new Keji);
+//    lumeng->addSkill(new KejiSkip);
 
-    related_skills.insertMulti("keji", "#keji-skip");
+//    related_skills.insertMulti("keji", "#keji-skip");
 
-    luxun = new General(this, "luxun", "wu", 3);
-    luxun->addSkill(new Qianxun);
-    luxun->addSkill(new Lianying);
+//    luxun = new General(this, "luxun", "wu", 3);
+//    luxun->addSkill(new Qianxun);
+//    luxun->addSkill(new Lianying);
 
-    ganning = new General(this, "ganning", "wu");
-    ganning->addSkill(new Qixi);
+//    ganning = new General(this, "ganning", "wu");
+//    ganning->addSkill(new Qixi);
 
-    huanggai = new General(this, "huanggai", "wu");
-    huanggai->addSkill(new Kurou);
+//    huanggai = new General(this, "huanggai", "wu");
+//    huanggai->addSkill(new Kurou);
 
-    daqiao = new General(this, "daqiao", "wu", 3, false);
-    daqiao->addSkill(new Guose);
-    daqiao->addSkill(new Liuli);
+//    daqiao = new General(this, "daqiao", "wu", 3, false);
+//    daqiao->addSkill(new Guose);
+//    daqiao->addSkill(new Liuli);
 
-    sunshangxiang = new General(this, "sunshangxiang", "wu", 3, false);
-    sunshangxiang->addSkill(new Chujia);
-    sunshangxiang->addSkill(new Jieyin);
-    sunshangxiang->addSkill(new Xiaoji);
+//    sunshangxiang = new General(this, "sunshangxiang", "wu", 3, false);
+//    sunshangxiang->addSkill(new Chujia);
+//    sunshangxiang->addSkill(new Jieyin);
+//    sunshangxiang->addSkill(new Xiaoji);
 
-    General *lubu, *huatuo, *diaochan;
+//    General *lubu, *huatuo, *diaochan;
 
-    lubu = new General(this, "lubu", "qun");
-    lubu->addSkill(new Wushuang);
+//    lubu = new General(this, "lubu", "qun");
+//    lubu->addSkill(new Wushuang);
 
-    huatuo = new General(this, "huatuo", "qun", 3);
-    huatuo->addSkill(new Qingnang);
-    huatuo->addSkill(new Jijiu);
+//    huatuo = new General(this, "huatuo", "qun", 3);
+//    huatuo->addSkill(new Qingnang);
+//    huatuo->addSkill(new Jijiu);
 
-    diaochan = new General(this, "diaochan", "qun", 3, false);
-    diaochan->addSkill(new Lijian);
-    diaochan->addSkill(new Biyue);
-    diaochan->addSkill(new Tuoqiao);
+//    diaochan = new General(this, "diaochan", "qun", 3, false);
+//    diaochan->addSkill(new Lijian);
+//    diaochan->addSkill(new Biyue);
+//    diaochan->addSkill(new Tuoqiao);
 
-    // for test only
-    General *zhiba_sunquan = new General(this, "zhibasunquan$", "wu", 4, true, true);
-    zhiba_sunquan->addSkill(new Zhiba);
-    zhiba_sunquan->addSkill("jiuyuan");
+//    // for test only
+//    General *zhiba_sunquan = new General(this, "zhibasunquan$", "wu", 4, true, true);
+//    zhiba_sunquan->addSkill(new Zhiba);
+//    zhiba_sunquan->addSkill("jiuyuan");
 
-    General *wuxing_zhuge = new General(this, "wuxingzhuge", "shu", 3, true, true);
-    wuxing_zhuge->addSkill(new SuperGuanxing);
-    wuxing_zhuge->addSkill("kongcheng");
-    wuxing_zhuge->addSkill("#kongcheng-effect");
+//    General *wuxing_zhuge = new General(this, "wuxingzhuge", "shu", 3, true, true);
+//    wuxing_zhuge->addSkill(new SuperGuanxing);
+//    wuxing_zhuge->addSkill("kongcheng");
+//    wuxing_zhuge->addSkill("#kongcheng-effect");
 
     // for skill cards
     addMetaObject<ZhihengCard>();

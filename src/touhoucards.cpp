@@ -74,7 +74,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     room->getThread()->trigger(AttackDeclared,source,data);
 
     BasicCard::use(room,source,targets);
-    room->getThread()->delay(200);
+    room->getThread()->delay(500);
 
 
     // reveal attacker
@@ -112,7 +112,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
 
     broken = room->getThread()->trigger(CombatRevealed,source,data);
     if(broken)return;
-    room->getThread()->delay(200);
+    room->getThread()->delay();
 
 
     // reveal each blocker and finish combat
@@ -163,7 +163,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
                 broken = room->getThread()->trigger(CombatRevealed,player,data);
                 if(broken)continue;
 
-                room->getThread()->delay(200);
+                room->getThread()->delay();
             }
 
 
