@@ -624,7 +624,7 @@ const Card *Room::askForCard(ServerPlayer *player, const QString &pattern, const
             getResult("responseCardCommand", player);
 
             if(result.isEmpty())
-                return askForCard(player, pattern, prompt);
+                return askForCard(player, pattern, prompt, throw_it);
 
             if(result != ".")
                 card = Card::Parse(result);

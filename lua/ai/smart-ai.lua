@@ -537,6 +537,8 @@ function SmartAI:filterEvent(event, player, data)
 	
 	if (event == sgs.PhaseChange) or (event == sgs.GameStart) then
 		self:updatePlayers()
+		self.usedCombat = true
+		
 		for _,skill in ipairs(sgs.ai_skills) do
 			if self:hasSkill(skill) then
 			self[skill.name.."_used"]=false
@@ -951,78 +953,24 @@ function SmartAI:useBasicCard(card, use,no_distance)
 		self.slash_targets=3
 	end	
 	
-	if card:inherits("Slash") and self:slashIsAvailable() then
+	if card:inherits("CombatCard") and self.usedCombat then
 		local target_count=0
-		for _, friend in ipairs(self.friends_noself) do						
-			local slash_prohibit=false
-			slash_prohibit=self:slashProhibit(card,friend)
-			if (self.player:hasSkill("pojun") and friend:getHp() >3 and self:getJinkNumber(friend) == 0) 
-			or (self.player:hasSkill("wushuang") and friend:hasSkill("leiji") and self:getJinkNumber(friend) > 1 and self.player:getHandcardNum() > 2 and #self.enemies > 0)
-			or (friend:hasSkill("leiji") and self:getJinkNumber(friend) > 0)
-			or (friend:isLord() and self.player:hasSkill("guagu") and friend:getLostHp()>=1 and self:getJinkNumber(friend)==0)
-			then
-				if not slash_prohibit then
-					if ((self.player:canSlash(friend, not no_distance)) or 
-						(use.isDummy and (self.player:distanceTo(friend)<=self.predictedRange))) and 
-						self:slashIsEffective(card, friend) then
-						use.card=card
-						if use.to then 
-							use.to:append(friend) 
-							self:speak("hostile", self.player:getGeneral():isFemale())
-						end
-						target_count=target_count+1
-						if self.slash_targets<=target_count then return end
-					end
-				end	
---				break
-			end
-		end	
-	
+		
+		
+	self:log("sdadw")
 		self:sort(self.enemies, "defense")
 		for _, enemy in ipairs(self.enemies) do
-			local slash_prohibit=false
-			slash_prohibit=self:slashProhibit(card,enemy)
-			if not slash_prohibit then
-				self.predictedRange = self.player:getAttackRange()
-				if ((self.player:canSlash(enemy, not no_distance)) or 
-				(use.isDummy and self.predictedRange and (self.player:distanceTo(enemy)<=self.predictedRange))) and 
-				self:objectiveLevel(enemy)>3 and
-				self:slashIsEffective(card, enemy) then
-					-- fill the card use struct
-					local anal=self:searchForAnaleptic(use,enemy,card)
-					if anal then 
-						use.card = anal
-						return 
-					end
+			
 					use.card=card
-					if use.to then use.to:append(enemy) end
-					target_count=target_count+1
-					if self.slash_targets<=target_count then return end
-				end
-			end
+					if use.to then 
+						use.to:append(enemy) 
+						self.usedCombat = false
+					end
+					
+					return
 		end
 		
-		for _, friend in ipairs(self.friends_noself) do	
-			if friend:hasSkill("yiji") and friend:getLostHp() < 1 and 
-				not (friend:containsTrick("indulgence") or friend:containsTrick("supply_shortage")) then
-				local slash_prohibit=false
-				slash_prohibit=self:slashProhibit(card, friend)
-				if not slash_prohibit then
-					if ((self.player:canSlash(friend, not no_distance)) or 
-						(use.isDummy and (self.player:distanceTo(friend)<=self.predictedRange))) and 
-						self:slashIsEffective(card, friend) then
-						use.card=card
-						if use.to then 
-							use.to:append(friend) 
-							self:speak("yiji")
-						end
-						target_count=target_count+1
-						if self.slash_targets<=target_count then return end
-					end
-				end	
-				break
-			end
-		end
+	
 		
 	elseif card:inherits("Peach") and self.player:isWounded() then
 		local peaches=0

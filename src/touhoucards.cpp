@@ -74,7 +74,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     room->getThread()->trigger(AttackDeclared,source,data);
 
     BasicCard::use(room,source,targets);
-    room->getThread()->delay();
+    room->getThread()->delay(200);
 
 
     // reveal attacker
@@ -84,7 +84,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     if(reveal.revealed->getEffectiveId() == source->tag["Combat_Convert_From"].toInt())
         reveal.revealed = Card::Parse(source->tag["Combat_Convert_To"].toString());
 
-    source->tag["Combat_Convert_From"] = QVariant();
+    source->tag["Combat_Convert_From"] = -1;
     source->tag["Combat_Convert_To"]   = QVariant();
 
 
@@ -112,7 +112,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
 
     broken = room->getThread()->trigger(CombatRevealed,source,data);
     if(broken)return;
-    room->getThread()->delay();
+    room->getThread()->delay(200);
 
 
     // reveal each blocker and finish combat
@@ -138,7 +138,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
                     block_reveal.revealed = Card::Parse(player->tag["Combat_Convert_To"].toString());
 
 
-                player->tag["Combat_Convert_From"] = QVariant();
+                player->tag["Combat_Convert_From"] = -1;
                 player->tag["Combat_Convert_To"]   = QVariant();
 
 
@@ -163,7 +163,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
                 broken = room->getThread()->trigger(CombatRevealed,player,data);
                 if(broken)continue;
 
-                room->getThread()->delay();
+                room->getThread()->delay(200);
             }
 
 

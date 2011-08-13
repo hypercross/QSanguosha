@@ -221,7 +221,6 @@ public:
         Room *room = player->getRoom();
 
         if(combat.block->inherits("DummyCard"))return false;
-        if(!room->askForSkillInvoke(player,objectName()))return false;
 
         if(!combat.block->inherits("CombatCard"))
         {

@@ -190,6 +190,11 @@ public:
 
     }
 
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return player->getMp()>0;
+    }
+
     virtual const Card* viewAs() const
     {
         return new FreezeCard;
@@ -375,26 +380,124 @@ void PhoenixSoarCard::use(Room *room, ServerPlayer *source, const QList<ServerPl
     room->setPlayerFlag(source,"-jilei_temp");
 }
 
+DeathlureCard::DeathlureCard()
+{
+    setObjectName("death_lure");
+}
+
+bool DeathlureCard::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const
+{
+    return Self->getMp() > to_select->getHp() && SkillCard::targetFilter(targets,to_select,Self);
+}
+
+void DeathlureCard::onEffect(const CardEffectStruct &effect) const
+{
+    int thresh = effect.to->getHp();
+    if(effect.from->getMp() <= thresh)return;
+
+    Room *room = effect.to->getRoom();
+
+    room->changeMp(effect.from, - effect.from->getMp());
+
+    if(!room->askForCard(effect.to,"peach+analeptic","deathlure-pa"))room->loseHp(effect.to,effect.to->getHp());
+}
+
+class Deathlure : public ZeroCardViewAsSkill
+{
+public:
+    Deathlure():ZeroCardViewAsSkill("death_lure")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return player->getMp()>0 ;
+    }
+
+    virtual const Card* viewAs() const
+    {
+        return new DeathlureCard;
+    }
+};
+
+class SumiSakura : public MasochismSkill
+{
+public:
+    SumiSakura():MasochismSkill("sumi_sakura")
+    {
+
+    }
+
+    virtual void onDamaged(ServerPlayer *target, const DamageStruct &damage) const
+    {
+        Room * room =target->getRoom();
+
+        bool invoke = true;
+
+        if(target->getMaxHP()<2)invoke = false;
+        else if(!room->askForSkillInvoke(target,objectName()))invoke = false;
+
+        if(invoke)
+        {
+            room->loseMaxHp(target);
+            room->setPlayerProperty(target,"maxmp",target->getMaxMP()+1);
+
+            room->broadcastProperty(target,"maxmp");
+        }
+
+        if(target->getMaxHP() < 3) room->changeMp(target,target->getMaxMP());
+    }
+};
+
+class GreedyPrincess : public TriggerSkill
+{
+public:
+    GreedyPrincess():TriggerSkill("greedy_princess")
+    {
+        frequency = Frequent;
+        events << CardEffected;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        CardEffectStruct effect = data.value<CardEffectStruct>();
+
+        if(!effect.card->inherits("Peach"))return false;
+        if(!(effect.to == player))return false;
+
+        player->getRoom()->changeMp(player,1);
+
+        return false;
+    }
+};
+
 void TouhouPackage::addGenerals()
 {
-    General *lingmeng = new General(this,"reimu","wei", 3, false ,false, 4);
+    General *lingmeng = new General(this,"reimu","_hrp", 3, false ,false, 4);
     lingmeng->addSkill(new GuifuViewAs);
     lingmeng->addSkill(new MusouViewAs);
 
-    General *chiruno = new General(this,"chiruno","wei", 9 , false , false , 1);
+    General *chiruno = new General(this,"chiruno","_esd", 9 , false , false , 1);
     chiruno->addSkill(new Baka);
     chiruno->addSkill(new PerfectFreeze);
 
-    General *aya =new General(this,"aya","wei",3,false,false,3);
+    General *aya =new General(this,"aya","_stb",3,false,false,3);
     aya->addSkill(new WindGirl);
     aya->addSkill(new Fastshot);
 
-    General *mokou = new General(this,"mokou","wei",4,false,false,3);
+    General *mokou = new General(this,"mokou","_in",4,false,false,3);
     mokou->addSkill(new PhoenixTail);
     mokou->addSkill(new PhoenixSoar);
+
+    General *yuyuko = new General(this,"yuyuko","_pcb",4,false,false,2);
+    yuyuko->addSkill(new Deathlure);
+    yuyuko->addSkill(new SumiSakura);
+    yuyuko->addSkill(new GreedyPrincess);
 
     skills << new GuifuDetacher << new GuifuConstraint;
     addMetaObject<GuifuCard>();
     addMetaObject<FreezeCard>();
     addMetaObject<PhoenixSoarCard>();
+    addMetaObject<DeathlureCard>();
 }

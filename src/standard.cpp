@@ -452,7 +452,7 @@ StandardPackage::StandardPackage()
 
     patterns["barrage"] = new NamePattern("barrage");
     patterns["strike"] = new NamePattern("strike");
-    patterns["rune"] = new NamePattern("eune");
+    patterns["rune"] = new NamePattern("rune");
     patterns[".combat"] = new InheritancePattern("CombatCard");
 }
 
