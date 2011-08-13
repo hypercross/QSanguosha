@@ -304,7 +304,7 @@ public:
 
     virtual bool viewFilter(const CardItem *to_select) const
     {
-        return to_select->getCard()->isRed();
+        return to_select->getCard()->getSuit() == Card::Diamond;
     }
 
     virtual const Card* viewAs(CardItem *card_item) const
