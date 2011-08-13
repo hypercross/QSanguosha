@@ -372,7 +372,8 @@ QStringList Engine::getKingdoms() const{
     static QStringList kingdoms;
     if(kingdoms.isEmpty())
         kingdoms << "wei" << "shu" << "wu" << "qun" << "god" <<
-                    "_hrp" << "_esd" << "_stb" << "_in" << "_pcb";
+                    "_hrp" << "_esd" << "_stb" << "_in" << "_pcb"
+                    << "_mof" << "_swr";
 
     return kingdoms;
 }

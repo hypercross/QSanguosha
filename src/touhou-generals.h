@@ -34,6 +34,24 @@ public:
     virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
 };
 
+class FuujinSaishiCard: public SkillCard
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE FuujinSaishiCard();
+
+    virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
+};
+
+class MosesMiracleCard : public SkillCard
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE MosesMiracleCard();
+
+    virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
+};
+
 class DeathlureCard : public SkillCard
 {
     Q_OBJECT

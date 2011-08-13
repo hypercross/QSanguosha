@@ -450,25 +450,125 @@ public:
     }
 };
 
-class GreedyPrincess : public TriggerSkill
+class Munenmusou : public TriggerSkill
 {
 public:
-    GreedyPrincess():TriggerSkill("greedy_princess")
+    Munenmusou():TriggerSkill("munenmusou")
     {
-        frequency = Frequent;
-        events << CardEffected;
+        events << MpChanged ;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
     {
-        CardEffectStruct effect = data.value<CardEffectStruct>();
+        MpChangeStruct change = data.value<MpChangeStruct>();
 
-        if(!effect.card->inherits("Peach"))return false;
-        if(!(effect.to == player))return false;
+        if(change.delta + player -> getMp() < 1) change.delta = 1 - player->getMp();
+        else return false;
 
-        player->getRoom()->changeMp(player,1);
+        if(change.delta > 0) return false;
+
+        data = QVariant::fromValue(change) ;
 
         return false;
+    }
+};
+
+class GuardianKanameishi : public MasochismSkill
+{
+public:
+    GuardianKanameishi():MasochismSkill("guardian_kanameishi")
+    {
+        frequency = Frequent ;
+    }
+
+    virtual void onDamaged(ServerPlayer *target, const DamageStruct &damage) const
+    {
+        Room * room = target->getRoom();
+        int num = target->getMaxHP() - target->getHandcardNum() ;
+        if(num > 0 && room->askForSkillInvoke(target,objectName()))room->drawCards(target,num);
+    }
+
+};
+
+FuujinSaishiCard::FuujinSaishiCard()
+{
+    setObjectName("fuujin_saishi");
+
+    target_fixed = true;
+}
+
+void FuujinSaishiCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    foreach(ServerPlayer *player, room->getAlivePlayers()){
+        room->changeMp(player,1);
+    }
+}
+
+class FuujinSaishi : public ZeroCardViewAsSkill
+{
+public:
+    FuujinSaishi():ZeroCardViewAsSkill("fuujin_saishi")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return !player->hasUsed("FuujinSaishiCard");
+    }
+
+    virtual const Card* viewAs() const
+    {
+        return new FuujinSaishiCard;
+    }
+};
+
+MosesMiracleCard::MosesMiracleCard()
+{
+    will_throw = false;
+    setObjectName("moses_miracle");
+
+}
+
+void MosesMiracleCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    if(targets.isEmpty())
+        return;
+
+    ServerPlayer *target = targets.first();
+    room->moveCardTo(this, target, Player::Hand, false);
+
+    QString result = room->askForChoice(source,objectName(),"draw+recover");
+    if(result == "draw")
+        room->drawCards(source,2);
+    else {
+        RecoverStruct recover ;
+        recover.who = source;
+        room->recover(source,recover);
+    }
+}
+
+class MosesMiracle : public ViewAsSkill
+{
+public:
+    MosesMiracle():ViewAsSkill("moses_miracle")
+    {
+
+    }
+
+    virtual bool viewFilter(const QList<CardItem *> &selected, const CardItem *to_select) const
+    {
+        return selected.length()<2 && !to_select->isEquipped();
+    }
+
+    virtual const Card* viewAs(const QList<CardItem *> &cards) const
+    {
+        if(cards.length()<2)
+            return NULL;
+
+        MosesMiracleCard *mmc = new MosesMiracleCard;
+        mmc->addSubcards(cards);
+        return mmc;
     }
 };
 
@@ -493,11 +593,20 @@ void TouhouPackage::addGenerals()
     General *yuyuko = new General(this,"yuyuko","_pcb",4,false,false,2);
     yuyuko->addSkill(new Deathlure);
     yuyuko->addSkill(new SumiSakura);
-    yuyuko->addSkill(new GreedyPrincess);
+
+    General *tenshi = new General(this,"tenshi","_swr",4,false,false,2);
+    tenshi->addSkill(new Munenmusou);
+    tenshi->addSkill(new GuardianKanameishi);
+
+    General *sanai = new General(this,"sanai","_mof",3,false,false,4);
+    sanai->addSkill(new FuujinSaishi);
+    sanai->addSkill(new MosesMiracle);
 
     skills << new GuifuDetacher << new GuifuConstraint;
     addMetaObject<GuifuCard>();
     addMetaObject<FreezeCard>();
     addMetaObject<PhoenixSoarCard>();
     addMetaObject<DeathlureCard>();
+    addMetaObject<FuujinSaishiCard>();
+    addMetaObject<MosesMiracleCard>();
 }
