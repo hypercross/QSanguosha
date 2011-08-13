@@ -462,10 +462,12 @@ public:
     {
         MpChangeStruct change = data.value<MpChangeStruct>();
 
+        if(change.delta >= 0) return false;
+
+        if(player->getMp()<1) return false;
+
         if(change.delta + player -> getMp() < 1) change.delta = 1 - player->getMp();
         else return false;
-
-        if(change.delta > 0) return false;
 
         data = QVariant::fromValue(change) ;
 
@@ -572,6 +574,78 @@ public:
     }
 };
 
+class UmbrellaIllusion : public TriggerSkill{
+public:
+    UmbrellaIllusion():TriggerSkill("umbrella_illusion")
+    {
+        events << Predamaged ;
+    }
+
+    virtual int getPriority() const
+    {
+        return -2;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return TriggerSkill::triggerable(target) && target->getRoom()->getCardPlace(102) == Player::Equip;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        DamageStruct damage = data.value<DamageStruct>();
+        if(damage.damage >= player->getHp())
+        {
+
+
+            LogMessage log;
+            log.type = "#UmbrellaIllusion";
+            log.arg  = QString::number(damage.damage);
+            log.arg  = QString::number(player->getHp() - 1);
+            player->getRoom()->sendLog(log);
+
+            damage.damage = player->getHp() - 1;
+
+            if(damage.damage <= 0)return true;
+            data=QVariant::fromValue(damage);
+
+        }
+        return false;
+    }
+};
+
+class UmbrellaRecollect: public TriggerSkill{
+public:
+    UmbrellaRecollect():TriggerSkill("#umbrella_recollect"){
+        events << CardLost;
+        frequency = Frequent;
+    }
+
+    virtual int getPriority() const{
+        return -1;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const{
+        return ! target->hasSkill(objectName());
+    }
+
+
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const{
+        Room *room = player->getRoom();
+       CardMoveStar cms = data.value<CardMoveStar>();
+
+       if(cms->card_id != 102)return false;
+
+        ServerPlayer* kogasa = player->getRoom()->findPlayerBySkillName(objectName());
+
+        const Card* umb = Sanguosha->getCard(102) ;
+        if(room->getCardPlace(102)==Player::DiscardedPile)kogasa->obtainCard(umb);
+
+        return false;
+    }
+};
+
 void TouhouPackage::addGenerals()
 {
     General *lingmeng = new General(this,"reimu","_hrp", 3, false ,false, 4);
@@ -601,6 +675,11 @@ void TouhouPackage::addGenerals()
     General *sanai = new General(this,"sanai","_mof",3,false,false,4);
     sanai->addSkill(new FuujinSaishi);
     sanai->addSkill(new MosesMiracle);
+
+
+    General *kogasa = new General(this,"kogasa","_ufo",3,false,false,4);
+    kogasa->addSkill(new UmbrellaIllusion);
+    kogasa->addSkill(new UmbrellaRecollect);
 
     skills << new GuifuDetacher << new GuifuConstraint;
     addMetaObject<GuifuCard>();

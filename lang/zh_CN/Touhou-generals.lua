@@ -7,6 +7,7 @@ return
 	["_pcb"] = "妖妖梦",
 	["_mof"] = "风神录",
 	["_swr"] = "绯想天",
+	["_ufo"] = "星莲船",
 	
 	["MaxMP"]= "灵力上限",
 	["reimu"] = "博丽灵梦",
@@ -48,5 +49,7 @@ return
 	[":munenmusou"] = "你的最后一点灵力不会被扣减。",
 	["guardian_kanameishi"] = "守护的要石",
 	[":guardian_kanameishi"] = "每当你受到伤害，你可以将手牌补至你的生命上限。",
+	
+	["kogasa"] = "多多良小伞",
 
 }

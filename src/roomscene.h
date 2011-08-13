@@ -32,6 +32,7 @@ class QGroupBox;
 class AnimatedGraphicsItem : public QObject, public QGraphicsItem
 {
     Q_OBJECT
+    Q_INTERFACES(QGraphicsItem)
     Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity)
 public:
     void fadeTo(qreal op,int duration = 300);
