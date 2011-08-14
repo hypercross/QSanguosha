@@ -446,7 +446,7 @@ public:
             room->broadcastProperty(target,"maxmp");
         }
 
-        if(target->getMaxHP() < 3) room->changeMp(target,target->getMaxMP());
+        room->changeMp(target,target->getMaxMP());
     }
 };
 
@@ -942,14 +942,14 @@ void TouhouPackage::addGenerals()
     tenshi->addSkill(new Munenmusou);
     tenshi->addSkill(new GuardianKanameishi);
 
-    General *sanai = new General(this,"sanai","_mof",3,false,false,4);
+    General *sanai = new General(this,"sanai","_mof",4,false,false,4);
     sanai->addSkill(new FuujinSaishi);
     sanai->addSkill(new MosesMiracle);
 
 
-    General *kogasa = new General(this,"kogasa","_ufo",3,false,false,4);
-    kogasa->addSkill(new UmbrellaIllusion);
-    kogasa->addSkill(new UmbrellaRecollect);
+//    General *kogasa = new General(this,"kogasa","_ufo",3,false,false,4);
+//    kogasa->addSkill(new UmbrellaIllusion);
+//    kogasa->addSkill(new UmbrellaRecollect);
     //fix me
 
     General *remilia = new General(this,"remilia","_esd",3,false,false,4);
