@@ -559,10 +559,12 @@ QList<QPointF> RoomScene::getPhotoPositions() const{
 }
 
 void RoomScene::changeTextEditBackground(){
-    QPalette palette;
-    palette.setBrush(QPalette::Base, backgroundBrush());
-    chat_box->setPalette(palette);
-    log_box->setPalette(palette);
+    QPalette pal = palette();
+    pal.setColor(QPalette::Window, QColor(0x00,0xff,0x00,0x00));
+
+
+    chat_box->setStyleSheet("background-color: rgba(150, 100, 100, 50%);");
+    log_box->setStyleSheet("background-color: rgba(150, 100, 100, 50%);");
 }
 
 void RoomScene::addPlayer(ClientPlayer *player){

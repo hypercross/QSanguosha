@@ -342,7 +342,7 @@ void SupplyShortage::use(Room *room, ServerPlayer *source, const QList<ServerPla
     int consum = source->distanceTo(targets.first()) - 1 ;
 
     if(source->getMp()<consum)return;
-    room->changeMp(source,consum);
+    room->changeMp(source,-consum);
     DelayedTrick::use(room,source,targets);
 }
 

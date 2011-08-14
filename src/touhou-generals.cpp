@@ -563,6 +563,11 @@ public:
         return selected.length()<2 && !to_select->isEquipped();
     }
 
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return !player->hasUsed("MosesMiracleCard");
+    }
+
     virtual const Card* viewAs(const QList<CardItem *> &cards) const
     {
         if(cards.length()<2)

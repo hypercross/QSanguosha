@@ -774,7 +774,7 @@ void Snatch::onEffect(const CardEffectStruct &effect) const{
 
     int delta=effect.from->distanceTo(effect.to)-1;
     if(effect.from->getMp()<delta)return;
-    room->changeMp(effect.from,delta);
+    room->changeMp(effect.from,-delta);
 
     int card_id = room->askForCardChosen(effect.from, effect.to, "hej", objectName());
 
