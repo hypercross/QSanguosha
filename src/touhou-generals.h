@@ -62,4 +62,14 @@ public:
     virtual void onEffect(const CardEffectStruct &effect) const;
 };
 
+class DaremoinaiCard : public SkillCard
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE DaremoinaiCard();
+
+    virtual bool targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const;
+    virtual void onEffect(const CardEffectStruct &effect) const;
+};
+
 #endif // TOUHOUGENERALS_H

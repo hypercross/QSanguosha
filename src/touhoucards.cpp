@@ -50,7 +50,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     foreach(ServerPlayer *player,targets)
         if(source->distanceTo(player)>farthest)
             farthest = source->distanceTo(player);
-    if(farthest > source->getAttackRange())
+    if(farthest > source->getAttackRange() && !source->hasFlag("tianyi_success"))
     {
         if(source->getMp()< (farthest - source->getAttackRange()) )return;
         room->changeMp(source,source->getAttackRange() - farthest);
@@ -225,10 +225,10 @@ bool CombatCard::targetFilter(const QList<const Player *> &targets, const Player
 
     bool distance_limit = true;
 
-//    if(Self->hasFlag("tianyi_success")){
-//        distance_limit = false;
-//        slash_targets ++;
-//    }
+    if(Self->hasFlag("tianyi_success")){
+        distance_limit = false;
+        slash_targets ++;
+    }
 
 //    if(Self->hasSkill("shenji") && Self->getWeapon() == NULL)
 //        slash_targets = 3;

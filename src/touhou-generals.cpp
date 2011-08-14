@@ -633,9 +633,9 @@ public:
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const{
         Room *room = player->getRoom();
-       CardMoveStar cms = data.value<CardMoveStar>();
+        CardMoveStar cms = data.value<CardMoveStar>();
 
-       if(cms->card_id != 102)return false;
+        if(cms->card_id != 102)return false;
 
         ServerPlayer* kogasa = player->getRoom()->findPlayerBySkillName(objectName());
 
@@ -645,6 +645,276 @@ public:
         return false;
     }
 };
+
+class NightlessCity : public TriggerSkill
+{
+public:
+    NightlessCity():TriggerSkill("nightless_city")
+    {
+        events << CardLost;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return TriggerSkill::triggerable(target) &&
+                target->getRoom()->getCurrent() != target;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        Room *room = player->getRoom();
+        CardMoveStar cms = data.value<CardMoveStar>();
+
+        if(cms->to_place != Player::DiscardedPile)return false;
+
+        if(player->getMp()<1)return false;
+
+        if(!room->askForSkillInvoke(player,objectName()))return false;
+
+        room->changeMp(player,-1);
+
+        JudgeStruct judge;
+        judge.pattern = QRegExp("(.*):(spade|club):(.*)");
+        judge.good = false;
+        judge.reason = objectName();
+        judge.who = room->getCurrent();
+
+        room->judge(judge);
+        if(judge.isGood())
+        {
+            DamageStruct damage;
+            damage.from = player;
+            damage.to = judge.who;
+
+            room->setEmotion(player, "good");
+            room->damage(damage);
+        }else room->setEmotion(player, "bad");
+
+        return false;
+    }
+
+};
+
+class ImperishableHeart : public TriggerSkill
+{
+public:
+    ImperishableHeart():TriggerSkill("imperishable_heart"){
+        frequency = Frequent;
+
+        events << FinishJudge;
+    }
+
+    virtual int getPriority() const{
+        return -1;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const{
+        return !target->hasSkill(objectName());
+    }
+
+    virtual bool trigger(TriggerEvent , ServerPlayer *player, QVariant &data) const{
+        JudgeStar judge = data.value<JudgeStar>();
+        CardStar card = judge->card;
+        if(card->getSuit() != Card::Heart ||
+                player->getRoom()->getCardPlace(card->getId()) != Player::DiscardedPile)
+            return false;
+
+        ServerPlayer* ojoosama = player->getRoom()->findPlayerBySkillName(objectName());
+        if(!ojoosama->getRoom()->askForSkillInvoke(ojoosama,objectName()))return false;
+        ojoosama->obtainCard(card);
+
+        return false;
+    }
+
+};
+
+class RemiliaStalker : public TriggerSkill
+{
+public:
+    RemiliaStalker():TriggerSkill("remilia_stalker")
+    {
+        events << BlockDeclare;
+        frequency = Compulsory;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return true;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        CombatStruct combat = data.value<CombatStruct>();
+        if(!combat.from->hasSkill(objectName()) ) return false;
+        if(combat.from->getAttackRange()<=player->getMp()) return false;
+
+        player->tag["combatEffective"]=true;
+        return true;
+    }
+};
+
+class KillerDoll : public OneCardViewAsSkill
+{
+public:
+    KillerDoll():OneCardViewAsSkill("killer_doll"){
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const{
+        return Slash::IsAvailable(player) || player->hasWeapon("hakkero");
+    }
+
+
+
+    virtual bool viewFilter(const CardItem *to_select) const{
+        const Card *card = to_select->getFilteredCard();
+
+        return card->inherits("Barrage");
+
+    }
+
+    virtual const Card *viewAs(CardItem *card_item) const{
+        const Card *card = card_item->getCard();
+        Card *strike = new Strike(card->getSuit(), 13);
+        strike->addSubcard(card->getId());
+        strike->setSkillName(objectName());
+        return strike;
+    }
+};
+
+class DeflatedWorld : public PhaseChangeSkill
+{
+public:
+    DeflatedWorld():PhaseChangeSkill("deflated_world")
+    {
+
+    }
+
+    virtual bool onPhaseChange(ServerPlayer *target) const
+    {
+        Room *room = target->getRoom();
+
+        if(target->getPhase() != Player::Judge) return false;
+        if(target->getMp()<2) return false;
+
+        if(!room->askForSkillInvoke(target,objectName()))return false;
+
+        room->changeMp(target,-2);
+        room->setPlayerFlag(target,"tianyi_success");
+        return true;
+    }
+};
+
+class FourNineFive: public TriggerSkill{
+public:
+    FourNineFive():TriggerSkill("four_nine_five"){
+        frequency = Compulsory;
+        events << Damage;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const{
+        DamageStruct damage = data.value<DamageStruct>();
+
+        if(!damage.card)return false;
+        if(damage.card->isVirtualCard())return false;
+
+        int cid = damage.card->getEffectiveId();
+        int num = Sanguosha->getCard(cid)->getNumber();
+        if(num != 4 && num != 9 && num != 5)return false;
+
+        Room *room = player->getRoom();
+
+        room->playSkillEffect(objectName());
+
+        LogMessage log;
+        log.type = "#FourNineFiveRecover";
+        log.from = player;
+        log.arg = QString::number(damage.damage);
+        room->sendLog(log);
+
+        RecoverStruct recover;
+        recover.who = player;
+        recover.recover = damage.damage;
+        room->recover(player, recover);
+
+        return false;
+    }
+};
+
+DaremoinaiCard::DaremoinaiCard()
+{
+    setObjectName("dare_mo_inai");
+}
+
+bool DaremoinaiCard::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const
+{
+    return targets.isEmpty() && Self->distanceTo(to_select) <= Self->getAttackRange();
+}
+
+void DaremoinaiCard::onEffect(const CardEffectStruct &effect) const
+{
+    ServerPlayer *from = effect.from;
+    ServerPlayer *to = effect.to;
+    Room * room = to->getRoom();
+
+    int count = from->getMp();
+    if(count <= 1 ) return;
+
+    room->changeMp(from,-count);
+
+    bool suits[4] = {false,false,false,false};
+
+    for(int i=0;i<count;i++)
+    {
+        JudgeStruct judge;
+        judge.pattern = QRegExp("(.*):(.*):(.*)");
+        judge.good = true;
+        judge.reason = objectName();
+        judge.who = to;
+
+        room->judge(judge);
+        suits[judge.card->getSuit()]=true;
+    }
+
+    int dmg = count+1;
+
+    for(int i=0;i<4;i++) if(suits[i])dmg--;
+
+    DamageStruct damage;
+    damage.from = from;
+    damage.to   = to;
+    damage.damage=dmg;
+
+    room->damage(damage);
+
+}
+
+class Daremoinai : public ViewAsSkill
+{
+public:
+    Daremoinai():ViewAsSkill("dare_mo_inai")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return player->getMp()>0;
+    }
+
+    virtual bool viewFilter(const QList<CardItem *> &selected, const CardItem *to_select) const
+    {
+        return selected.length()<Self->getMp() && !to_select->isEquipped();
+    }
+
+    virtual const Card* viewAs(const QList<CardItem *> &cards) const
+    {
+        if(cards.length()<Self->getMp())return NULL;
+        Card *card = new DaremoinaiCard;
+        card->addSubcards(cards);
+        return card;
+    }
+};
+
 
 void TouhouPackage::addGenerals()
 {
@@ -680,6 +950,20 @@ void TouhouPackage::addGenerals()
     General *kogasa = new General(this,"kogasa","_ufo",3,false,false,4);
     kogasa->addSkill(new UmbrellaIllusion);
     kogasa->addSkill(new UmbrellaRecollect);
+    //fix me
+
+    General *remilia = new General(this,"remilia","_esd",3,false,false,4);
+    remilia->addSkill(new NightlessCity);
+    remilia->addSkill(new ImperishableHeart);
+    remilia->addSkill(new RemiliaStalker);
+
+    General *sakuya = new General(this,"sakuya","_esd",4,false,false,2);
+    sakuya->addSkill(new KillerDoll);
+    sakuya->addSkill(new DeflatedWorld);
+
+    General *flandre = new General(this,"flandre","_esd",3,false,false,4);
+    flandre->addSkill(new FourNineFive);
+    flandre->addSkill(new Daremoinai);
 
     skills << new GuifuDetacher << new GuifuConstraint;
     addMetaObject<GuifuCard>();
@@ -688,4 +972,5 @@ void TouhouPackage::addGenerals()
     addMetaObject<DeathlureCard>();
     addMetaObject<FuujinSaishiCard>();
     addMetaObject<MosesMiracleCard>();
+    addMetaObject<DaremoinaiCard>();
 }
