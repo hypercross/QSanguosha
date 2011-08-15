@@ -2939,7 +2939,7 @@ void RoomScene::onGameStart(){
         return;
 
     // start playing background music
-    QString bgmusic_path = Config.value("BackgroundMusic", "audio/system/background.mp3").toString();
+    QString bgmusic_path = "audio/bgms/"+Self->getGeneral()->getKingdom()+ "/" +QString::number( qrand() % 4 )+".mp3";
 #ifdef  Q_OS_WIN32
     const char *filename = bgmusic_path.toLocal8Bit().data();
     BackgroundMusic = SoundEngine->play2D(filename, true, false, true);

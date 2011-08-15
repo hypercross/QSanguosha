@@ -694,6 +694,8 @@ const ProhibitSkill *Engine::isProhibited(const Player *from, const Player *to, 
     foreach(const ProhibitSkill *skill, prohibit_skills){
         if(to->hasSkill(skill->objectName()) && skill->isProhibited(from, to, card))
             return skill;
+        if(skill->isGlobal() && skill->isProhibited(from, to, card))
+            return skill;
     }
 
     return NULL;

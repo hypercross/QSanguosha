@@ -1367,7 +1367,7 @@ function SmartAI:getJinkNumber(player)
 	return getJinkNumber(player,self)
 end
 
-function SmartAI:useCardDuel(duel, use)
+function SmartAI:useCardDannatu(duel, use)
 	if self.player:hasSkill("wuyan") then return end
 	self:sort(self.enemies,"defense")
 	local enemies = self:exclude(self.enemies, duel)
@@ -1884,7 +1884,7 @@ function SmartAI:getUseValue(card)
 	else
 		if card:inherits("Slash") and (self.player:hasFlag("drank") or self.player:hasFlag("tianyi_success") or self.player:hasFlag("luoyi")) then v = 8.7 --self:log("must slash")
 		elseif self.player:getWeapon() and card:inherits("Collateral") then v=2
-		elseif self.player:getMark("shuangxiong") and card:inherits("Duel") then v=8
+		elseif self.player:getMark("shuangxiong") and card:inherits("Dannatu") then v=8
 		elseif self.player:hasSkill("jujian") then
 			if not self:hasTrickEffective(card) then v=0 
 			else
@@ -2434,7 +2434,7 @@ function SmartAI:askForNullification(trick_name, from, to, positive)
 			if trick_name:inherits("Indulgence") or trick_name:inherits("SupplyShortage") then
 				return null_card
 			end
-			if trick_name:inherits("Duel") and not(trick_name:getSuit() == sgs.Card_NoSuit) then
+			if trick_name:inherits("Dannatu") and not(trick_name:getSuit() == sgs.Card_NoSuit) then
 				return null_card
 			end
 			if trick_name:inherits("ArcheryAttack") then

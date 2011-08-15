@@ -43,6 +43,27 @@ void GuifuCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *
     }
 }
 
+void GuifuCard::ApplyChain(const QString &objectname,ServerPlayer* sp, ServerPlayer *source)
+{
+    Room* room = sp->getRoom();
+
+    if(sp->hasSkill(objectname + "_constraint"))return;
+
+    LogMessage log;
+    log.type = "#SetConstraint";
+    log.from = source;
+    log.arg   = sp->getGeneralName();
+
+    room ->sendLog(log);
+    //room ->attachSkillToPlayer(sp ,objectName() + "_detacher");
+    //room ->attachSkillToPlayer(sp ,objectName() + "_constraint");
+    room ->acquireSkill(sp ,"#" + objectname + "_detacher");
+    room->acquireSkill(sp ,objectname + "_constraint");
+    sp->addMark("Chain");
+    sp->setChained(true);
+    room->broadcastProperty(sp,"chained");
+}
+
 class GuifuDetacher : public DetacherSkill
 {
 public:
@@ -486,7 +507,7 @@ public:
     virtual void onDamaged(ServerPlayer *target, const DamageStruct &damage) const
     {
         Room * room = target->getRoom();
-        int num = target->getMaxHP() - target->getHandcardNum() ;
+        int num = 3 - target->getHandcardNum() ;
         if(num > 0 && room->askForSkillInvoke(target,objectName()))room->drawCards(target,num);
     }
 
@@ -920,6 +941,309 @@ public:
     }
 };
 
+class PhilosopherStone: public ViewAsSkill
+{
+public:
+    PhilosopherStone():ViewAsSkill("philosopher_stone")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return !player->hasUsed("PhilosopherStoneCard");
+    }
+
+    virtual bool viewFilter(const QList<CardItem *> &selected, const CardItem *to_select) const
+    {
+        foreach(CardItem * aselected,selected)
+        {
+            if(to_select->getCard()->getSuit() == aselected->getCard()->getSuit())return false;
+        }
+
+        return selected.length()<4 && !to_select->isEquipped();
+    }
+
+    virtual const Card* viewAs(const QList<CardItem *> &cards) const
+    {
+        if(cards.length()<1)return NULL;
+
+        Card *psc = new PhilosopherStoneCard;
+
+        psc->addSubcards(cards);
+        return psc;
+
+    }
+};
+
+PhilosopherStoneCard::PhilosopherStoneCard()
+{
+    setObjectName("philosopher_stone");
+
+    will_throw = true ;
+}
+
+bool PhilosopherStoneCard::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const
+{
+    return SkillCard::targetFilter(targets,to_select,Self)
+            && getSubcards().length()>3 && Self->getMp()>3;
+}
+
+bool PhilosopherStoneCard::targetsFeasible(const QList<const Player *> &targets, const Player *Self) const
+{
+    return getSubcards().length()<4 || targets.length()>0;
+}
+
+void PhilosopherStoneCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+
+    room->throwCard(this);
+    int cases = getSubcards().length();
+
+    RecoverStruct recover;
+    recover.who = source;
+
+    switch(cases)
+    {
+    case 1:
+        room->recover(source,recover);
+        break;
+    case 2:
+        room->drawCards(source,2);
+        break;
+    case 3:
+        room->setPlayerMark(source,"extra_turn",1);
+        break;
+    case 4:
+        if(source->getMp()<4)return;
+        room->changeMp(source,-4);
+
+        ServerPlayer* sp  = targets.first();
+        if(sp->hasSkill(objectName() + "_constraint"))return;
+
+        LogMessage log;
+        log.type = "#SetConstraint";
+        log.from = source;
+        log.arg   = sp->getGeneralName();
+
+        room ->sendLog(log);
+        //room ->attachSkillToPlayer(sp ,objectName() + "_detacher");
+        //room ->attachSkillToPlayer(sp ,objectName() + "_constraint");
+        room ->acquireSkill(sp ,"#" + objectName() + "_detacher");
+        room->acquireSkill(sp ,objectName() + "_constraint");
+        sp->addMark("Chain");
+        sp->setChained(true);
+        room->broadcastProperty(sp,"chained");
+        break;
+    }
+}
+
+
+class PhilosopherStoneDetacher : public DetacherSkill
+{
+public:
+    PhilosopherStoneDetacher():DetacherSkill("philosopher_stone")
+    {
+    }
+
+    virtual bool validPhaseChange(ServerPlayer *player, QVariant &data) const
+    {
+        return false;
+    }
+};
+
+class PhilosopherStoneConstraint : public ConstraintSkill
+{
+public:
+    PhilosopherStoneConstraint():ConstraintSkill("philosopher_stone")
+    {
+        events << PhaseChange;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        if(player->getPhase() != Player::Start)return false;
+
+        Room * room =player->getRoom();
+
+        ServerPlayer *pachuli = room->findPlayerBySkillName("philosopher_stone");
+        if(!pachuli->askForSkillInvoke(objectName()))return false;
+
+        room->doGuanxing(pachuli, room->getNCards(4, false),false);
+        return false;
+    }
+};
+
+class PhilosopherStonePhaseChange : public PhaseChangeSkill
+{
+public:
+    PhilosopherStonePhaseChange():PhaseChangeSkill("#philosopher_stone")
+    {
+
+    }
+
+    virtual int getPriority() const{
+        return -1;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return PhaseChangeSkill::triggerable(target)
+                && target->getPhase() == Player::NotActive
+                && target->getMark("extra_turn") > 0;
+    }
+
+    virtual bool onPhaseChange(ServerPlayer *target) const
+    {
+        target->setMark("extra_turn",0);
+
+        Room *room = target->getRoom();
+
+        LogMessage log;
+        log.type = "#PSExtraTurn";
+        log.from = target;
+        room->sendLog(log);
+
+        room->getThread()->trigger(TurnStart, target);
+
+        return false;
+    }
+};
+
+class DoubleSwordMaster: public TriggerSkill
+{
+public:
+    DoubleSwordMaster():TriggerSkill("double_sword_master")
+    {
+        events << CombatFinished;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        CombatStruct cs = data.value<CombatStruct>();
+
+        if(!cs.combat->canbeBlocked(cs.block))
+        {
+            if(player->getMp()==player->getMaxMP())return false;
+            if(!player->getRoom()->askForSkillInvoke(player,objectName()))return false;
+            player->getRoom()->changeMp(player,1);
+        }else
+        {
+            if(cs.to->containsTrick("supply_shortage"))return false;
+            const Card* basic = player->getRoom()->askForCard(player,".basic","snow-basic",false);
+            if(!basic)return false;
+
+            SupplyShortage *shortage = new SupplyShortage(basic->getSuit(), basic->getNumber());
+            shortage->setSkillName(objectName());
+            shortage->addSubcard(basic);
+
+            CardUseStruct use;
+            use.card = shortage;
+            use.from = player;
+            use.to << cs.to ;
+
+            player->getRoom()->useCard(use,false);
+        }
+        return false;
+    }
+};
+
+class Arcanum : public ViewAsSkill
+{
+public:
+    Arcanum():ViewAsSkill("arcanum")
+    {
+
+    }
+
+    virtual bool viewFilter(const QList<CardItem *> &selected, const CardItem *to_select) const
+    {
+        foreach(CardItem *aselected,selected)
+            if(to_select->getCard()->getSuit() != aselected->getCard()->getSuit())
+                return false;
+        return selected.length()<2 && !to_select->isEquipped();
+    }
+
+    virtual const Card* viewAs(const QList<CardItem *> &cards) const
+    {
+        if(cards.length()<2)return NULL;
+
+        GodSalvation *salve = new GodSalvation(cards.first()->getCard()->getSuit(),0);
+        salve->addSubcards(cards);
+        salve->setSkillName(objectName());
+        return salve;
+    }
+};
+
+class WorldJar : public ZeroCardViewAsSkill
+{
+public:
+    WorldJar():ZeroCardViewAsSkill("worldjar")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return player->getMp() >= Self->aliveCount()/2 && !player->hasUsed("WorldJarCard");
+    }
+
+    virtual const Card* viewAs() const
+    {
+        return new WorldJarCard;
+    }
+};
+
+WorldJarCard::WorldJarCard()
+{
+    setObjectName("worldjar");
+}
+
+bool WorldJarCard::targetsFeasible(const QList<const Player *> &targets, const Player *Self) const
+{
+    return targets.length() >= Self->aliveCount()/2;
+}
+
+bool WorldJarCard::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const
+{
+    return targets.length() < Self->aliveCount()/2;
+}
+
+void WorldJarCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    if(source->getMp()<targets.length())return;
+    room->changeMp(source, - targets.length());
+    foreach(ServerPlayer * sp,targets)GuifuCard::ApplyChain(objectName(),sp, source);
+}
+
+class WorldJarDetacher: public DetacherSkill
+{
+public:
+    WorldJarDetacher():DetacherSkill("worldjar")
+    {
+
+    }
+};
+
+class WorldJarProhibit:public ProhibitSkill
+{
+public:
+    WorldJarProhibit():ProhibitSkill("#worldjar")
+    {
+
+    }
+
+    virtual bool isProhibited(const Player *from, const Player *to, const Card *card) const
+    {
+        return (from->hasSkill("worldjar_constraint")) != (to->hasSkill("worldjar_constraint"))
+                && !card->isVirtualCard();
+    }
+
+    virtual bool isGlobal() const
+    {
+        return true;
+    }
+};
 
 void TouhouPackage::addGenerals()
 {
@@ -952,9 +1276,9 @@ void TouhouPackage::addGenerals()
     sanai->addSkill(new MosesMiracle);
 
 
-//    General *kogasa = new General(this,"kogasa","_ufo",3,false,false,4);
-//    kogasa->addSkill(new UmbrellaIllusion);
-//    kogasa->addSkill(new UmbrellaRecollect);
+    //    General *kogasa = new General(this,"kogasa","_ufo",3,false,false,4);
+    //    kogasa->addSkill(new UmbrellaIllusion);
+    //    kogasa->addSkill(new UmbrellaRecollect);
     //fix me
 
     General *remilia = new General(this,"remilia","_esd",3,false,false,4);
@@ -970,7 +1294,22 @@ void TouhouPackage::addGenerals()
     flandre->addSkill(new FourNineFive);
     flandre->addSkill(new Daremoinai);
 
-    skills << new GuifuDetacher << new GuifuConstraint;
+    General *pachuli = new General(this,"pachuli","_esd",3,false,false,5);
+    pachuli->addSkill(new PhilosopherStone);
+    pachuli->addSkill(new PhilosopherStonePhaseChange);
+
+    General *youmu = new General(this,"youmu","_pcb",4,false,false,3);
+    youmu->addSkill(new DoubleSwordMaster);
+
+    General *eirin = new General(this,"eirin","_in",3,false,false,4);
+    eirin->addSkill(new Skill("sharpmind"));
+    eirin->addSkill(new WorldJar);
+    eirin->addSkill(new WorldJarProhibit);
+    eirin->addSkill(new Arcanum);
+
+    skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;
+    skills << new WorldJarDetacher << new Skill("worldjar_constraint");
+
     addMetaObject<GuifuCard>();
     addMetaObject<FreezeCard>();
     addMetaObject<PhoenixSoarCard>();
@@ -978,4 +1317,6 @@ void TouhouPackage::addGenerals()
     addMetaObject<FuujinSaishiCard>();
     addMetaObject<MosesMiracleCard>();
     addMetaObject<DaremoinaiCard>();
+    addMetaObject<PhilosopherStoneCard>();
+    addMetaObject<WorldJarCard>();
 }

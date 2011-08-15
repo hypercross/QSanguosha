@@ -299,6 +299,11 @@ ProhibitSkill::ProhibitSkill(const QString &name)
 {
 }
 
+bool ProhibitSkill::isGlobal() const
+{
+    return false;
+}
+
 DistanceSkill::DistanceSkill(const QString &name)
     :Skill(name, Skill::Compulsory)
 {

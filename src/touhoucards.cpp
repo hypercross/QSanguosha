@@ -50,7 +50,9 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     foreach(ServerPlayer *player,targets)
         if(source->distanceTo(player)>farthest)
             farthest = source->distanceTo(player);
-    if(farthest > source->getAttackRange() && !source->hasFlag("tianyi_success"))
+    if(farthest > source->getAttackRange()
+            && !source->hasFlag("tianyi_success")
+            && !source->hasSkill("sharpmind"));
     {
         if(source->getMp()< (farthest - source->getAttackRange()) )return;
         room->changeMp(source,source->getAttackRange() - farthest);
@@ -607,7 +609,7 @@ public:
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
     {
         MpChangeStruct change = data.value<MpChangeStruct>();
-        if(change.delta<0)return false;
+        if(change.delta<=0)return false;
 
         Room *room = player->getRoom();
         //if(!room->askForSkillInvoke(player,objectName()))return false;

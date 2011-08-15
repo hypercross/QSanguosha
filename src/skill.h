@@ -184,6 +184,7 @@ public:
     ProhibitSkill(const QString &name);
 
     virtual bool isProhibited(const Player *from, const Player *to, const Card *card) const = 0;
+    virtual bool isGlobal() const;
 };
 
 class DistanceSkill: public Skill{

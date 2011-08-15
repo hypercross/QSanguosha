@@ -454,6 +454,7 @@ StandardPackage::StandardPackage()
     patterns["strike"] = new NamePattern("strike");
     patterns["rune"] = new NamePattern("rune");
     patterns[".combat"] = new InheritancePattern("CombatCard");
+    patterns[".basic"] = new InheritancePattern("BasicCard");
 }
 
 ADD_PACKAGE(Standard)
