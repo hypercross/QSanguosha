@@ -146,7 +146,7 @@ void AOE::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &) c
             LogMessage log;
             log.type = "#SkillAvoid";
             log.from = player;
-            log.arg = skill->objectName();
+            log.arg = skill->objectName().replace("#","");
             log.arg2 = objectName();
             room->sendLog(log);
 

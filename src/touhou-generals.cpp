@@ -1350,7 +1350,8 @@ public:
 
     virtual bool triggerable(const ServerPlayer *target) const
     {
-        return target->getMp()>1 && target->getPhase() == Player::Judge;
+        return target->getMp()>1 && target->getPhase() == Player::Judge
+                &&PhaseChangeSkill::triggerable(target);
     }
 
     virtual bool onPhaseChange(ServerPlayer *target) const
