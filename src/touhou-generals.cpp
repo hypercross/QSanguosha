@@ -826,6 +826,7 @@ public:
 
         room->changeMp(target,-2);
         room->setPlayerFlag(target,"tianyi_success");
+        target->skip(Player::Draw);
         return true;
     }
 };
@@ -1245,6 +1246,186 @@ public:
     }
 };
 
+class RealSumiSakuraViewas: public ZeroCardViewAsSkill{
+public:
+    RealSumiSakuraViewas():ZeroCardViewAsSkill("sumisakura"){
+    }
+
+    virtual const Card *viewAs() const{
+        return new RealSumiSakuraCard;
+    }
+
+    virtual bool isEnabledAtPlay(const Player *) const{
+        return false;
+    }
+
+    virtual bool isEnabledAtResponse(const Player *, const QString &pattern) const{
+        return pattern == "@@sumisakura";
+    }
+};
+
+class RealSumiSakura: public PhaseChangeSkill{
+public:
+    RealSumiSakura():PhaseChangeSkill("sumisakura"){
+        default_choice = "gainmp";
+
+        view_as_skill = new RealSumiSakuraViewas;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const{
+        return PhaseChangeSkill::triggerable(target)
+                && target->getPhase() == Player::Finish
+                && target->getMp() < target->getMaxMP();
+    }
+
+    virtual bool onPhaseChange(ServerPlayer *yuyuko) const{
+        Room *room = yuyuko->getRoom();
+        room->askForUseCard(yuyuko, "@@sumisakura", "@sumisakura");
+
+        return false;
+    }
+};
+
+RealSumiSakuraCard::RealSumiSakuraCard()
+{
+    mute = true;
+}
+
+class AllLost :public GameStartSkill
+{
+public:
+    AllLost():GameStartSkill("alllost")
+    {
+
+    }
+
+    virtual void onGameStart(ServerPlayer *player) const
+    {
+        player->getRoom()->changeMp(player,player->getMaxMP());
+    }
+};
+
+void RealSumiSakuraCard::onEffect(const CardEffectStruct &effect) const
+{
+    int num = effect.from->getMaxMP() -effect.from->getMp();
+    Room *room = effect.to->getRoom();
+
+    QString choice = room->askForChoice(effect.from,"sumisakura","gainmp+gaincard");
+
+    if(choice == "gainmp")
+    {
+        int mpfrom = effect.to->getMp();
+        room->changeMp(effect.to,num);
+        int mpto   = effect.to->getMp();
+
+        num = mpto - mpfrom;
+
+        if(num<=0)return;
+
+        num = qMin(num,effect.to->getCardCount(false)) ;
+        room->askForDiscard(effect.to,"sumisakura",num);
+    }
+
+    else
+
+    {
+        int mpfrom = effect.to->getMp();
+        room->changeMp(effect.to,-num);
+        int mpto   = effect.to->getMp();
+
+        num =  mpfrom - mpto;
+
+        if(num<=0)return;
+
+        room->drawCards(effect.to,num);
+    }
+}
+
+class NightReturn : public PhaseChangeSkill
+{
+public:
+    NightReturn():PhaseChangeSkill("nightreturn")
+    {
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return target->getMp()>1 && target->getPhase() == Player::Judge;
+    }
+
+    virtual bool onPhaseChange(ServerPlayer *target) const
+    {
+        Room * room = target->getRoom();
+
+        if(!room->askForSkillInvoke(target,objectName()))return false;
+
+        room->changeMp(target,-2);
+
+        target->skip(Player::Judge);
+        target->skip(Player::Play);
+        target->skip(Player::Discard);
+    }
+};
+
+FiveProblemCard::FiveProblemCard()
+{
+}
+
+void FiveProblemCard::onEffect(const CardEffectStruct &effect) const
+{
+    if(effect.from->getMp()<1)return;
+    effect.from->getRoom()->changeMp(effect.from,-1);
+
+    CardStar card = effect.to->getRoom()->getTag("FiveProblemCard").value<CardStar>();
+    const Card* c = card;
+    effect.to->obtainCard(card);
+
+    effect.to->setFlags("jilei");
+    effect.to->jilei(c->getEffectIdString());
+    effect.to->invoke("jilei",c->getEffectIdString());
+}
+
+class FiveProblemViewAs: public ZeroCardViewAsSkill
+{
+public:
+    FiveProblemViewAs():ZeroCardViewAsSkill("fiveproblem"){
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const{
+        return false;
+    }
+
+    virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const{
+        return  pattern == "@@fiveproblem";
+    }
+
+    virtual const Card *viewAs() const{
+        return new FiveProblemCard;
+    }
+};
+
+class FiveProblem : public MasochismSkill
+{
+public:
+    FiveProblem():MasochismSkill("fiveproblem")
+    {
+        view_as_skill = new FiveProblemViewAs;
+    }
+
+    virtual void onDamaged(ServerPlayer *target, const DamageStruct &damage) const
+    {
+        Room* room = target->getRoom();
+        if(!room->obtainable(damage.card,target))return;
+        if(target->getMp()<1)return;
+
+        room->setTag("FiveProblemCard",QVariant::fromValue(damage.card));
+
+        room->askForUseCard(target,"@@fiveproblem","@fiveproblem");
+    }
+
+};
+
 void TouhouPackage::addGenerals()
 {
     General *lingmeng = new General(this,"reimu","_hrp", 3, false ,false, 4);
@@ -1263,9 +1444,10 @@ void TouhouPackage::addGenerals()
     mokou->addSkill(new PhoenixTail);
     mokou->addSkill(new PhoenixSoar);
 
-    General *yuyuko = new General(this,"yuyuko","_pcb",4,false,false,2);
-    yuyuko->addSkill(new Deathlure);
-    yuyuko->addSkill(new SumiSakura);
+    General *yuyuko = new General(this,"yuyuko","_pcb",4,false,false,3);
+    //yuyuko->addSkill(new Deathlure);
+    yuyuko->addSkill(new AllLost);
+    yuyuko->addSkill(new RealSumiSakura);
 
     General *tenshi = new General(this,"tenshi","_swr",4,false,false,2);
     tenshi->addSkill(new Munenmusou);
@@ -1307,6 +1489,10 @@ void TouhouPackage::addGenerals()
     eirin->addSkill(new WorldJarProhibit);
     eirin->addSkill(new Arcanum);
 
+    General *kaguya = new General(this,"kaguya","_in",4,false,false);
+    kaguya->addSkill(new NightReturn);
+    kaguya->addSkill(new FiveProblem);
+
     skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;
     skills << new WorldJarDetacher << new Skill("worldjar_constraint");
 
@@ -1319,4 +1505,6 @@ void TouhouPackage::addGenerals()
     addMetaObject<DaremoinaiCard>();
     addMetaObject<PhilosopherStoneCard>();
     addMetaObject<WorldJarCard>();
+    addMetaObject<RealSumiSakuraCard>();
+    addMetaObject<FiveProblemCard>();
 }

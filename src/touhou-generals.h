@@ -96,4 +96,22 @@ public:
     virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
 };
 
+class RealSumiSakuraCard : public SkillCard
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE RealSumiSakuraCard();
+
+    virtual void onEffect(const CardEffectStruct &effect) const;
+};
+
+class FiveProblemCard : public SkillCard
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE FiveProblemCard();
+
+    virtual void onEffect(const CardEffectStruct &effect) const;
+};
+
 #endif // TOUHOUGENERALS_H
