@@ -1684,6 +1684,106 @@ public:
 
 };
 
+class OstinateStone : public TriggerSkill
+{
+public:
+    OstinateStone():TriggerSkill("ostinatestone")
+    {
+        events << PhaseChange;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        if(player->getPhase() == Player::Start)
+        {
+            Room * room =player->getRoom();
+            const Card* block = room->askForCard(player,".","ostinateCard",false);
+            while(block)
+            {
+                player->addToPile("Defense",block->getEffectiveId(),false);
+
+                LogMessage log;
+                log.type = "#chosenOstinate";
+                log.from = player;
+                room->sendLog(log);
+
+                block = room->askForCard(player,".","ostinateCard",false);
+            }
+        }
+        return false;
+    }
+};
+
+class UnconsViewas : public ZeroCardViewAsSkill
+{
+public:
+    UnconsViewas():ZeroCardViewAsSkill("unconsciousness")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return false;
+    }
+
+    virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const
+    {
+        return pattern.startsWith("@@unc");
+    }
+
+    virtual const Card* viewAs() const
+    {
+        QString pattern = ClientInstance->getPattern();
+
+        QRegExp rx("@@unc_(\\d+)");
+        if(rx.exactMatch(pattern))return Sanguosha->getCard(rx.capturedTexts().at(1).toInt());
+        return NULL;
+    }
+};
+
+class Unconsciousness : public TriggerSkill
+{
+public:
+    Unconsciousness():TriggerSkill("unconsciousness")
+    {
+        events << CardLost << DrawNCards;
+
+        view_as_skill = new UnconsViewas;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return TriggerSkill::triggerable(target) && target->getPhase() == Player::Discard;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        if(event == DrawNCards )
+        {
+            if(player->getMp()<1)return false;
+            if(!player->getRoom()->askForSkillInvoke(player,objectName()))return false;
+
+            player->getRoom()->changeMp(player,-1);
+            data = QVariant::fromValue(data.toInt() + 1);
+            player->skip(Player::Play);
+            return false;
+        }
+
+        const CardMoveStruct* move = data.value<CardMoveStar>();
+
+        const Card* card =Sanguosha->getCard(move->card_id);
+
+        if(card->inherits("CombatCard"))return false;
+        if(!card->isAvailable(player))return false;
+        QString pattern = "@@unc_" + QString::number(move->card_id);
+
+        player->getRoom()->askForUseCard(player,pattern,"@unc:::" + card->objectName());
+
+        return false;
+    }
+};
+
 void TouhouPackage::addGenerals()
 {
     General *lingmeng = new General(this,"reimu","_hrp", 3, false ,false, 4);
@@ -1764,6 +1864,10 @@ void TouhouPackage::addGenerals()
     General * rin = new General(this,"rin","_sa",3,false,false,4);
     rin->addSkill(new FireWheel);
     rin->addSkill(new Catwalk);
+
+    General * koishi = new General(this,"koishi","_sa",3,false,false,4);
+    koishi->addSkill(new OstinateStone);
+    koishi->addSkill(new Unconsciousness);
 
     skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;
     skills << new WorldJarDetacher << new Skill("worldjar_constraint");

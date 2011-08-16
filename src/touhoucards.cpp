@@ -82,7 +82,17 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     // reveal attacker
     CombatRevealStruct reveal;
 
-    reveal.revealed = Sanguosha->getCard(source->getPile("Attack").first());
+    QList<int> atkpile = source->getPile("Attack");
+
+    if(atkpile.length()<2)
+        reveal.revealed = Sanguosha->getCard(atkpile.first());
+    else{
+        room->fillAG(atkpile,source);
+        int cid = room->askForAG(source,atkpile,false,"combat-reveal");
+        source->invoke("clearAG");
+        reveal.revealed = Sanguosha->getCard(cid);
+    }
+
     if(reveal.revealed->getEffectiveId() == source->tag["Combat_Convert_From"].toInt())
         reveal.revealed = Card::Parse(source->tag["Combat_Convert_To"].toString());
 
@@ -135,7 +145,15 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
             {
                 CombatRevealStruct block_reveal;
 
-                block_reveal.revealed = Sanguosha->getCard(pile.first());
+                if(pile.length()<2)
+                    block_reveal.revealed = Sanguosha->getCard(pile.first());
+                else{
+                    room->fillAG(pile,player);
+                    int cid = room->askForAG(player,pile,false,"combat-reveal");
+                    player->invoke("clearAG");
+                    block_reveal.revealed = Sanguosha->getCard(cid);
+                }
+
                 if(block_reveal.revealed->getEffectiveId() == player->tag["Combat_Convert_From"].toInt())
                     block_reveal.revealed = Card::Parse(player->tag["Combat_Convert_To"].toString());
 

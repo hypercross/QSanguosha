@@ -1811,6 +1811,7 @@ void RoomScene::updateStatus(Client::Status status){
             QRegExp rx("@@?(\\w+)!?");
             if(rx.exactMatch(pattern)){
                 QString skill_name = rx.capturedTexts().at(1);
+                skill_name = skill_name.replace(QRegExp("_\\d+"),"");
                 const ViewAsSkill *skill = Sanguosha->getViewAsSkill(skill_name);
                 if(skill)
                     dashboard->startPending(skill);

@@ -136,7 +136,7 @@ return
 	
 	["yukari"] = "八云 紫",
 	["realmcontroller"] = "境界妖怪",
-	[":realmcontroller"] = "任何玩家的束缚即将被解开时，你可令其持续至下一个解除时机。",
+	[":realmcontroller"] = "任何玩家的束缚即将被解开时，你可支付一点灵力令其持续至下一个解除时机。",
 	
 	["kamikakushi"] = "八云紫的神隐",
 	[":kamikakushi"] = "锁定技，其他玩家到你的距离+1",
@@ -157,4 +157,19 @@ return
 	[":subterraneansun"] = "你宣告进攻牌时可以支付2点灵力并展示之。若为弹幕，其伤害+1。",
 	["megaflare"] = "百万耀斑",
 	[":megaflare"] = "你可将你的黑桃手牌当做【流星爆炸】使用。",
+	
+	["#SunDamagePlus"]="%from 的技能【地狱的人工太阳】被触发，伤害从%arg 提升到%arg2",
+
+	["koishi"] = "古明地 恋",
+	
+	["@unc"] = "你可以立即使用弃入弃牌区的 %arg",
+	["ostinateCard"] = "你可以预先打出防御牌",
+	["#chosenOstinate"]="%from 预先打出了防御牌",
+	
+
+	["ostinatestone"] = "顽固的小石",
+	[":ostinatestone"] = "回合开始时，你可以背面向上打出任意张牌，作为你已经宣告的防御牌。",
+	
+	["unconsciousness"] = "无意识",
+	[":unconsciousness"] = "你可以立即使用你在弃牌阶段弃掉的牌。摸牌阶段，你可支付一点灵力额外摸一张牌并跳过你的出牌阶段。",
 }
