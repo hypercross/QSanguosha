@@ -350,6 +350,8 @@ DetacherSkill::DetacherSkill(const QString &name)
 bool DetacherSkill::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
 {
     if(!validPhaseChange(player,data))return false;
+    bool broken = player->getRoom()->getThread()->trigger(ConstraintLose,player);
+    if(broken)return false;
 
     QString name = objectName();
     name.replace("_detacher","_constraint");

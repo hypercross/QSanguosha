@@ -1131,19 +1131,17 @@ public:
         }else
         {
             if(cs.to->containsTrick("supply_shortage"))return false;
+            if(player->getMp()<1)return false;
             const Card* basic = player->getRoom()->askForCard(player,".basic","snow-basic",false);
             if(!basic)return false;
+
+            player->getRoom()->changeMp(player,-1);
 
             SupplyShortage *shortage = new SupplyShortage(basic->getSuit(), basic->getNumber());
             shortage->setSkillName(objectName());
             shortage->addSubcard(basic);
 
-            CardUseStruct use;
-            use.card = shortage;
-            use.from = player;
-            use.to << cs.to ;
-
-            player->getRoom()->useCard(use,false);
+            player->getRoom()->moveCardTo(shortage,cs.to,Player::Judging,true);
         }
         return false;
     }
@@ -1365,6 +1363,8 @@ public:
         target->skip(Player::Judge);
         target->skip(Player::Play);
         target->skip(Player::Discard);
+
+        return false;
     }
 };
 
@@ -1427,6 +1427,263 @@ public:
 
 };
 
+class RealmController : public TriggerSkill
+{
+public:
+    RealmController():TriggerSkill("realmcontroller")
+    {
+        events << ConstraintLose;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return true;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+
+        Room *room =player->getRoom();
+        ServerPlayer * yukari = room->findPlayerBySkillName(objectName());
+        if(!yukari)return false;
+
+        if(yukari->getMp()<1)return false;
+        if(!room->askForSkillInvoke(yukari,objectName()))return false;
+
+        room->changeMp(yukari,-1);
+        return true;
+    }
+
+};
+
+class BlackButterflyConstraint : public ConstraintSkill
+{
+public:
+    BlackButterflyConstraint():ConstraintSkill("blackbutterfly")
+    {
+        events << PhaseChange;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        if(player->getPhase() != Player::Play)return false;
+        Room * room = player->getRoom();
+
+        if(!room->askForCard(player,".C","@black-butterfly"))
+        {
+            room->loseHp(player);
+        }
+
+        return false;
+    }
+};
+
+class BlackButterflyDetacher : public DetacherSkill
+{
+public:
+    BlackButterflyDetacher():DetacherSkill("blackbutterfly")
+    {
+
+    }
+
+    virtual bool validPhaseChange(ServerPlayer *player, QVariant &data) const
+    {
+        return player->getPhase()==Player::Draw;
+    }
+};
+
+class BlackButterfly : public MasochismSkill
+{
+public:
+    BlackButterfly():MasochismSkill("blackbutterfly")
+    {
+
+    }
+
+    virtual void onDamaged(ServerPlayer *target, const DamageStruct &damage) const
+    {
+        Room * room = target->getRoom();
+
+        QList<ServerPlayer *> other_players = room->getOtherPlayers(target);
+
+        if(!room->askForSkillInvoke(target,objectName()))return;
+
+        foreach(ServerPlayer* aplayer, other_players)
+        {
+            GuifuCard::ApplyChain(objectName(),aplayer,target);
+        }
+    }
+};
+
+class Kamikakushi: public DistanceSkill{
+public:
+    Kamikakushi():DistanceSkill("kamikakushi"){
+
+    }
+
+    virtual int getCorrect(const Player *from, const Player *to) const{
+        if(to->hasSkill(objectName()))
+            return +1;
+        else
+            return 0;
+    }
+};
+
+class SubterraneanSun : public TriggerSkill
+{
+public:
+    SubterraneanSun():TriggerSkill("subterraneansun")
+    {
+        events << AttackDeclared << Predamage;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        Room * room = player->getRoom();
+
+        if(event == AttackDeclared)
+        {
+            const Card * card = data.value<CardStar>();
+
+            if(player->getMp()<2)return false;
+            if(!room->askForSkillInvoke(player,objectName()))
+                return false;
+            room->changeMp(player,-2);
+
+            room->showCard(player,card->getEffectiveId());
+
+            if(!card->inherits("Barrage"))return false;
+            room->setTag("SunDamagePlus",card->toString());
+
+            return false;
+        }
+
+        DamageStruct damage = data.value<DamageStruct>();
+
+        if(!damage.card ||
+                damage.card->toString() != room->getTag("SunDamagePlus").toString())
+            return false;
+
+        room->setTag("SunDamagePlus",QString("-1"));
+
+        LogMessage log;
+        log.type = "#SunDamagePlus";
+        log.from = player;
+        log.to << damage.to;
+        log.arg = QString::number(damage.damage);
+        log.arg2 = QString::number(damage.damage + 1);
+        player->getRoom()->sendLog(log);
+
+        damage.damage ++;
+        data = QVariant::fromValue(damage);
+
+        return false;
+    }
+
+};
+
+class MegaFlare : public OneCardViewAsSkill{
+public:
+    MegaFlare():OneCardViewAsSkill("megaflare"){
+
+    }
+
+    virtual bool viewFilter(const CardItem *to_select) const{
+        return to_select->getFilteredCard()->getSuit()==Card::Spade;
+    }
+
+    virtual const Card *viewAs(CardItem *card_item) const{
+        const Card *first = card_item->getCard();
+        Dismantlement *dismantlement = new Dismantlement(first->getSuit(), first->getNumber());
+        dismantlement->addSubcard(first->getId());
+        dismantlement->setSkillName(objectName());
+        return dismantlement;
+    }
+};
+
+class Catwalk : public TriggerSkill
+{
+public:
+    Catwalk():TriggerSkill("catwalk")
+    {
+        events << TargetFinish;
+
+        frequency = Compulsory;
+    }
+
+    virtual int getPriority() const
+    {
+        return 2;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        Room *room = player->getRoom();
+        CombatStruct combat = data.value<CombatStruct>();
+        if(!combat.block->inherits("Barrage"))return false;
+
+        Barrage *barrage = new Barrage(combat.block->getSuit(),13);
+        barrage->setSkillName(objectName());
+        barrage->addSubcard(combat.block);
+        combat.block = barrage;
+
+        data = QVariant::fromValue(combat);
+
+        LogMessage log;
+        log.type = "#CatwalkConvert";
+        log.from = combat.to ;
+        log.card_str = barrage->toString();
+        room->sendLog(log);
+
+        return false;
+    }
+};
+
+class FireWheel : public TriggerSkill
+{
+public:
+    FireWheel():TriggerSkill("firewheel")
+    {
+        events << AttackDeclared << CombatTargetDeclare;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        Room * room = player->getRoom();
+
+        if(event == AttackDeclared){
+
+            const Card * card = data.value<CardStar>();
+
+            if(player->getMp()<1)return false;
+            if(!room->askForSkillInvoke(player,objectName()))return false;
+
+            room->changeMp(player,-1);
+            room->showCard(player,card->getEffectiveId());
+
+            if(!card->inherits("Rune"))return false;
+
+            room->setPlayerFlag(player,"firewheel");
+            return false;
+        }else{
+
+            CombatStruct combat = data.value<CombatStruct>();
+            if(!combat.from->hasFlag("firewheel"))return false;
+
+            if(!room->askForCard(combat.to,"strike","@firewheel"))
+            {
+                DamageStruct damage ;
+                damage.from = combat.from;
+                damage.to   = combat.to ;
+                room->damage(damage);
+            }
+
+            return true;
+        }
+    }
+
+};
+
 void TouhouPackage::addGenerals()
 {
     General *lingmeng = new General(this,"reimu","_hrp", 3, false ,false, 4);
@@ -1457,6 +1714,11 @@ void TouhouPackage::addGenerals()
     General *sanai = new General(this,"sanai","_mof",4,false,false,4);
     sanai->addSkill(new FuujinSaishi);
     sanai->addSkill(new MosesMiracle);
+
+    General *utuho = new General(this,"utuho","_sa",4,false,false,3);
+    utuho->addSkill(new SubterraneanSun);
+    utuho->addSkill(new MegaFlare);
+
 
 
     //    General *kogasa = new General(this,"kogasa","_ufo",3,false,false,4);
@@ -1494,8 +1756,18 @@ void TouhouPackage::addGenerals()
     kaguya->addSkill(new NightReturn);
     kaguya->addSkill(new FiveProblem);
 
+    General * yukari =new General(this,"yukari","_pcb",3,false,false,4);
+    yukari->addSkill(new RealmController);
+    yukari->addSkill(new BlackButterfly);
+    yukari->addSkill(new Kamikakushi);
+
+    General * rin = new General(this,"rin","_sa",3,false,false,4);
+    rin->addSkill(new FireWheel);
+    rin->addSkill(new Catwalk);
+
     skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;
     skills << new WorldJarDetacher << new Skill("worldjar_constraint");
+    skills << new BlackButterflyConstraint << new BlackButterflyDetacher;
 
     addMetaObject<GuifuCard>();
     addMetaObject<FreezeCard>();

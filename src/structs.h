@@ -203,6 +203,8 @@ enum TriggerEvent{
     AttackDeclare,
     AttackDeclared,
 
+    ConstraintLose,
+
     NumOfEvents,
 };
 

@@ -52,7 +52,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
             farthest = source->distanceTo(player);
     if(farthest > source->getAttackRange()
             && !source->hasFlag("tianyi_success")
-            && !source->hasSkill("sharpmind"));
+            && !source->hasSkill("sharpmind"))
     {
         if(source->getMp()< (farthest - source->getAttackRange()) )return;
         room->changeMp(source,source->getAttackRange() - farthest);
@@ -787,6 +787,11 @@ public:
     SinbagSkill():TriggerSkill("sinbag")
     {
         events << CombatFinish << TargetFinish;
+    }
+
+    virtual int getPriority() const
+    {
+        return -1;
     }
 
     virtual bool triggerable(const ServerPlayer *target) const
