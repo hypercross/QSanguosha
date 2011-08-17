@@ -1314,13 +1314,8 @@ void RealSumiSakuraCard::onEffect(const CardEffectStruct &effect) const
 
     if(choice == "gainmp")
     {
-        int mpfrom = effect.to->getMp();
+
         room->changeMp(effect.to,num);
-        int mpto   = effect.to->getMp();
-
-        num = mpto - mpfrom;
-
-        if(num<=0)return;
 
         num = qMin(num,effect.to->getCardCount(false)) ;
         room->askForDiscard(effect.to,"sumisakura",num);
@@ -1329,13 +1324,7 @@ void RealSumiSakuraCard::onEffect(const CardEffectStruct &effect) const
     else
 
     {
-        int mpfrom = effect.to->getMp();
         room->changeMp(effect.to,-num);
-        int mpto   = effect.to->getMp();
-
-        num =  mpfrom - mpto;
-
-        if(num<=0)return;
 
         room->drawCards(effect.to,num);
     }
