@@ -430,6 +430,16 @@ public:
     }
 };
 
+class SRPattern: public CardPattern{
+public:
+    virtual bool match(const Player *player, const Card *card) const{
+        return ! player->hasEquip(card) &&
+                (card->objectName() == "rune" ||
+                 card->objectName() == "strike"
+                 );
+    }
+};
+
 StandardPackage::StandardPackage()
     :Package("standard")
 {
@@ -453,6 +463,7 @@ StandardPackage::StandardPackage()
     patterns["barrage"] = new NamePattern("barrage");
     patterns["strike"] = new NamePattern("strike");
     patterns["rune"] = new NamePattern("rune");
+    patterns["strike+rune"] = new SRPattern;
     patterns[".combat"] = new InheritancePattern("CombatCard");
     patterns[".basic"] = new InheritancePattern("BasicCard");
 }

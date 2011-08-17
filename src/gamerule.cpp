@@ -463,7 +463,7 @@ bool GameRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data)
                 effect.to->addToPile("Defense",block->getEffectiveId(),false);
                 if(block->getSkillName().length()>0)
                 {
-                    effect.to->tag["Combat_Convert_From"] = block->getEffectiveId();
+                    effect.to->tag["Combat_Convert_From"] = block->getEffectiveId()+1;
                     effect.to->tag["Combat_Convert_To"] = block->toString();
                 }
 

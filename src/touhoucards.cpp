@@ -69,7 +69,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     source->addToPile("Attack",declare->getEffectiveId(),false);
     if(declare->getSkillName().length()>0)
     {
-        source->tag["Combat_Convert_From"] = declare->getEffectiveId();
+        source->tag["Combat_Convert_From"] = declare->getEffectiveId()+1;
         source->tag["Combat_Convert_To"] = declare->toString();
     }
 
@@ -93,10 +93,10 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
         reveal.revealed = Sanguosha->getCard(cid);
     }
 
-    if(reveal.revealed->getEffectiveId() == source->tag["Combat_Convert_From"].toInt())
+    if(reveal.revealed->getEffectiveId() == source->tag["Combat_Convert_From"].toInt()-1)
         reveal.revealed = Card::Parse(source->tag["Combat_Convert_To"].toString());
 
-    source->tag["Combat_Convert_From"] = -1;
+    source->tag["Combat_Convert_From"] = 0;
     source->tag["Combat_Convert_To"]   = QVariant();
 
 
@@ -154,11 +154,11 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
                     block_reveal.revealed = Sanguosha->getCard(cid);
                 }
 
-                if(block_reveal.revealed->getEffectiveId() == player->tag["Combat_Convert_From"].toInt())
+                if(block_reveal.revealed->getEffectiveId() == player->tag["Combat_Convert_From"].toInt()-1)
                     block_reveal.revealed = Card::Parse(player->tag["Combat_Convert_To"].toString());
 
 
-                player->tag["Combat_Convert_From"] = -1;
+                player->tag["Combat_Convert_From"] = 0;
                 player->tag["Combat_Convert_To"]   = QVariant();
 
 
@@ -212,10 +212,10 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
             if(combat.combat->canbeBlocked(combat.block))
                 ccard->resolveDefense(combat);
 
-            if(combat.block->inherits("DummyCard"))delete combat.block;
-
             room->getThread()->trigger(CombatFinished,source,data);
             room->getThread()->trigger(TargetFinished,player,data);
+
+            if(combat.block->inherits("DummyCard"))delete combat.block;
 
         }
 }
@@ -427,7 +427,7 @@ void FullscreanBarrage::use(Room *room, ServerPlayer *source, const QList<Server
 
 void FullscreanBarrage::onEffect(const CardEffectStruct &effect) const{
     Room *room = effect.to->getRoom();
-    const Card *slash = room->askForCard(effect.to, "strike", "full-scre-strike:" + effect.from->objectName());
+    const Card *slash = room->askForCard(effect.to, "strike+rune", "full-scre-strike:" + effect.from->objectName());
     if(slash == NULL){
         DamageStruct damage;
         damage.card = this;
@@ -527,6 +527,8 @@ bool NiceGuyCard::isAvailable(const Player *player) const
 void NiceGuyCard::onMove(const CardMoveStruct &move) const
 {
     ServerPlayer *from = move.from;
+
+    if(from->isDead())return;
     if(from && move.to_place == Player::DiscardedPile)
     {
         from->getRoom()->drawCards(from,1);

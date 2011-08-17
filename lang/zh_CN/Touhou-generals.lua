@@ -99,7 +99,7 @@ return
 	
 	["pachuli"] = "帕秋莉 诺蕾姬",
 	["philosopher_stone"] = "贤者之石",
-	[":philosopher_stone"] = "出牌阶段，你可以弃掉任意张花色互不相同的手牌，然后按以下规则发动效果：\
+	[":philosopher_stone"] = "出牌阶段，你可以弃掉任意张花色互不相同的牌，然后按以下规则发动效果：\
 	1张：你回复一点体力\
 	2张：你摸2张牌\
 	3张：你在此回合后进行一个额外回合\
@@ -161,15 +161,26 @@ return
 	["#SunDamagePlus"]="%from 的技能【地狱的人工太阳】被触发，伤害从%arg 提升到%arg2",
 
 	["koishi"] = "古明地 恋",
-	
 	["@unc"] = "你可以立即使用弃入弃牌区的 %arg",
 	["ostinateCard"] = "你可以预先打出防御牌",
 	["#chosenOstinate"]="%from 预先打出了防御牌",
-	
-
 	["ostinatestone"] = "顽固的小石",
 	[":ostinatestone"] = "回合开始时，你可以背面向上打出任意张牌，作为你已经宣告的防御牌。",
-	
 	["unconsciousness"] = "无意识",
 	[":unconsciousness"] = "你可以立即使用你在弃牌阶段弃掉的牌。摸牌阶段，你可支付一点灵力额外摸一张牌并跳过你的出牌阶段。",
+	
+	["nitori"] = "河城 荷取",
+	["opticalcamo"] = "光学迷彩",
+	[":opticalcamo"] = "其他角色需要宣告防御牌时，你可支付一点灵力替其打出防御牌。",
+	["extendedarm"] = "手臂延伸",
+	[":extendedarm"] = "你可将武器手牌当作灵击使用或打出。",
+	["@camo-card"] = "你可支付一点灵力替 %src 宣告防御牌",
+	["#chosenCamo"] = "%from 打出了防御牌",
+	
+	["hina"] = "键山雏",
+	["brokenamulet"] = "破碎的护身符",
+	[":brokenamulet"] = "锁定技，你成为进攻目标时，若你灵力值不多于对方，对方支付一点灵力否则你跳过战斗。",
+	
+	["wheelmisfortune"] = "厄运之轮",
+	[":wheelmisfortune"] = "出牌阶段，你可以指定一名灵力不满的玩家，获取一名灵力不为零的玩家的一点灵力，并且解除所有冻结。",
 }

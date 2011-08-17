@@ -9,7 +9,7 @@ return
 	["blockCard"]      ="请打出一张防御牌",
 	["ex-spell-barrage"]="请打出一张【弹幕】",
 	["dannatu-barrage"] ="请打出一张【弹幕】",
-	["full-scre-strike"]="请打出一张【灵击】",
+	["full-scre-strike"]="请打出一张【灵击】或【符咒】",
 	
 	["#increasedMp"]    ="%from 回复了%arg点灵力",
 	["#decreasedMp"]    ="%from 损失了%arg点灵力",
@@ -52,7 +52,7 @@ return
 	["fullscrean_barrage"]="全屏弹幕",
 	[":fullscrean_barrage"]="出牌时机：出牌阶段。\
 使用目标：除你以外的所有角色。\
-作用效果：按行动顺序结算，除非目标角色打出1张【灵击】，否则该角色受到【全屏弹幕】对其造成的1点伤害", 
+作用效果：按行动顺序结算，除非目标角色打出1张【灵击】或【符卡】，否则该角色受到【全屏弹幕】对其造成的1点伤害", 
 	["surprise"] = "惊吓",
 	[":surprise"]= "出牌时机：出牌阶段\
 使用目标：除你以外，任意一名有手牌的角色\

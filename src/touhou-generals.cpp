@@ -925,7 +925,7 @@ public:
 
     virtual bool isEnabledAtPlay(const Player *player) const
     {
-        return player->getMp()>0;
+        return player->getMp()>1;
     }
 
     virtual bool viewFilter(const QList<CardItem *> &selected, const CardItem *to_select) const
@@ -962,7 +962,7 @@ public:
             if(to_select->getCard()->getSuit() == aselected->getCard()->getSuit())return false;
         }
 
-        return selected.length()<4 && !to_select->isEquipped();
+        return selected.length()<4;
     }
 
     virtual const Card* viewAs(const QList<CardItem *> &cards) const
@@ -1235,7 +1235,7 @@ public:
     virtual bool isProhibited(const Player *from, const Player *to, const Card *card) const
     {
         return (from->hasSkill("worldjar_constraint")) != (to->hasSkill("worldjar_constraint"))
-                && !card->isVirtualCard();
+                && !card->inherits("SkillCard");
     }
 
     virtual bool isGlobal() const
@@ -1360,11 +1360,10 @@ public:
 
         room->changeMp(target,-2);
 
-        target->skip(Player::Judge);
         target->skip(Player::Play);
         target->skip(Player::Discard);
 
-        return false;
+        return true;
     }
 };
 
@@ -1784,6 +1783,178 @@ public:
     }
 };
 
+class OpticalCamo : public TriggerSkill
+{
+public:
+    OpticalCamo():TriggerSkill("opticalcamo")
+    {
+        events << BlockDeclare;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return !target->hasSkill(objectName());
+    }
+
+    virtual int  getPriority() const
+    {
+        return -1;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        Room * room = player->getRoom();
+        ServerPlayer * nitori = room->findPlayerBySkillName(objectName());
+
+        if(nitori->getHandcardNum()<1 || nitori->getMp()<1)return false;
+
+        const Card * block = room->askForCard(nitori,".","@camo-card:" + player->objectName(),false);
+        if(!block)return false;
+
+        room->changeMp(nitori,-1);
+        player->tag["combatEffective"]=true;
+        player->addToPile("Defense",block->getEffectiveId(),false);
+
+        LogMessage log;
+        log.type = "#chosenCamo";
+        log.from = player;
+        room->sendLog(log);
+
+        CombatStruct effect = data.value<CombatStruct>();
+        effect.block = block;
+
+        QVariant declareData = QVariant::fromValue(effect);
+
+        room->getThread()->trigger(BlockDeclared, effect.to, declareData);
+        return true;
+
+    }
+};
+
+class ExtendedArm : public OneCardViewAsSkill
+{
+public:
+    ExtendedArm():OneCardViewAsSkill("extendedarm")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return Slash::IsAvailable(player) || player->hasWeapon("hakkero");
+    }
+
+    virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const
+    {
+        return pattern == "strike" || pattern == ".combat" || pattern == ".";
+    }
+
+    virtual bool viewFilter(const CardItem *to_select) const
+    {
+        const Card* card = to_select->getFilteredCard();
+
+        return card->inherits("Weapon") && !card->isEquipped();
+    }
+
+    virtual const Card *viewAs(CardItem *card_item) const{
+        const Card *card = card_item->getCard();
+        Card *strike = new Strike(card->getSuit(), card->getNumber());
+        strike->addSubcard(card->getId());
+        strike->setSkillName(objectName());
+        return strike;
+    }
+};
+
+class WheelMisfortune : public ZeroCardViewAsSkill
+{
+public:
+    WheelMisfortune():ZeroCardViewAsSkill("wheelmisfortune")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return !player->hasUsed("MisfortuneCard");
+    }
+
+    virtual const Card* viewAs() const
+    {
+        return new MisfortuneCard;
+    }
+};
+
+MisfortuneCard::MisfortuneCard(){
+    once = true;
+}
+
+bool MisfortuneCard::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const{
+    if(targets.isEmpty() && to_select->getMp() == to_select->getMaxMP())
+        return false;
+
+    if(!targets.isEmpty() && to_select->getMp() == 0) return false;
+
+    return true;
+}
+
+bool MisfortuneCard::targetsFeasible(const QList<const Player *> &targets, const Player *Self) const{
+    return targets.length() == 2;
+}
+
+void MisfortuneCard::use(Room *room, ServerPlayer *, const QList<ServerPlayer *> &targets) const{
+
+    ServerPlayer *to = targets.at(0);
+    ServerPlayer *from = targets.at(1);
+
+    room->changeMp(to,1);
+    to->jilei(NULL);
+    to->invoke("jilei",NULL);
+
+    LogMessage log;
+    log.type = "#JileiClear";
+    log.from = to;
+    room->sendLog(log);
+
+    room->changeMp(from,-1);
+}
+
+class BrokenAmulet  : public TriggerSkill
+{
+public:
+    BrokenAmulet():TriggerSkill("brokenamulet")
+    {
+        events << CombatTargetDeclare;
+
+        frequency = Compulsory;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return true;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        CombatStruct combat = data.value<CombatStruct>();
+        Room * room = player->getRoom();
+
+        if(!combat.to->hasSkill(objectName()))return false;
+        if(combat.to->getMp()>combat.from->getMp())return false;
+        if(combat.from->getMp()<1)
+        {
+            LogMessage log;
+            log.type = "#InsufficientMp";
+            log.from = combat.from;
+            log.arg  = objectName();
+            room->sendLog(log);
+
+            return true;
+        }
+        room->changeMp(combat.from,-1);
+        return false;
+    }
+};
+
 void TouhouPackage::addGenerals()
 {
     General *lingmeng = new General(this,"reimu","_hrp", 3, false ,false, 4);
@@ -1794,7 +1965,7 @@ void TouhouPackage::addGenerals()
     chiruno->addSkill(new Baka);
     chiruno->addSkill(new PerfectFreeze);
 
-    General *aya =new General(this,"aya","_stb",3,false,false,3);
+    General *aya =new General(this,"aya","_hrp",3,false,false,3);
     aya->addSkill(new WindGirl);
     aya->addSkill(new Fastshot);
 
@@ -1869,6 +2040,14 @@ void TouhouPackage::addGenerals()
     koishi->addSkill(new OstinateStone);
     koishi->addSkill(new Unconsciousness);
 
+    General * nitori = new General(this,"nitori","_mof",3,false,false,4);
+    nitori->addSkill(new OpticalCamo);
+    nitori->addSkill(new ExtendedArm);
+
+    General * hina =  new General(this,"hina","_mof",4,false,false,2);
+    hina->addSkill(new WheelMisfortune);
+    hina->addSkill(new BrokenAmulet);
+
     skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;
     skills << new WorldJarDetacher << new Skill("worldjar_constraint");
     skills << new BlackButterflyConstraint << new BlackButterflyDetacher;
@@ -1884,4 +2063,5 @@ void TouhouPackage::addGenerals()
     addMetaObject<WorldJarCard>();
     addMetaObject<RealSumiSakuraCard>();
     addMetaObject<FiveProblemCard>();
+    addMetaObject<MisfortuneCard>();
 }
