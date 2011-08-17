@@ -664,7 +664,7 @@ public:
         if(cms->card_id != 102)return false;
 
         ServerPlayer* kogasa = player->getRoom()->findPlayerBySkillName(objectName());
-
+        if(!kogasa)return false;
         const Card* umb = Sanguosha->getCard(102) ;
         if(room->getCardPlace(102)==Player::DiscardedPile)kogasa->obtainCard(umb);
 
@@ -746,6 +746,7 @@ public:
             return false;
 
         ServerPlayer* ojoosama = player->getRoom()->findPlayerBySkillName(objectName());
+        if(!ojoosama)return false;
         if(!ojoosama->getRoom()->askForSkillInvoke(ojoosama,objectName()))return false;
         ojoosama->obtainCard(card);
 
@@ -1068,6 +1069,7 @@ public:
         Room * room =player->getRoom();
 
         ServerPlayer *pachuli = room->findPlayerBySkillName("philosopher_stone");
+        if(!pachuli)return false;
         if(!pachuli->askForSkillInvoke(objectName()))return false;
 
         room->doGuanxing(pachuli, room->getNCards(4, false),false);
@@ -1753,7 +1755,9 @@ public:
 
     virtual bool triggerable(const ServerPlayer *target) const
     {
-        return TriggerSkill::triggerable(target) && target->getPhase() == Player::Discard;
+        return TriggerSkill::triggerable(target)
+                &&( target->getPhase() == Player::Discard
+                || target->getPhase() == Player::Draw);
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
@@ -1805,6 +1809,7 @@ public:
     {
         Room * room = player->getRoom();
         ServerPlayer * nitori = room->findPlayerBySkillName(objectName());
+        if(!nitori)return false;
 
         if(nitori->getHandcardNum()<1 || nitori->getMp()<1)return false;
 
@@ -1955,6 +1960,167 @@ public:
     }
 };
 
+class Belief: public PhaseChangeSkill
+{
+public:
+    Belief():PhaseChangeSkill("belief")
+    {
+        frequency = Frequent;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return PhaseChangeSkill::triggerable(target) && target->getPhase() == Player::Finish;
+    }
+
+    virtual bool onPhaseChange(ServerPlayer *target) const
+    {
+        if(target->getMp() > target->getHp()
+                && target->getRoom()->askForSkillInvoke(target,objectName()))
+
+        {
+
+            RecoverStruct recover;
+            recover.who = target;
+
+            target->getRoom()->recover(target,recover);
+        }
+
+        return false;
+    }
+
+};
+
+OnbashiraCard::OnbashiraCard(){
+    once = true;
+    mute = true;
+}
+
+void OnbashiraCard::onEffect(const CardEffectStruct &effect) const{
+    Room *room = effect.from->getRoom();
+
+    QString choice = room->askForChoice(effect.from,"onbashira","recovermp+losemp");
+
+    int num = (choice == "recovermp") ? 1 : -1 ;
+    room->changeMp(effect.from,num);
+    room->changeMp(effect.to,num);
+}
+
+class Onbashira : public ViewAsSkill
+{
+public:
+    Onbashira():ViewAsSkill("onbashira")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return ! player->hasUsed("OnbashiraCard");
+    }
+
+    virtual bool viewFilter(const QList<CardItem *> &selected, const CardItem *to_select) const
+    {
+        return selected.length()<2 && ! to_select->getCard()->isEquipped();
+    }
+
+    virtual const Card* viewAs(const QList<CardItem *> &cards) const
+    {
+        if(cards.length()<2)return NULL;
+        OnbashiraCard * ocard = new OnbashiraCard();
+        ocard->addSubcards(cards);
+        ocard->setSkillName(objectName());
+        return ocard;
+    }
+};
+
+class IronWheel : public ZeroCardViewAsSkill
+{
+public:
+    IronWheel():ZeroCardViewAsSkill("ironwheel")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return !player->hasUsed("IronWheelCard") && player->getMp()>0;
+    }
+
+    virtual const Card * viewAs() const
+    {
+        return new IronWheelCard;
+    }
+};
+
+IronWheelCard::IronWheelCard()
+{
+    setObjectName("ironwheel");
+    once = true;
+    mute =true;
+    target_fixed = true;
+}
+
+void IronWheelCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    if(source->getMp()<1)return;
+
+    room->changeMp(source,-1);
+
+    QList<ServerPlayer*> players;
+
+    int min = 100;
+    foreach(ServerPlayer *sp,room->getAlivePlayers())if(sp->getHandcardNum() < min)
+        min = sp->getHandcardNum();
+
+    foreach(ServerPlayer *sp,room->getAlivePlayers())if(sp->getHandcardNum()==min)
+        players << sp;
+
+    ServerPlayer* target = room->askForPlayerChosen(source,players,"ironwheel");
+    room->drawCards(target,2);
+}
+
+class HatIllusion : public TriggerSkill{
+public:
+    HatIllusion():TriggerSkill("hatillusion")
+    {
+        events << Predamaged ;
+    }
+
+    virtual int getPriority() const
+    {
+        return -2;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return TriggerSkill::triggerable(target) && target->getRoom()->getCardPlace(95) == Player::Equip;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        DamageStruct damage = data.value<DamageStruct>();
+        if(damage.damage >= player->getHp())
+        {
+
+
+            LogMessage log;
+            log.type = "#HatIllusion";
+            log.arg  = QString::number(damage.damage);
+            log.arg2 = QString::number(player->getHp() - 1);
+            log.from = player;
+            player->getRoom()->sendLog(log);
+
+            damage.damage = player->getHp() - 1;
+
+            if(damage.damage <= 0)return true;
+            data=QVariant::fromValue(damage);
+
+        }
+        return false;
+    }
+};
+
 void TouhouPackage::addGenerals()
 {
     General *lingmeng = new General(this,"reimu","_hrp", 3, false ,false, 4);
@@ -2048,6 +2214,16 @@ void TouhouPackage::addGenerals()
     hina->addSkill(new WheelMisfortune);
     hina->addSkill(new BrokenAmulet);
 
+    General * kanako = new General(this,"kanako","_mof",4,false,false,3);
+    kanako->addSkill(new Belief);
+    kanako->addSkill(new Onbashira);
+
+    General * suwako = new General(this,"suwako","_mof",3,false,false,4);
+    suwako->addSkill(new IronWheel);
+    suwako->addSkill("belief");
+    suwako->addSkill(new HatIllusion);
+
+
     skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;
     skills << new WorldJarDetacher << new Skill("worldjar_constraint");
     skills << new BlackButterflyConstraint << new BlackButterflyDetacher;
@@ -2064,4 +2240,6 @@ void TouhouPackage::addGenerals()
     addMetaObject<RealSumiSakuraCard>();
     addMetaObject<FiveProblemCard>();
     addMetaObject<MisfortuneCard>();
+    addMetaObject<OnbashiraCard>();
+    addMetaObject<IronWheelCard>();
 }

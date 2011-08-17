@@ -125,4 +125,20 @@ public:
     virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
 };
 
+class OnbashiraCard:public SkillCard{
+    Q_OBJECT
+
+public:
+    Q_INVOKABLE OnbashiraCard();
+    virtual void onEffect(const CardEffectStruct &effect) const;
+};
+
+class IronWheelCard:public SkillCard{
+    Q_OBJECT
+
+public:
+    Q_INVOKABLE IronWheelCard();
+
+    virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
+};
 #endif // TOUHOUGENERALS_H

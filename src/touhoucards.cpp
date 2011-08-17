@@ -879,7 +879,7 @@ TouhouPackage::TouhouPackage()
     cards << new FullscreanBarrage(Card::Spade,4);
     cards << new Barrage(Card::Spade,5);
     cards << new Indulgence(Card::Spade,6);
-    cards << new Rune(Card::Spade,7);
+    cards << new Strike(Card::Spade,7);
     cards << new Rune(Card::Spade,8);
     cards << new Rune(Card::Spade,9);
     cards << new Rune(Card::Spade,10);
@@ -932,8 +932,8 @@ TouhouPackage::TouhouPackage()
     cards << new Rune(Card::Club,4);
     cards << new SupplyShortage(Card::Club,5);
 
-    cards << new Rune(Card::Club,7);
-    cards << new Rune(Card::Club,8);
+    cards << new Strike(Card::Club,7);
+    cards << new Strike(Card::Club,8);
     cards << new Rune(Card::Club,9);
     cards << new Rune(Card::Club,10);
 
