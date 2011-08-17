@@ -1,4 +1,4 @@
-Open Source Sanguosha
+Open Source Sanguosha - the Touhou MOD 
 ==========
 
 Introduction
@@ -13,6 +13,14 @@ such as SDL, HGE, Clanlib and others,
 but many of them lack some important features. 
 Although Qt is an application framework instead of a game engine, 
 its graphics view framework is suitable for my game developing.
+
+This is a modification of the original game and the 
+theme is set to the touhou world. All game cards are re-made 
+, new systems and characters are introduced.
+
+The gameplay is my design, image & audio is from pixiv and 
+everywhere on the web, or possibly the remainder of the
+original game.
 
 Features
 ----------
