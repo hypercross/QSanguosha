@@ -220,19 +220,16 @@ public:
         CombatStruct combat = data.value<CombatStruct>();
         Room *room = player->getRoom();
 
-        if(combat.block->inherits("DummyCard"))return false;
-
-        if(!combat.block->inherits("CombatCard"))
+        if(combat.block->inherits("DummyCard"))
         {
-            Barrage *barrage = new Barrage(combat.block->getSuit(),combat.block->getNumber());
-            barrage->setSkillName(objectName());
-            barrage->addSubcard(combat.block);
-            combat.block = barrage;
+            Strike *strike = new Strike(Card::NoSuit,1);
+            strike->setSkillName(objectName());
+            combat.block = strike;
 
             LogMessage log;
             log.type = "#PadConvert";
             log.from = combat.to ;
-            log.card_str = barrage->toString();
+            log.card_str = strike->toString();
             room->sendLog(log);
 
             data =QVariant::fromValue(combat);
@@ -254,24 +251,32 @@ class DollSkill : public ArmorSkill
 public:
     DollSkill():ArmorSkill("doll")
     {
-        events << TargetFinish;
+        events << BlockDeclare;
 
-        frequency = Compulsory;
+        frequency = Frequent ;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
     {
         CombatStruct combat = data.value<CombatStruct>();
+        Room * room = player->getRoom();
 
-        if(combat.combat->inherits("Strike"))
-        {
-            LogMessage log;
-            log.from = player;
-            log.type = "#DollNullify";
-            player->getRoom()->sendLog(log);
+        if(!room->askForSkillInvoke(player,objectName()))return false;
 
-            return true;
-        }
+        const Card* card = room->peek();
+        room->drawCards(combat.from,1);
+
+        room->throwCard(combat.combat);
+        combat.from->addToPile("Attack",card->getId(),false);
+
+        player->tag["combatEffective"] = true;
+
+        LogMessage log;
+        log.from = player;
+        log.type = "#DollExchange";
+        player->getRoom()->sendLog(log);
+        player->getRoom()->getThread()->delay();
+
         return false;
     }
 };

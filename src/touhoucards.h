@@ -3,6 +3,7 @@
 
 #include<standard.h>
 #include<touhou-generals.h>
+#include<engine.h>
 
 class CombatCard : public BasicCard
 {

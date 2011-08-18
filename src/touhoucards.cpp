@@ -109,7 +109,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
 
     broken=room->getThread()->trigger(CombatReveal,source,data);
     reveal = data.value<CombatRevealStruct>();
-    if(broken || !reveal.revealed->inherits("CombatCard"))return;
+    if(broken)return;
 
 
     const Card * attackCard = reveal.revealed;
@@ -126,6 +126,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     if(broken)return;
     room->getThread()->delay();
 
+    if(!reveal.revealed->inherits("CombatCard"))return;
 
     // reveal each blocker and finish combat
         foreach(ServerPlayer* player,room->getAlivePlayers())
@@ -528,9 +529,10 @@ void NiceGuyCard::onMove(const CardMoveStruct &move) const
 {
     ServerPlayer *from = move.from;
 
-    if(from->isDead())return;
+
     if(from && move.to_place == Player::DiscardedPile)
     {
+        if(from->isDead())return;
         from->getRoom()->drawCards(from,1);
     }
 }
