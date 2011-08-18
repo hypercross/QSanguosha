@@ -222,7 +222,7 @@ public:
 
         if(combat.block->inherits("DummyCard"))
         {
-            Strike *strike = new Strike(Card::NoSuit,1);
+            Strike *strike = new Strike(Card::NoSuit,10);
             strike->setSkillName(objectName());
             combat.block = strike;
 
@@ -308,6 +308,10 @@ void TouhouPackage::addEquips()
     cards << new Pad(Card::Spade,2);
     cards << new Umbrella(Card::Spade,2);
     cards << new Hisonoken(Card::Spade,5);
+
+    //ex
+    cards<< new Pad(Card::Spade,2);
+    cards<< new Doll(Card::Diamond,12);
 
     foreach(Card *card, cards)
         card->setParent(this);

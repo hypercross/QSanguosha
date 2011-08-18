@@ -126,7 +126,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     if(broken)return;
     room->getThread()->delay();
 
-    if(!reveal.revealed->inherits("CombatCard"))return;
+    //if(!reveal.revealed->inherits("CombatCard"))return;
 
     // reveal each blocker and finish combat
         foreach(ServerPlayer* player,room->getAlivePlayers())
@@ -189,6 +189,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
 
 
             //finish combat
+
             CombatStruct combat;
             combat.from   = source;
             combat.to     = player;
@@ -207,11 +208,18 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
             combat = data.value<CombatStruct>();
 
             const CombatCard * ccard=qobject_cast<const CombatCard*>(combat.block);
-            if((!combat.block->inherits("CombatCard")) || ccard->canbeBlocked(combat.combat))
-                combat.combat->resolveAttack(combat);
 
-            if(combat.combat->canbeBlocked(combat.block))
-                ccard->resolveDefense(combat);
+            if(attackCard->inherits("CombatCard") &&
+                    (!blocker->inherits("CombatCard")
+                    || ccard->canbeBlocked(combat.combat))
+                    )
+                    combat.combat->resolveAttack(combat);
+
+            if(blocker->inherits("CombatCard") &&
+                    (!attackCard->inherits("CombatCard")
+                    || combat.combat->canbeBlocked(combat.block))
+                    )
+                    ccard->resolveDefense(combat);
 
             room->getThread()->trigger(CombatFinished,source,data);
             room->getThread()->trigger(TargetFinished,player,data);
@@ -968,6 +976,10 @@ TouhouPackage::TouhouPackage()
     cards << new Surprise(Card::Diamond,11);
     cards << new Peach(Card::Diamond,12);
     cards << new Barrage(Card::Diamond,13);
+
+    //ex
+    cards<< new Saisen(Card::Club,2);
+    cards<< new Nullification(Card::Diamond,12);
 
 
 

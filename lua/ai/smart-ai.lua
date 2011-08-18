@@ -661,19 +661,8 @@ end
 -- the table that stores whether the skill should be invoked
 -- used for SmartAI:askForSkillInvoke
 sgs.ai_skill_invoke = {
-	eight_diagram = true,
-	double_sword = true,
-	fan = true,
+	doll = true,
 	
-	kylin_bow = function(self, data)	
-		local effect = data:toSlashEffect()
-		
-		if effect.to:hasSkill("xiaoji") or effect.to:hasSkill("xuanfeng") then
-			return self:isFriend(effect.to)
-		end
-		
-		return self:isEnemy(effect.to)
-	end,
 }
 
 function SmartAI:askForSkillInvoke(skill_name, data)
