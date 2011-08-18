@@ -141,4 +141,34 @@ public:
 
     virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
 };
+
+class NinetailCard:public SkillCard{
+    Q_OBJECT
+
+public:
+    Q_INVOKABLE NinetailCard();
+
+    virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
+};
+
+class MindreaderCard:public SkillCard{
+    Q_OBJECT
+
+public:
+    Q_INVOKABLE MindreaderCard();
+
+
+    virtual void onEffect(const CardEffectStruct &effect) const;
+};
+
+class UltimateBuddhistCard : public SkillCard{
+    Q_OBJECT
+
+public:
+    Q_INVOKABLE UltimateBuddhistCard();
+
+
+    virtual void onEffect(const CardEffectStruct &effect) const;
+};
+
 #endif // TOUHOUGENERALS_H

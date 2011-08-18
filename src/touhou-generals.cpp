@@ -2127,7 +2127,7 @@ class HatIllusion : public TriggerSkill{
 public:
     HatIllusion():TriggerSkill("hatillusion")
     {
-        events << Predamaged ;
+        events << Predamaged <<HpLost;
     }
 
     virtual int getPriority() const
@@ -2142,6 +2142,23 @@ public:
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
     {
+        if(event == HpLost)
+        {
+            int num = data.toInt();
+            if(num<player->getHp())return false;
+
+            LogMessage log;
+            log.type = "#HatIllusion";
+            log.arg  = QString::number(num);
+            log.arg2 = QString::number(player->getHp() - 1);
+            log.from = player;
+            player->getRoom()->sendLog(log);
+
+            if(player->getHp()<2)return true;
+
+            data=QVariant::fromValue(player->getHp() - 1);
+        }
+
         DamageStruct damage = data.value<DamageStruct>();
         if(damage.damage >= player->getHp())
         {
@@ -2270,7 +2287,7 @@ public:
 
     virtual bool triggerable(const ServerPlayer *target) const
     {
-        return target->getMp()>1;
+        return TriggerSkill::triggerable(target) && target->getMp()>1;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
@@ -2321,6 +2338,211 @@ public:
         room->sendLog(log);
     }
 };
+
+class GodsBanquet : public PhaseChangeSkill
+{
+public:
+    GodsBanquet():PhaseChangeSkill("godsbanquet")
+    {
+
+    }
+
+    virtual bool onPhaseChange(ServerPlayer *target) const
+    {
+        if(target->getPhase() != Player::Draw)return false;
+        Room * room = target->getRoom();
+
+        if(!room->askForSkillInvoke(target,objectName()))return false;
+
+        foreach(ServerPlayer* sp,room->getOtherPlayers(target))
+        {
+            if(sp->getHandcardNum()>0)
+            {
+                const Card* card = sp->getRandomHandCard();
+                room->moveCardTo(card,target,Player::Hand,false);
+            }
+        }
+
+        target->skip(Player::Play);
+        return true;
+    }
+};
+
+UltimateBuddhistCard::UltimateBuddhistCard()
+{
+
+}
+
+
+void UltimateBuddhistCard::onEffect(const CardEffectStruct &effect) const
+{
+    if(effect.from->getMp()<1)return;
+    effect.from->getRoom()->changeMp(effect.from,-1);
+
+    effect.to->obtainCard(this);
+    RecoverStruct recover;
+    recover.card= this;
+    recover.who = effect.to;
+    effect.to->getRoom()->recover(effect.to,recover);
+}
+
+class UltimateBuddhist: public OneCardViewAsSkill{
+public:
+    UltimateBuddhist():OneCardViewAsSkill("ultimatebuddhist"){
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const{
+        return false;
+    }
+
+    virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const{
+        return  pattern.contains("peach")
+                && player->getPhase() == Player::NotActive
+                && player->getMp()>0;
+    }
+
+    virtual bool viewFilter(const CardItem *to_select) const{
+        return to_select->getFilteredCard()->getSuit() == Card::Club
+                && !to_select->isEquipped();
+    }
+
+    virtual const Card *viewAs(CardItem *card_item) const{
+        const Card *first = card_item->getCard();
+        UltimateBuddhistCard *peach = new UltimateBuddhistCard;
+        peach->addSubcard(first->getId());
+        return peach;
+    }
+};
+
+class Phantasm: public DistanceSkill{
+public:
+    Phantasm():DistanceSkill("phantasm"){
+
+    }
+
+    virtual int getCorrect(const Player *from, const Player *to) const{
+        if(from->hasSkill(objectName()) && to->isChained())
+            return -10;
+        else
+            return 0;
+    }
+};
+
+
+class NinetailViewas : public OneCardViewAsSkill
+{
+public:
+    NinetailViewas():OneCardViewAsSkill("ninetail")
+    {
+
+    }
+
+    virtual bool viewFilter(const CardItem *to_select) const
+    {
+        return !to_select->isEquipped();
+    }
+
+    virtual const Card *viewAs(CardItem *card_item) const
+    {
+        Card* card = new NinetailCard;
+        card->addSubcard(card_item->getCard());
+        return card;
+    }
+};
+
+NinetailCard::NinetailCard()
+{
+    setObjectName("ninetail");
+
+    will_throw = true;
+    target_fixed=true;
+}
+
+void NinetailCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    source->getRoom()->changeMp(source,1);
+    room->throwCard(this);
+}
+
+class Ninetail : public TriggerSkill
+{
+public:
+    Ninetail():TriggerSkill("ninetail")
+    {
+        view_as_skill = new NinetailViewas;
+        events << MpChanged << PhaseChange;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        if(event == PhaseChange && player->getPhase() != Player::Discard)return false;
+        player->setXueyi(player->getMp());
+        return false;
+    }
+};
+
+MindreaderCard::MindreaderCard()
+{
+}
+
+void MindreaderCard::onEffect(const CardEffectStruct &effect) const
+{
+    Room* room=effect.to->getRoom();
+    QList<int> hand=effect.to->handCards();
+    room->fillAG(hand,effect.from);
+
+    int cid=room->askForAG(effect.from,hand,true,"surprise");
+    if(cid>=0)
+    {
+        room->moveCardTo(Sanguosha->getCard(cid),effect.from,Player::Hand,false);
+        cid=room->askForAG(effect.from,hand,true,"surprise");
+
+        if(cid>=0)
+            room->moveCardTo(Sanguosha->getCard(cid),effect.from,Player::Hand,false);
+    }
+    effect.from->invoke("clearAG");
+
+    room->drawCards(effect.to,2);
+}
+
+class MindreaderViewas: public ZeroCardViewAsSkill
+{
+public:
+    MindreaderViewas():ZeroCardViewAsSkill("mindreader")
+    {
+
+    }
+
+    virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const
+    {
+        return pattern == "@@mindreader";
+    }
+
+    virtual const Card* viewAs() const
+    {
+        return new MindreaderCard;
+    }
+};
+
+class Mindreader : public PhaseChangeSkill
+{
+public:
+    Mindreader():PhaseChangeSkill("mindreader")
+    {
+        view_as_skill = new MindreaderViewas;
+    }
+
+    virtual bool onPhaseChange(ServerPlayer *target) const
+    {
+        if(target->getPhase() != Player::Draw)return false;
+
+        Room * room = target->getRoom();
+        if(!room->askForUseCard(target,"@@mindreader","@mindreader"))return false;
+        return true;
+    }
+};
+
 
 void TouhouPackage::addGenerals()
 {
@@ -2435,6 +2657,15 @@ void TouhouPackage::addGenerals()
     reisen->addSkill(new IdlingWave);
     reisen->addSkill(new LunaticRedEyes);
 
+    General * ran = new General(this,"ran","_pcb",3,false,false,4);
+    ran->addSkill(new Phantasm);
+    ran->addSkill(new Ninetail);
+    ran->addSkill(new UltimateBuddhist);
+
+    General * satori = new General(this,"satori","_sa",4,false,false,3);
+    satori->addSkill(new Mindreader);
+
+
     skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;
     skills << new WorldJarDetacher << new Skill("worldjar_constraint");
     skills << new BlackButterflyConstraint << new BlackButterflyDetacher;
@@ -2453,4 +2684,7 @@ void TouhouPackage::addGenerals()
     addMetaObject<MisfortuneCard>();
     addMetaObject<OnbashiraCard>();
     addMetaObject<IronWheelCard>();
+    addMetaObject<NinetailCard>();
+    addMetaObject<MindreaderCard>();
+    addMetaObject<UltimateBuddhistCard>();
 }
