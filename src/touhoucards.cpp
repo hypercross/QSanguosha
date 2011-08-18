@@ -193,7 +193,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
             CombatStruct combat;
             combat.from   = source;
             combat.to     = player;
-            combat.combat = qobject_cast<const CombatCard*>(attackCard);
+            combat.combat = attackCard;
             combat.block  = blocker;
 
             data=QVariant::fromValue(combat);
@@ -207,24 +207,27 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
             }
             combat = data.value<CombatStruct>();
 
-            const CombatCard * ccard=qobject_cast<const CombatCard*>(combat.block);
+            //const CombatCard * ccard=qobject_cast<const CombatCard*>(combat.block);
+            attackCard = combat.combat;
+            blocker    = combat.block;
 
-            if(attackCard->inherits("CombatCard") &&
-                    (!blocker->inherits("CombatCard")
-                    || ccard->canbeBlocked(combat.combat))
-                    )
-                    combat.combat->resolveAttack(combat);
+            if(blocker->canbeBlocked(combat.combat) && combat.combat->inherits("CombatCard"))
+            {
+                const CombatCard * ccard=qobject_cast<const CombatCard*>(combat.combat);
+                ccard->resolveAttack(combat);
+            }
 
-            if(blocker->inherits("CombatCard") &&
-                    (!attackCard->inherits("CombatCard")
-                    || combat.combat->canbeBlocked(combat.block))
-                    )
-                    ccard->resolveDefense(combat);
+            if(attackCard->canbeBlocked(blocker) && blocker->inherits("CombatCard"))
+            {
+                const CombatCard * ccard=qobject_cast<const CombatCard*>(blocker);
+                ccard->resolveDefense(combat);
+            }
 
             room->getThread()->trigger(CombatFinished,source,data);
             room->getThread()->trigger(TargetFinished,player,data);
 
             if(combat.block->inherits("DummyCard"))delete combat.block;
+            if(combat.combat->inherits("DummyCard"))delete combat.combat;
 
         }
 }

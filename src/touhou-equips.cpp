@@ -81,19 +81,19 @@ public:
 
 
 
-            room->throwCard(judge->card);
+        room->throwCard(judge->card);
 
-            judge->card = player->getWeapon();
-            room->moveCardTo(judge->card, NULL, Player::Special);
+        judge->card = player->getWeapon();
+        room->moveCardTo(judge->card, NULL, Player::Special);
 
-            LogMessage log;
-            log.type = "$ChangedJudge";
-            log.from = player;
-            log.to << judge->who;
-            log.card_str = judge->card->getEffectIdString();
-            room->sendLog(log);
+        LogMessage log;
+        log.type = "$ChangedJudge";
+        log.from = player;
+        log.to << judge->who;
+        log.card_str = judge->card->getEffectIdString();
+        room->sendLog(log);
 
-            room->sendJudgeResult(judge);
+        room->sendJudgeResult(judge);
 
 
         return false;

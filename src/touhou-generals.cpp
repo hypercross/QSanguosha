@@ -77,13 +77,13 @@ class GuifuConstraint : public ConstraintSkill
 public:
     GuifuConstraint():ConstraintSkill("guifu")
     {
-        events << CardUsed;
+        events << CardFinished;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
     {
-        Room* room = player->getRoom();
-        room->askForDiscard(player,"guifu",1);
+        if(player->getHandcardNum()>0)
+            player->getRoom()->askForDiscard(player,"@guifu-constraint",1);
         return false;
     }
 };
@@ -137,6 +137,40 @@ public:
         rune->addSubcard(card->getId());
         rune->setSkillName(objectName());
         return rune;
+    }
+
+};
+
+class Musou : public TriggerSkill
+{
+public:
+    Musou():TriggerSkill("musoutensei")
+    {
+        view_as_skill = new MusouViewAs;
+
+        events << Predamaged;
+    }
+
+    virtual int getPriority() const
+    {
+        return 2;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        DamageStruct damage = data.value<DamageStruct>();
+
+        if(damage.card && damage.card->inherits("Rune"))
+        {
+            LogMessage log;
+            log.type = "#MusouProtect";
+            log.from = player;
+            player->getRoom()->sendLog(log);
+
+            return true;
+        }
+
+        return false;
     }
 
 };
@@ -714,6 +748,7 @@ public:
 
             room->setEmotion(player, "good");
             room->damage(damage);
+            room->changeMp(player,1);
         }else room->setEmotion(player, "bad");
 
         return false;
@@ -836,16 +871,32 @@ class FourNineFive: public TriggerSkill{
 public:
     FourNineFive():TriggerSkill("four_nine_five"){
         frequency = Compulsory;
-        events << Damage;
+        events << CardUsed << CardResponsed << CombatRevealed;
+    }
+
+    virtual int getPriority()
+    {
+        return -2;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const{
-        DamageStruct damage = data.value<DamageStruct>();
+        const Card* card;
+        if( event == CardUsed)
+        {
+            CardUseStruct use = data.value<CardUseStruct>();
+            card = use.card;
+            if(card->inherits("CombatCard"))return false;
+        }else if(event == CardResponsed)
+        {
+            card = data.value<CardStar>();
 
-        if(!damage.card)return false;
-        if(damage.card->isVirtualCard())return false;
-
-        int cid = damage.card->getEffectiveId();
+        }else
+        {
+            CombatRevealStruct reveal = data.value<CombatRevealStruct>();
+            card =reveal.revealed;
+        }
+        int cid = card->getEffectiveId();
+        if(cid<0)return false;
         int num = Sanguosha->getCard(cid)->getNumber();
         if(num != 4 && num != 9 && num != 5)return false;
 
@@ -853,15 +904,9 @@ public:
 
         room->playSkillEffect(objectName());
 
-        LogMessage log;
-        log.type = "#FourNineFiveRecover";
-        log.from = player;
-        log.arg = QString::number(damage.damage);
-        room->sendLog(log);
 
         RecoverStruct recover;
         recover.who = player;
-        recover.recover = damage.damage;
         room->recover(player, recover);
 
         return false;
@@ -903,7 +948,8 @@ void DaremoinaiCard::onEffect(const CardEffectStruct &effect) const
         suits[judge.card->getSuit()]=true;
     }
 
-    int dmg = count+1;
+    int dmg = count;
+    suits[Card::Heart] = false;
 
     for(int i=0;i<4;i++) if(suits[i])dmg--;
 
@@ -931,12 +977,12 @@ public:
 
     virtual bool viewFilter(const QList<CardItem *> &selected, const CardItem *to_select) const
     {
-        return selected.length()<Self->getMp() && !to_select->isEquipped();
+        return selected.length()<1 && !to_select->isEquipped() && to_select->getCard()->getSuit() == Card::Heart;
     }
 
     virtual const Card* viewAs(const QList<CardItem *> &cards) const
     {
-        if(cards.length()<Self->getMp())return NULL;
+        if(cards.length()<1)return NULL;
         Card *card = new DaremoinaiCard;
         card->addSubcards(cards);
         return card;
@@ -951,9 +997,8 @@ public:
 
     }
 
-    virtual bool isEnabledAtPlay(const Player *player) const
-    {
-        return !player->hasUsed("PhilosopherStoneCard");
+    virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const{
+        return  pattern == "nullification";
     }
 
     virtual bool viewFilter(const QList<CardItem *> &selected, const CardItem *to_select) const
@@ -963,12 +1008,24 @@ public:
             if(to_select->getCard()->getSuit() == aselected->getCard()->getSuit())return false;
         }
 
+        if(ClientInstance->getPattern() == "nullification") return selected.length()<1;
+
         return selected.length()<4;
     }
 
     virtual const Card* viewAs(const QList<CardItem *> &cards) const
     {
         if(cards.length()<1)return NULL;
+
+        if(ClientInstance->getPattern() == "nullification"){
+            const Card *first = cards.first()->getFilteredCard();
+            Card *ncard = new Nullification(first->getSuit(), first->getNumber());
+            ncard->addSubcard(first);
+            ncard->setSkillName(objectName());
+            return ncard;
+        }
+
+        if(cards.length()<2)return NULL;
 
         Card *psc = new PhilosopherStoneCard;
 
@@ -1007,11 +1064,8 @@ void PhilosopherStoneCard::use(Room *room, ServerPlayer *source, const QList<Ser
 
     switch(cases)
     {
-    case 1:
-        room->recover(source,recover);
-        break;
     case 2:
-        room->drawCards(source,2);
+        room->recover(source,recover);
         break;
     case 3:
         room->setPlayerMark(source,"extra_turn",1);
@@ -1186,7 +1240,7 @@ public:
 
     virtual bool isEnabledAtPlay(const Player *player) const
     {
-        return player->getMp() >= Self->aliveCount()/2 && !player->hasUsed("WorldJarCard");
+        return player->getMp() > 1 && !player->hasUsed("WorldJarCard");
     }
 
     virtual const Card* viewAs() const
@@ -1212,8 +1266,8 @@ bool WorldJarCard::targetFilter(const QList<const Player *> &targets, const Play
 
 void WorldJarCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
 {
-    if(source->getMp()<targets.length())return;
-    room->changeMp(source, - targets.length());
+    if(source->getMp()< 2 )return;
+    room->changeMp(source, - 2);
     foreach(ServerPlayer * sp,targets)GuifuCard::ApplyChain(objectName(),sp, source);
 }
 
@@ -1274,7 +1328,7 @@ public:
 
     virtual bool triggerable(const ServerPlayer *target) const{
         return PhaseChangeSkill::triggerable(target)
-                && target->getPhase() == Player::Finish
+                && target->getPhase() == Player::Start
                 && target->getMp() < target->getMaxMP();
     }
 
@@ -1496,7 +1550,7 @@ public:
 
         QList<ServerPlayer *> other_players = room->getOtherPlayers(target);
 
-        if(!room->askForSkillInvoke(target,objectName()))return;
+        if(!room->askForCard(target,".C","@blackbutterfly"))return;
 
         foreach(ServerPlayer* aplayer, other_players)
         {
@@ -1513,7 +1567,7 @@ public:
 
     virtual int getCorrect(const Player *from, const Player *to) const{
         if(to->hasSkill(objectName()))
-            return +1;
+            return from->isChained() ? +2 : +1;
         else
             return 0;
     }
@@ -2110,17 +2164,175 @@ public:
     }
 };
 
+class DollMaster : public TriggerSkill
+{
+public:
+    DollMaster():TriggerSkill("dollmaster")
+    {
+        events << BlockDeclare;
+
+        frequency = Frequent ;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return TriggerSkill::triggerable(target) &&
+                !target->getArmor();
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        CombatStruct combat = data.value<CombatStruct>();
+        Room * room = player->getRoom();
+
+        if(!room->askForSkillInvoke(player,objectName()))return false;
+
+        const Card* card = room->peek();
+        room->drawCards(combat.from,1);
+
+        room->throwCard(combat.combat);
+        combat.from->addToPile("Attack",card->getId(),false);
+
+        player->tag["combatEffective"] = true;
+
+        LogMessage log;
+        log.from = player;
+        log.type = "#DollExchange";
+        player->getRoom()->sendLog(log);
+        player->getRoom()->getThread()->delay();
+
+        return false;
+    }
+};
+
+
+class MasterSpark : public OneCardViewAsSkill
+{
+public:
+    MasterSpark():OneCardViewAsSkill("masterspark")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return Slash::IsAvailable(player) || player->hasWeapon("hakkero");
+    }
+
+    virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const
+    {
+        return pattern == "barrage" || pattern == ".combat" || pattern == ".";
+    }
+
+    virtual bool viewFilter(const CardItem *to_select) const{
+        const Card *card = to_select->getFilteredCard();
+
+        return card->isBlack();
+
+    }
+
+    virtual const Card *viewAs(CardItem *card_item) const{
+        const Card *card = card_item->getCard();
+        Card *barrage = new Barrage(card->getSuit(), card->getNumber());
+        barrage->addSubcard(card->getId());
+        barrage->setSkillName(objectName());
+        return barrage;
+    }
+
+};
+
+class ThiefMarisa: public DistanceSkill{
+public:
+    ThiefMarisa():DistanceSkill("thiefmarisa")
+    {
+    }
+
+    virtual int getCorrect(const Player *from, const Player *to) const{
+        if(from->hasSkill(objectName()))
+            return -1;
+        else
+            return 0;
+    }
+};
+
+class LunaticRedEyes : public TriggerSkill
+{
+public:
+    LunaticRedEyes():TriggerSkill("lunaticredeyes")
+    {
+        events << CombatFinish << TargetFinish;
+    }
+
+    virtual int getPriority() const
+    {
+        return -1;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return target->getMp()>1;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        CombatStruct combat = data.value<CombatStruct>();
+
+        Room * room = player->getRoom();
+
+        if(player->getMp()<2)return false;
+        if(!room->askForSkillInvoke(player,objectName()))return false;
+
+        room->changeMp(player,-2);
+        const Card* card = combat.block;
+        combat.block = combat.combat;
+        combat.combat = card ;
+
+        LogMessage log;
+        log.type = "#LunaticExchange";
+        log.from = player;
+        room->sendLog(log);
+
+        data = QVariant::fromValue(combat);
+
+        return false;
+    }
+
+};
+
+class IdlingWave : public MasochismSkill
+{
+public:
+    IdlingWave():MasochismSkill("idlingwave")
+    {
+    }
+
+    virtual void onDamaged(ServerPlayer *target, const DamageStruct &damage) const
+    {
+        Room * room = target->getRoom();
+        if(!room->askForSkillInvoke(target,objectName()))return;
+
+        room->changeMp(target,1);
+        if(damage.from)room->setPlayerFlag(room->getCurrent(),"IdlingWave");
+
+        LogMessage log;
+        log.type = "#idlingwave";
+        log.from = target;
+        log.to   << room->getCurrent();
+        room->sendLog(log);
+    }
+};
+
 void TouhouPackage::addGenerals()
 {
     General *lingmeng = new General(this,"reimu","_hrp", 3, false ,false, 4);
     lingmeng->addSkill(new GuifuViewAs);
-    lingmeng->addSkill(new MusouViewAs);
+    lingmeng->addSkill(new Musou);
 
     General *chiruno = new General(this,"chiruno","_esd", 9 , false , false , 1);
     chiruno->addSkill(new Baka);
     chiruno->addSkill(new PerfectFreeze);
 
-    General *aya =new General(this,"aya","_hrp",3,false,false,3);
+    General *aya =new General(this,"aya","_hrp",4,false,false,3);
     aya->addSkill(new WindGirl);
     aya->addSkill(new Fastshot);
 
@@ -2172,7 +2384,7 @@ void TouhouPackage::addGenerals()
     General *youmu = new General(this,"youmu","_pcb",4,false,false,3);
     youmu->addSkill(new DoubleSwordMaster);
 
-    General *eirin = new General(this,"eirin","_in",3,false,false,4);
+    General *eirin = new General(this,"eirin","_in",4,false,false,4);
     eirin->addSkill(new Skill("sharpmind"));
     eirin->addSkill(new WorldJar);
     eirin->addSkill(new WorldJarProhibit);
@@ -2207,11 +2419,21 @@ void TouhouPackage::addGenerals()
     kanako->addSkill(new Belief);
     kanako->addSkill(new Onbashira);
 
-    General * suwako = new General(this,"suwako","_mof",3,false,false,4);
+    General * suwako = new General(this,"suwako","_mof",3,false,false,3);
     suwako->addSkill(new IronWheel);
     suwako->addSkill("belief");
     suwako->addSkill(new HatIllusion);
 
+    General * alice = new General(this,"alice","_hrp",4,false,false,3);
+    alice->addSkill(new DollMaster);
+
+    General * marisa = new General(this,"marisa","_hrp",4,false,false,4);
+    marisa->addSkill(new MasterSpark);
+    marisa->addSkill(new ThiefMarisa);
+
+    General * reisen = new General(this,"reisen","_in",3,false,false,4);
+    reisen->addSkill(new IdlingWave);
+    reisen->addSkill(new LunaticRedEyes);
 
     skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;
     skills << new WorldJarDetacher << new Skill("worldjar_constraint");

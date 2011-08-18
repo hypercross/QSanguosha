@@ -551,3 +551,8 @@ QString DummyCard::getSubtype() const{
 QString DummyCard::toString() const{
     return "$" + subcardString();
 }
+
+bool Card::canbeBlocked(const Card *card) const
+{
+    return true;
+}

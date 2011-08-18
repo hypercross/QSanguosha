@@ -58,7 +58,7 @@ struct SlashEffectStruct{
 struct CombatStruct{
     CombatStruct();
 
-    const CombatCard *combat;
+    const Card *combat;
     const Card *block;
 
     ServerPlayer *from;

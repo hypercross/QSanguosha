@@ -350,7 +350,10 @@ DummyCard *ServerPlayer::wholeHandCards() const{
 }
 
 bool ServerPlayer::hasNullification() const{
-    if(hasSkill("kanpo")){
+    if(hasSkill("philosopher_stone") && getHandcardNum()>0)
+    {
+        return true;
+    }else if(hasSkill("kanpo")){
         foreach(const Card *card, handcards){
             if(card->isBlack() || card->objectName() == "nullification")
                 return true;

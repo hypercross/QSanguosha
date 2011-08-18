@@ -319,7 +319,7 @@ struct SlashEffectStruct{
 struct CombatStruct{
     CombatStruct();
 
-    const CombatCard *combat;
+    const Card *combat;
     const Card *block;
 
     ServerPlayer *from;
@@ -516,6 +516,7 @@ public:
     virtual bool isCancelable(const CardEffectStruct &effect) const;
 
     virtual void onMove(const CardMoveStruct &move) const;
+	virtual bool canbeBlocked(const Card* card) const ;
 
     // static functions
     static bool CompareBySuitNumber(const Card *a, const Card *b);
