@@ -981,7 +981,7 @@ TouhouPackage::TouhouPackage()
     cards << new Barrage(Card::Diamond,13);
 
     //ex
-    cards<< new Saisen(Card::Club,2);
+    cards<< new Tea(Card::Club,2);
     cards<< new Nullification(Card::Diamond,12);
 
 
