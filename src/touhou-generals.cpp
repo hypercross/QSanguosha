@@ -2469,20 +2469,37 @@ MindreaderCard::MindreaderCard()
 
 void MindreaderCard::onEffect(const CardEffectStruct &effect) const
 {
+    int cid=-1;
     Room* room=effect.to->getRoom();
     QList<int> hand=effect.to->handCards();
-    room->fillAG(hand,effect.from);
 
-    int cid=room->askForAG(effect.from,hand,false,"mindreader");
+    if(!hand.isEmpty())
+    {
+        room->fillAG(hand,effect.from);
+        cid=room->askForAG(effect.from,hand,true,"mindreader");
+    }
+
     if(cid>=0)
     {
+        hand.removeOne(cid);
         room->moveCardTo(Sanguosha->getCard(cid),effect.from,Player::Hand,false);
-        cid=room->askForAG(effect.from,hand,false,"mindreader");
+        effect.from->invoke("clearAG");
+        if(!hand.isEmpty())
+        {
+            room->fillAG(hand,effect.from);
 
-        if(cid>=0)
-            room->moveCardTo(Sanguosha->getCard(cid),effect.from,Player::Hand,false);
+            cid=room->askForAG(effect.from,hand,true,"mindreader");
+
+            if(cid>=0)
+            {
+                room->moveCardTo(Sanguosha->getCard(cid),effect.from,Player::Hand,false);
+                hand.removeOne(cid);
+            }
+
+
+            effect.from->invoke("clearAG");
+        }
     }
-    effect.from->invoke("clearAG");
 
     room->drawCards(effect.to,2);
 }
