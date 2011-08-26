@@ -182,7 +182,7 @@ FreeChooseDialog::FreeChooseDialog(QWidget *parent, bool pair_choose)
 {
     setWindowTitle(tr("Free choose generals"));
 
-    QHBoxLayout *box_layout = new QHBoxLayout;
+    QGridLayout *box_layout = new QGridLayout;
     group = new QButtonGroup(this);
     group->setExclusive(! pair_choose);
 
@@ -194,12 +194,15 @@ FreeChooseDialog::FreeChooseDialog(QWidget *parent, bool pair_choose)
 
     QStringList kingdoms = Sanguosha->getKingdoms();
 
+    int i= 0;
     foreach(QString kingdom, kingdoms){
         QList<const General *> generals = map[kingdom];
 
         if(!generals.isEmpty()){
             QGroupBox *box = createGroupBox(generals);
-            box_layout->addWidget(box);
+
+            box_layout->addWidget(box,i%2,i/2);
+            i++;
         }
     }
 
