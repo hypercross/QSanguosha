@@ -35,6 +35,7 @@ class Player : public QObject
     Q_PROPERTY(int seat READ getSeat WRITE setSeat)
     Q_PROPERTY(QString phase READ getPhaseString WRITE setPhaseString)
     Q_PROPERTY(bool faceup READ faceUp WRITE setFaceUp)
+    Q_PROPERTY(bool slow_mode READ slowMode WRITE setSlowMode)
     Q_PROPERTY(bool alive READ isAlive WRITE setAlive)
     Q_PROPERTY(QString flags READ getFlags WRITE setFlags)
     Q_PROPERTY(bool chained READ isChained WRITE setChained)
@@ -123,6 +124,9 @@ public:
 
     bool faceUp() const;
     void setFaceUp(bool face_up);
+
+    bool slowMode() const;
+    void setSlowMode(bool slow_mode);
 
     virtual int aliveCount() const = 0;
     void setFixedDistance(const Player *player, int distance);
@@ -232,6 +236,7 @@ private:
     const Horse *defensive_horse, *offensive_horse;
     bool face_up;
     bool chained;
+    bool slow_mode;
     QList<const Card *> judging_area;
     QList<const DelayedTrick *> delayed_tricks;
     QHash<const Player *, int> fixed_distance;

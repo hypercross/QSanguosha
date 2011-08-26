@@ -10,7 +10,7 @@ Player::Player(QObject *parent)
     hp(-1), max_hp(-1), xueyi(0), mp(-1), max_mp(-1), state("online"),
     seat(0), alive(true), attack_range(1), phase(NotActive),
     weapon(NULL), armor(NULL), defensive_horse(NULL), offensive_horse(NULL),
-    face_up(true), chained(false)
+    face_up(true), chained(false), slow_mode(false)
 {
 }
 
@@ -432,9 +432,21 @@ bool Player::faceUp() const{
     return face_up;
 }
 
+bool Player::slowMode() const{
+    return slow_mode;
+}
+
 void Player::setFaceUp(bool face_up){
     if(this->face_up != face_up){
         this->face_up = face_up;
+
+        emit state_changed();
+    }
+}
+
+void Player::setSlowMode(bool slow_mode){
+    if(this->slow_mode != slow_mode){
+        this->slow_mode = slow_mode;
 
         emit state_changed();
     }

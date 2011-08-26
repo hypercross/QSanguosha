@@ -199,6 +199,7 @@ bool GameRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data)
                 setGameProcess(room);
 
             player->drawCards(4, false);
+            player->getRoom()->attachSkillToPlayer(player,"switchmode");
 
             if(room->getMode() == "02_1v1")
                 room->setTag("FirstRound", true);

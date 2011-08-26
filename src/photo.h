@@ -92,7 +92,7 @@ private:
     QGraphicsPixmapItem *order_item;
     bool hide_avatar;
     QPixmap death_pixmap;
-    Pixmap *back_icon;
+    Pixmap *back_icon , *slow_icon;
     QProgressBar *progress_bar;
     int timer_id;
     QGraphicsPixmapItem *emotion_item, *frame_item;

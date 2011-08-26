@@ -8,6 +8,34 @@
 #include "maneuvering.h"
 #include "touhoucards.h"
 
+class SwitchMode : public ZeroCardViewAsSkill
+{
+public:
+    SwitchMode():ZeroCardViewAsSkill("switchmode")
+    {
+
+    }
+
+    virtual const Card* viewAs() const
+    {
+        return new ModeSwitchCard;
+    }
+};
+
+
+ModeSwitchCard::ModeSwitchCard()
+{
+    setObjectName("switchmode");
+
+    target_fixed = true;
+}
+
+void ModeSwitchCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    source->setSlowMode(!source->slowMode());
+    room->broadcastProperty(source,"slow_mode");
+}
+
 GuifuCard::GuifuCard()
 {
     setObjectName("guifu");
@@ -2664,6 +2692,9 @@ void TouhouPackage::addGenerals()
     skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;
     skills << new WorldJarDetacher << new Skill("worldjar_constraint");
     skills << new BlackButterflyConstraint << new BlackButterflyDetacher;
+
+    skills << new SwitchMode;
+    addMetaObject<ModeSwitchCard>();
 
     addMetaObject<GuifuCard>();
     addMetaObject<FreezeCard>();
