@@ -116,7 +116,7 @@ public:
 
     virtual bool isEnabledAtPlay(const Player *player) const
     {
-        return Slash::IsAvailable(player) || player->hasWeapon("hakkero");
+        return CombatCard::IsAvailable(player);
     }
 
     virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const
@@ -185,11 +185,6 @@ public:
         frequency = Compulsory;
     }
 
-    virtual int getPriority()
-    {
-        return -1;
-    }
-
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
     {
         if(event == AttackDeclared)
@@ -200,11 +195,7 @@ public:
             int cid = data.value<CombatStruct>().block->getEffectiveId();
             player->getRoom()->showCard(player,cid);
         }
-        else if(player->getPhase() == Player::Discard)
-        {
-            int value = qBound(-10,3 - player->getHp(),0);
-            player->setXueyi(value,false);
-        }
+
         return false;
     }
 };
@@ -822,7 +813,7 @@ public:
     }
 
     virtual bool isEnabledAtPlay(const Player *player) const{
-        return Slash::IsAvailable(player) || player->hasWeapon("hakkero");
+        return CombatCard::IsAvailable(player);
     }
 
 
@@ -1655,11 +1646,6 @@ public:
         frequency = Compulsory;
     }
 
-    virtual int getPriority() const
-    {
-        return 2;
-    }
-
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
     {
         Room *room = player->getRoom();
@@ -1889,7 +1875,7 @@ public:
 
     virtual bool isEnabledAtPlay(const Player *player) const
     {
-        return Slash::IsAvailable(player) || player->hasWeapon("hakkero");
+        return CombatCard::IsAvailable(player);
     }
 
     virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const
@@ -2233,7 +2219,7 @@ public:
 
     virtual bool isEnabledAtPlay(const Player *player) const
     {
-        return Slash::IsAvailable(player) || player->hasWeapon("hakkero");
+        return CombatCard::IsAvailable(player);
     }
 
     virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const
@@ -2278,11 +2264,6 @@ public:
     LunaticRedEyes():TriggerSkill("lunaticredeyes")
     {
         events << CombatFinish << TargetFinish;
-    }
-
-    virtual int getPriority() const
-    {
-        return -1;
     }
 
     virtual bool triggerable(const ServerPlayer *target) const
@@ -2492,11 +2473,11 @@ void MindreaderCard::onEffect(const CardEffectStruct &effect) const
     QList<int> hand=effect.to->handCards();
     room->fillAG(hand,effect.from);
 
-    int cid=room->askForAG(effect.from,hand,true,"surprise");
+    int cid=room->askForAG(effect.from,hand,false,"mindreader");
     if(cid>=0)
     {
         room->moveCardTo(Sanguosha->getCard(cid),effect.from,Player::Hand,false);
-        cid=room->askForAG(effect.from,hand,true,"surprise");
+        cid=room->askForAG(effect.from,hand,false,"mindreader");
 
         if(cid>=0)
             room->moveCardTo(Sanguosha->getCard(cid),effect.from,Player::Hand,false);
@@ -2550,41 +2531,20 @@ void TouhouPackage::addGenerals()
     lingmeng->addSkill(new GuifuViewAs);
     lingmeng->addSkill(new Musou);
 
-    General *chiruno = new General(this,"chiruno","_esd", 9 , false , false , 1);
-    chiruno->addSkill(new Baka);
-    chiruno->addSkill(new PerfectFreeze);
-
     General *aya =new General(this,"aya","_hrp",4,false,false,3);
     aya->addSkill(new WindGirl);
     aya->addSkill(new Fastshot);
 
-    General *mokou = new General(this,"mokou","_in",4,false,false,3);
-    mokou->addSkill(new PhoenixTail);
-    mokou->addSkill(new PhoenixSoar);
+    General * alice = new General(this,"alice","_hrp",4,false,false,3);
+    alice->addSkill(new DollMaster);
 
-    General *yuyuko = new General(this,"yuyuko","_pcb",4,false,false,3);
-    //yuyuko->addSkill(new Deathlure);
-    yuyuko->addSkill(new AllLost);
-    yuyuko->addSkill(new RealSumiSakura);
+    General * marisa = new General(this,"marisa","_hrp",4,false,false,4);
+    marisa->addSkill(new MasterSpark);
+    marisa->addSkill(new ThiefMarisa);
 
-    General *tenshi = new General(this,"tenshi","_swr",4,false,false,2);
-    tenshi->addSkill(new Munenmusou);
-    tenshi->addSkill(new GuardianKanameishi);
-
-    General *sanai = new General(this,"sanai","_mof",4,false,false,4);
-    sanai->addSkill(new FuujinSaishi);
-    sanai->addSkill(new MosesMiracle);
-
-    General *utuho = new General(this,"utuho","_sa",4,false,false,3);
-    utuho->addSkill(new SubterraneanSun);
-    utuho->addSkill(new MegaFlare);
-
-
-
-    //    General *kogasa = new General(this,"kogasa","_ufo",3,false,false,4);
-    //    kogasa->addSkill(new UmbrellaIllusion);
-    //    kogasa->addSkill(new UmbrellaRecollect);
-    //fix me
+    General *chiruno = new General(this,"chiruno","_esd", 9 , false , false , 1);
+    chiruno->addSkill(new Baka);
+    chiruno->addSkill(new PerfectFreeze);
 
     General *remilia = new General(this,"remilia","_esd",3,false,false,4);
     remilia->addSkill(new NightlessCity);
@@ -2603,8 +2563,27 @@ void TouhouPackage::addGenerals()
     pachuli->addSkill(new PhilosopherStone);
     pachuli->addSkill(new PhilosopherStonePhaseChange);
 
+    General *yuyuko = new General(this,"yuyuko","_pcb",4,false,false,3);
+    //yuyuko->addSkill(new Deathlure);
+    yuyuko->addSkill(new AllLost);
+    yuyuko->addSkill(new RealSumiSakura);
+
     General *youmu = new General(this,"youmu","_pcb",4,false,false,3);
     youmu->addSkill(new DoubleSwordMaster);
+
+    General * yukari =new General(this,"yukari","_pcb",3,false,false,4);
+    yukari->addSkill(new RealmController);
+    yukari->addSkill(new BlackButterfly);
+    yukari->addSkill(new Kamikakushi);
+
+    General * ran = new General(this,"ran","_pcb",3,false,false,4);
+    ran->addSkill(new Phantasm);
+    ran->addSkill(new Ninetail);
+    ran->addSkill(new UltimateBuddhist);
+
+    General *mokou = new General(this,"mokou","_in",4,false,false,3);
+    mokou->addSkill(new PhoenixTail);
+    mokou->addSkill(new PhoenixSoar);
 
     General *eirin = new General(this,"eirin","_in",4,false,false,4);
     eirin->addSkill(new Skill("sharpmind"));
@@ -2616,18 +2595,13 @@ void TouhouPackage::addGenerals()
     kaguya->addSkill(new NightReturn);
     kaguya->addSkill(new FiveProblem);
 
-    General * yukari =new General(this,"yukari","_pcb",3,false,false,4);
-    yukari->addSkill(new RealmController);
-    yukari->addSkill(new BlackButterfly);
-    yukari->addSkill(new Kamikakushi);
+    General * reisen = new General(this,"reisen","_in",3,false,false,4);
+    reisen->addSkill(new IdlingWave);
+    reisen->addSkill(new LunaticRedEyes);
 
-    General * rin = new General(this,"rin","_sa",3,false,false,4);
-    rin->addSkill(new FireWheel);
-    rin->addSkill(new Catwalk);
-
-    General * koishi = new General(this,"koishi","_sa",3,false,false,4);
-    koishi->addSkill(new OstinateStone);
-    koishi->addSkill(new Unconsciousness);
+    General *sanai = new General(this,"sanai","_mof",4,false,false,4);
+    sanai->addSkill(new FuujinSaishi);
+    sanai->addSkill(new MosesMiracle);
 
     General * nitori = new General(this,"nitori","_mof",3,false,false,4);
     nitori->addSkill(new OpticalCamo);
@@ -2646,25 +2620,29 @@ void TouhouPackage::addGenerals()
     suwako->addSkill("belief");
     suwako->addSkill(new HatIllusion);
 
-    General * alice = new General(this,"alice","_hrp",4,false,false,3);
-    alice->addSkill(new DollMaster);
+    General *tenshi = new General(this,"tenshi","_swr",4,false,false,2);
+    tenshi->addSkill(new Munenmusou);
+    tenshi->addSkill(new GuardianKanameishi);
 
-    General * marisa = new General(this,"marisa","_hrp",4,false,false,4);
-    marisa->addSkill(new MasterSpark);
-    marisa->addSkill(new ThiefMarisa);
+    General *utuho = new General(this,"utuho","_sa",4,false,false,3);
+    utuho->addSkill(new SubterraneanSun);
+    utuho->addSkill(new MegaFlare);
 
-    General * reisen = new General(this,"reisen","_in",3,false,false,4);
-    reisen->addSkill(new IdlingWave);
-    reisen->addSkill(new LunaticRedEyes);
+    General * rin = new General(this,"rin","_sa",3,false,false,4);
+    rin->addSkill(new FireWheel);
+    rin->addSkill(new Catwalk);
 
-    General * ran = new General(this,"ran","_pcb",3,false,false,4);
-    ran->addSkill(new Phantasm);
-    ran->addSkill(new Ninetail);
-    ran->addSkill(new UltimateBuddhist);
+    General * koishi = new General(this,"koishi","_sa",3,false,false,4);
+    koishi->addSkill(new OstinateStone);
+    koishi->addSkill(new Unconsciousness);
 
     General * satori = new General(this,"satori","_sa",4,false,false,3);
     satori->addSkill(new Mindreader);
 
+    General *kogasa = new General(this,"kogasa","_ufo",3,false,false,4);//--now for test
+    /*kogasa->addSkill(new UmbrellaIllusion);
+    kogasa->addSkill(new UmbrellaRecollect);
+    */
 
     skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;
     skills << new WorldJarDetacher << new Skill("worldjar_constraint");

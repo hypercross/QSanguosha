@@ -20,10 +20,6 @@ public:
         events << CombatReveal;
     }
 
-    virtual int getPriority() const{
-        return -1;
-    }
-
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
     {
         CombatRevealStruct reveal = data.value<CombatRevealStruct>();
@@ -35,7 +31,7 @@ public:
         foreach(ServerPlayer* aplayer, reveal.opponets)
             if(aplayer->getPile("Defense").length() > 0) to << aplayer ;
 
-        if(to.length()<1 || player->getMp()<1 || !room -> askForSkillInvoke(player,objectName()))return false;
+        if(to.isEmpty() || player->getMp()<1 || !room -> askForSkillInvoke(player,objectName()))return false;
 
         room->changeMp(player,-1);
 
@@ -213,6 +209,7 @@ public:
     PadSkill():ArmorSkill("pad")
     {
         events << TargetFinish;
+        frequency = Compulsory;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const

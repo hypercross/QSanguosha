@@ -441,6 +441,8 @@ void Player::setFaceUp(bool face_up){
 }
 
 int Player::getMaxCards() const{
+    if(hasSkill("baka"))
+        return qMin(3,hp);
     int extra = 0;
     if(Config.MaxHpScheme == 2 && general2){
         int total = general->getMaxHp() + general2->getMaxHp();

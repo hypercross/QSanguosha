@@ -38,6 +38,20 @@ void CombatCard::resolveDefense(CombatStruct &combat) const
 {
 }
 
+bool CombatCard::IsAvailable(const Player *player){
+    if(player->hasFlag("tianyi_failed") || player->hasFlag("xianzhen_failed"))
+        return false;
+
+    if(player->hasWeapon("hakkero"))
+        return true;
+    else
+        return player->canSlashWithoutCrossbow();
+}
+
+bool CombatCard::isAvailable(const Player *player) const{
+    return IsAvailable(player);
+}
+
 QString CombatCard::getSubtype() const
 {
     return "combat";
@@ -129,107 +143,110 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     //if(!reveal.revealed->inherits("CombatCard"))return;
 
     // reveal each blocker and finish combat
-        foreach(ServerPlayer* player,room->getAlivePlayers())
+    foreach(ServerPlayer* player,room->getAlivePlayers()){
+
+        //skip invalid targets
+        if(!player->tag["combatEffective"].toBool())continue;
+        player->tag["combatEffective"]=QVariant();
+
+
+        //reveal blocker
+        QList<int> pile=player->getPile("Defense");
+        CardStar blocker = new DummyCard;
+
+        if(!pile.isEmpty())
         {
+            CombatRevealStruct block_reveal;
 
-
-            //skip invalid targets
-            if(!player->tag["combatEffective"].toBool())continue;
-            player->tag["combatEffective"]=QVariant();
-
-
-            //reveal blocker
-            QList<int> pile=player->getPile("Defense");
-            CardStar blocker = new DummyCard;
-
-            if(pile.length()>0)
-            {
-                CombatRevealStruct block_reveal;
-
-                if(pile.length()<2)
-                    block_reveal.revealed = Sanguosha->getCard(pile.first());
-                else{
-                    room->fillAG(pile,player);
-                    int cid = room->askForAG(player,pile,false,"combat-reveal");
-                    player->invoke("clearAG");
-                    block_reveal.revealed = Sanguosha->getCard(cid);
-                }
-
-                if(block_reveal.revealed->getEffectiveId() == player->tag["Combat_Convert_From"].toInt()-1)
-                    block_reveal.revealed = Card::Parse(player->tag["Combat_Convert_To"].toString());
-
-
-                player->tag["Combat_Convert_From"] = 0;
-                player->tag["Combat_Convert_To"]   = QVariant();
-
-
-                block_reveal.who      = player;
-                block_reveal.opponets << source;
-
-                data = QVariant::fromValue(block_reveal);
-                broken = room->getThread()->trigger(CombatReveal,player,data);
-                block_reveal = data.value<CombatRevealStruct>();
-                if(broken)continue;
-
-                blocker = block_reveal.revealed;
-
-                LogMessage log;
-                log.type = QString("%1%2").arg(blocker->isVirtualCard() ? "#" : "$").arg("revealResult");
-                log.from = player;
-                log.card_str = blocker->toString();
-                room->sendLog(log);
-
-                room->throwCard(blocker);
-
-                broken = room->getThread()->trigger(CombatRevealed,player,data);
-                if(broken)continue;
-
-                room->getThread()->delay();
+            if(pile.length()<2)
+                block_reveal.revealed = Sanguosha->getCard(pile.first());
+            else{
+                room->fillAG(pile,player);
+                int cid = room->askForAG(player,pile,false,"combat-reveal");
+                player->invoke("clearAG");
+                block_reveal.revealed = Sanguosha->getCard(cid);
             }
 
+            if(block_reveal.revealed->getEffectiveId() == player->tag["Combat_Convert_From"].toInt()-1)
+                block_reveal.revealed = Card::Parse(player->tag["Combat_Convert_To"].toString());
 
-            //finish combat
 
-            CombatStruct combat;
-            combat.from   = source;
-            combat.to     = player;
-            combat.combat = attackCard;
-            combat.block  = blocker;
+            player->tag["Combat_Convert_From"] = 0;
+            player->tag["Combat_Convert_To"]   = QVariant();
 
-            data=QVariant::fromValue(combat);
 
-            broken=room->getThread()->trigger(CombatFinish,source,data);
-            broken = broken || room->getThread()->trigger(TargetFinish,player,data);
-            if(broken)
-            {
-                if(combat.block->inherits("DummyCard"))delete combat.block;
-                continue;
-            }
-            combat = data.value<CombatStruct>();
+            block_reveal.who      = player;
+            block_reveal.opponets << source;
 
-            //const CombatCard * ccard=qobject_cast<const CombatCard*>(combat.block);
-            attackCard = combat.combat;
-            blocker    = combat.block;
+            data = QVariant::fromValue(block_reveal);
+            broken = room->getThread()->trigger(CombatReveal,player,data);
+            block_reveal = data.value<CombatRevealStruct>();
+            if(broken)continue;
 
-            if(blocker->canbeBlocked(combat.combat) && combat.combat->inherits("CombatCard"))
-            {
-                const CombatCard * ccard=qobject_cast<const CombatCard*>(combat.combat);
+            blocker = block_reveal.revealed;
+
+            LogMessage log;
+            log.type = QString("%1%2").arg(blocker->isVirtualCard() ? "#" : "$").arg("revealResult");
+            log.from = player;
+            log.card_str = blocker->toString();
+            room->sendLog(log);
+
+            room->throwCard(blocker);
+
+            broken = room->getThread()->trigger(CombatRevealed,player,data);
+            if(broken)continue;
+
+            room->getThread()->delay();
+        }
+
+
+        //finish combat
+
+        CombatStruct combat;
+        combat.from   = source;
+        combat.to     = player;
+        combat.combat = attackCard;
+        combat.block  = blocker;
+
+        data=QVariant::fromValue(combat);
+
+        broken=room->getThread()->trigger(CombatFinish,source,data);
+        broken = broken || room->getThread()->trigger(TargetFinish,player,data);
+        if(broken)
+        {
+            if(combat.block->inherits("DummyCard"))delete combat.block;
+            continue;
+        }
+        combat = data.value<CombatStruct>();
+
+        //const CombatCard * ccard=qobject_cast<const CombatCard*>(combat.block);
+        attackCard = combat.combat;
+        blocker    = combat.block;
+
+        bool success = blocker->canbeBlocked(attackCard);
+        LogMessage CombatResult;
+        CombatResult.type = success ? "#AttackerWin" : "#DefenderWin";
+        CombatResult.from = combat.from;
+        CombatResult.to << combat.to;
+        room->sendLog(CombatResult);
+
+        if(success){
+            if(combat.combat->inherits("CombatCard")){
+                const CombatCard *ccard=qobject_cast<const CombatCard*>(combat.combat);
                 ccard->resolveAttack(combat);
             }
-
-            if(attackCard->canbeBlocked(blocker) && blocker->inherits("CombatCard"))
-            {
-                const CombatCard * ccard=qobject_cast<const CombatCard*>(blocker);
-                ccard->resolveDefense(combat);
-            }
-
-            room->getThread()->trigger(CombatFinished,source,data);
-            room->getThread()->trigger(TargetFinished,player,data);
-
-            if(combat.block->inherits("DummyCard"))delete combat.block;
-            if(combat.combat->inherits("DummyCard"))delete combat.combat;
-
+        }else if(blocker->inherits("CombatCard")){
+            const CombatCard *ccard=qobject_cast<const CombatCard*>(blocker);
+            ccard->resolveDefense(combat);
         }
+
+        room->getThread()->trigger(CombatFinished,source,data);
+        room->getThread()->trigger(TargetFinished,player,data);
+
+        if(combat.block->inherits("DummyCard"))delete combat.block;
+        if(combat.combat->inherits("DummyCard"))delete combat.combat;
+
+    }
 }
 
 void CombatCard::onEffect(const CardEffectStruct &effect) const
@@ -284,10 +301,6 @@ bool CombatCard::canbeBlocked(const Card *card) const
     a=a || (this->inherits("Rune") && card->inherits("Barrage"));
     a=a || (this->inherits("Strike") && card->inherits("Rune"));
     return a;
-}
-
-bool CombatCard::isAvailable(const Player *player) const{
-    return Slash::IsAvailable(player) || player->hasWeapon("hakkero");
 }
 
 Barrage::Barrage(Card::Suit suit, int number):CombatCard(suit,number)
@@ -541,10 +554,15 @@ void NiceGuyCard::onMove(const CardMoveStruct &move) const
     ServerPlayer *from = move.from;
 
 
-    if(from && move.to_place == Player::DiscardedPile)
-    {
-        if(from->isDead())return;
-        from->getRoom()->drawCards(from,1);
+    if(from && move.to_place == Player::DiscardedPile){
+        if(from->isDead())
+            return;
+        Room *room = from->getRoom();
+        LogMessage log;
+        log.type = "#NiceGuy";
+        log.from = from;
+        room->sendLog(log);
+        room->drawCards(from,1);
     }
 }
 
@@ -685,9 +703,8 @@ public:
     virtual void onDamaged(ServerPlayer *target, const DamageStruct &damage) const
     {
         Room * room = target->getRoom();
-        if(!room->askForSkillInvoke(target,objectName()))return;
-        if(!damage.from)return;
-        if(damage.from->isDead())return;
+        if(!(damage.from && damage.from->isAlive() && room->askForSkillInvoke(target,objectName())))
+            return;
 
         room->throwCard(target->getOffensiveHorse());
 
@@ -820,11 +837,6 @@ public:
     SinbagSkill():TriggerSkill("sinbag")
     {
         events << CombatFinish << TargetFinish;
-    }
-
-    virtual int getPriority() const
-    {
-        return -1;
     }
 
     virtual bool triggerable(const ServerPlayer *target) const

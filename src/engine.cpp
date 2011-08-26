@@ -96,7 +96,7 @@ Engine::Engine()
     modes["02_1v1"] = tr("2 players (KOF style)");
     modes["03p"] = tr("3 players");
     modes["04p"] = tr("4 players");
-    modes["04_1v3"] = tr("4 players (Hulao Pass)");
+//    modes["04_1v3"] = tr("4 players (Hulao Pass)");
     modes["05p"] = tr("5 players");
     modes["06p"] = tr("6 players");
     modes["06pd"] = tr("6 players (2 renegades)");
@@ -104,7 +104,7 @@ Engine::Engine()
     modes["07p"] = tr("7 players");
     modes["08p"] = tr("8 players");
     modes["08pd"] = tr("8 players (2 renegades)");
-    modes["08boss"] = tr("8 players (boss mode)");
+//    modes["08boss"] = tr("8 players (boss mode)");
     modes["08same"] = tr("8 players (same mode)");
     modes["09p"] = tr("9 players");
     modes["10p"] = tr("10 players");
@@ -372,8 +372,8 @@ QStringList Engine::getKingdoms() const{
     static QStringList kingdoms;
     if(kingdoms.isEmpty())
         kingdoms << "wei" << "shu" << "wu" << "qun" << "god" <<
-                    "_hrp" << "_esd" << "_stb" << "_in" << "_pcb"
-                    << "_mof" << "_swr" << "_ufo" << "_sa";
+                    "_hrp" << "_esd" << "_pcb" << "_in" << "_stb"
+                    << "_mof" << "_swr" << "_sa" << "_ufo";
 
     return kingdoms;
 }
@@ -534,8 +534,12 @@ QStringList Engine::getRandomLords() const{
 
     qShuffle(nonlord_list);
 
+    int max_choice = Config.value("MaxChoice", 5).toInt();
+    int total = Sanguosha->getGeneralCount();
+    int max_available = (total-1) / (Sanguosha->getPlayerCount(Config.GameMode)-1);
+    int choice_count = qMin(max_choice, max_available);
     int i;
-    const static int extra = 2;
+    const static int extra = choice_count;
     for(i=0; i< extra; i++)
         lords << nonlord_list.at(i);
 

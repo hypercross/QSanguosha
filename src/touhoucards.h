@@ -17,7 +17,6 @@ public:
 
     virtual bool targetsFeasible(const QList<const Player *> &targets, const Player *Self) const;
     virtual bool targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const;
-    virtual bool isAvailable(const Player *player) const;
     //virtual void onHit(const CardEffectStruct &effect) const;
 
     virtual void onUse(Room *room, const CardUseStruct &card_use) const;
@@ -25,6 +24,9 @@ public:
     virtual bool canbeBlocked(const Card* card) const;
     virtual void resolveDefense(CombatStruct &combat) const;
     virtual void resolveAttack(CombatStruct &combat) const;
+    virtual bool isAvailable(const Player *player) const;
+
+    static bool IsAvailable(const Player *player);
 };
 
 class Barrage : public CombatCard
