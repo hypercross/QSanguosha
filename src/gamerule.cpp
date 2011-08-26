@@ -143,7 +143,7 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
             player->clearFlags();
             player->clearHistory();
 
-            room->changeMp(player,1);
+            if(!player->slowMode())room->changeMp(player,1);
             return;
         }
     }

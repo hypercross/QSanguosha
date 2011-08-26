@@ -760,7 +760,7 @@ bool Snatch::targetFilter(const QList<const Player *> &targets, const Player *to
     if(to_select == Self)
         return false;
 
-    if(Self->distanceTo(to_select) > (1+Self->getMp()) && !Self->hasSkill("qicai"))
+    if(Self->distanceTo(to_select) > (1+(Self->slowMode() ? 0 : Self->getMp())) && !Self->hasSkill("qicai"))
         return false;
 
     return true;
@@ -772,9 +772,9 @@ void Snatch::onEffect(const CardEffectStruct &effect) const{
 
     Room *room = effect.to->getRoom();
 
-    int delta=effect.from->distanceTo(effect.to)-1;
-    if(effect.from->getMp()<delta)return;
-    room->changeMp(effect.from,-delta);
+        int delta=effect.from->distanceTo(effect.to)-1;
+        if(effect.from->getMp()<delta)return;
+        room->changeMp(effect.from,-delta);
 
     int card_id = room->askForCardChosen(effect.from, effect.to, "hej", objectName());
 

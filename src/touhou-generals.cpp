@@ -36,6 +36,7 @@ void ModeSwitchCard::use(Room *room, ServerPlayer *source, const QList<ServerPla
     room->broadcastProperty(source,"slow_mode");
 }
 
+
 GuifuCard::GuifuCard()
 {
     setObjectName("guifu");
