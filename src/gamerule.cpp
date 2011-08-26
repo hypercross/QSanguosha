@@ -122,8 +122,6 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
                 log.type = "#JileiClear";
                 log.from = player;
                 room->sendLog(log);
-
-                room->setPlayerFlag(player,"-jilei");
             }
 
             foreach(ServerPlayer* aplayer, room->getAlivePlayers())
