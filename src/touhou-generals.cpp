@@ -20,6 +20,11 @@ public:
     {
         return new ModeSwitchCard;
     }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return !player->hasUsed("ModeSwitchCard");
+    }
 };
 
 
@@ -34,6 +39,7 @@ void ModeSwitchCard::use(Room *room, ServerPlayer *source, const QList<ServerPla
 {
     source->setSlowMode(!source->slowMode());
     room->broadcastProperty(source,"slow_mode");
+    room->setPlayerFlag(source,"IdlingWave");
 }
 
 
@@ -2152,7 +2158,7 @@ public:
 
     virtual bool triggerable(const ServerPlayer *target) const
     {
-        return TriggerSkill::triggerable(target) && target->getRoom()->getCardPlace(95) == Player::Equip;
+        return TriggerSkill::triggerable(target) && target->getRoom()->getCardPlace(97) == Player::Equip;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const

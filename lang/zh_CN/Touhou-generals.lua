@@ -196,7 +196,7 @@ return
 	--绯想天
 	["tenshi"] = "比那名居 天子",
 	["munenmusou"] = "无念无想",
-	[":munenmusou"] = "你的最后一点灵力不会被扣减。",
+	[":munenmusou"] = "你的最后一点灵力不会被损耗。",
 	["guardian_kanameishi"] = "守护的要石",
 	["guardiankanameishi"] = "守护的要石",
 	[":guardian_kanameishi"] = "每当你受到伤害，你可以将手牌补至3张。",

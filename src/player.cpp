@@ -598,7 +598,7 @@ bool Player::canCombat(const Player *other, bool distance_limit) const{
         return false;
 
     if(distance_limit)
-        return distanceTo(other) <= getAttackRange() + (slowMode() ? mp : 0);
+        return distanceTo(other) <= getAttackRange() + (slowMode() ? 0 : mp);
     else
         return true;
 }
