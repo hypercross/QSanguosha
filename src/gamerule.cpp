@@ -143,7 +143,7 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
             player->clearFlags();
             player->clearHistory();
 
-            room->changeMp(player,1);
+            if(!player->slowMode())room->changeMp(player,1);
             return;
         }
     }
@@ -197,6 +197,7 @@ bool GameRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data)
                 setGameProcess(room);
 
             player->drawCards(4, false);
+            player->getRoom()->attachSkillToPlayer(player,"switchmode");
 
             if(room->getMode() == "02_1v1")
                 room->setTag("FirstRound", true);

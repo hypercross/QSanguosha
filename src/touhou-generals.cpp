@@ -8,6 +8,41 @@
 #include "maneuvering.h"
 #include "touhoucards.h"
 
+class SwitchMode : public ZeroCardViewAsSkill
+{
+public:
+    SwitchMode():ZeroCardViewAsSkill("switchmode")
+    {
+
+    }
+
+    virtual const Card* viewAs() const
+    {
+        return new ModeSwitchCard;
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return !player->hasUsed("ModeSwitchCard");
+    }
+};
+
+
+ModeSwitchCard::ModeSwitchCard()
+{
+    setObjectName("switchmode");
+
+    target_fixed = true;
+}
+
+void ModeSwitchCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+{
+    source->setSlowMode(!source->slowMode());
+    room->broadcastProperty(source,"slow_mode");
+    room->setPlayerFlag(source,"IdlingWave");
+}
+
+
 GuifuCard::GuifuCard()
 {
     setObjectName("guifu");
@@ -2123,7 +2158,7 @@ public:
 
     virtual bool triggerable(const ServerPlayer *target) const
     {
-        return TriggerSkill::triggerable(target) && target->getRoom()->getCardPlace(95) == Player::Equip;
+        return TriggerSkill::triggerable(target) && target->getRoom()->getCardPlace(97) == Player::Equip;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
@@ -2469,20 +2504,37 @@ MindreaderCard::MindreaderCard()
 
 void MindreaderCard::onEffect(const CardEffectStruct &effect) const
 {
+    int cid=-1;
     Room* room=effect.to->getRoom();
     QList<int> hand=effect.to->handCards();
-    room->fillAG(hand,effect.from);
 
-    int cid=room->askForAG(effect.from,hand,false,"mindreader");
+    if(!hand.isEmpty())
+    {
+        room->fillAG(hand,effect.from);
+        cid=room->askForAG(effect.from,hand,true,"mindreader");
+    }
+
     if(cid>=0)
     {
+        hand.removeOne(cid);
         room->moveCardTo(Sanguosha->getCard(cid),effect.from,Player::Hand,false);
-        cid=room->askForAG(effect.from,hand,false,"mindreader");
+        effect.from->invoke("clearAG");
+        if(!hand.isEmpty())
+        {
+            room->fillAG(hand,effect.from);
 
-        if(cid>=0)
-            room->moveCardTo(Sanguosha->getCard(cid),effect.from,Player::Hand,false);
+            cid=room->askForAG(effect.from,hand,true,"mindreader");
+
+            if(cid>=0)
+            {
+                room->moveCardTo(Sanguosha->getCard(cid),effect.from,Player::Hand,false);
+                hand.removeOne(cid);
+            }
+
+
+            effect.from->invoke("clearAG");
+        }
     }
-    effect.from->invoke("clearAG");
 
     room->drawCards(effect.to,2);
 }
@@ -2647,6 +2699,9 @@ void TouhouPackage::addGenerals()
     skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;
     skills << new WorldJarDetacher << new Skill("worldjar_constraint");
     skills << new BlackButterflyConstraint << new BlackButterflyDetacher;
+
+    skills << new SwitchMode;
+    addMetaObject<ModeSwitchCard>();
 
     addMetaObject<GuifuCard>();
     addMetaObject<FreezeCard>();

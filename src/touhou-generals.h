@@ -5,6 +5,17 @@
 #include "touhoucards.h"
 #include "standard-skillcards.h"
 
+
+class ModeSwitchCard : public SkillCard
+{
+    Q_OBJECT
+public:
+    Q_INVOKABLE ModeSwitchCard();
+
+    virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
+};
+
+
 class GuifuCard : public SkillCard
 {
     Q_OBJECT

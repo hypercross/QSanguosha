@@ -1723,10 +1723,23 @@ void Room::loseMaxHp(ServerPlayer *victim, int lose){
 }
 
 void Room::applyDamage(ServerPlayer *victim, const DamageStruct &damage){
-    int new_hp = victim->getHp() - damage.damage;
+    int dmg = damage.damage;
+    int mpc = 0;
+    if(victim->slowMode() && damage.card && damage.card->inherits("CombatCard"))
+    {
+        if(dmg>0 && victim->getMp())
+        {
+            mpc = mpc + qMin(dmg,victim->getMp());
+            dmg = dmg - mpc ;
+        }
+    }
+
+    int new_hp = victim->getHp() - dmg;
+    int new_mp = victim->getMp() - mpc;
 
     setPlayerProperty(victim, "hp", new_hp);
-    QString change_str = QString("%1:%2").arg(victim->objectName()).arg(-damage.damage);
+    setPlayerProperty(victim, "mp", new_mp);
+    QString change_str = QString("%1:%2").arg(victim->objectName()).arg(-dmg);
     switch(damage.nature){
     case DamageStruct::Fire: change_str.append("F"); break;
     case DamageStruct::Thunder: change_str.append("T"); break;
@@ -1734,6 +1747,7 @@ void Room::applyDamage(ServerPlayer *victim, const DamageStruct &damage){
     }
 
     broadcastInvoke("hpChange", change_str);
+    broadcastInvoke("mpChange", QString("%1:%2").arg(victim->objectName()).arg(-mpc));
 }
 
 void Room::recover(ServerPlayer *player, const RecoverStruct &recover, bool set_emotion){

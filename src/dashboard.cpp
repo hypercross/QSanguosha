@@ -97,6 +97,12 @@ void Dashboard::createRight(){
     back_icon->setZValue(1.0);
     back_icon->hide();
 
+    slow_icon = new Pixmap("image/system/touhou/high.png");
+    slow_icon->setParentItem(this);
+    slow_icon->setPos(-12, -6);
+    //back_icon->hide();
+    slow_icon->setZValue(1.0);
+
     QGraphicsPixmapItem *handcard_pixmap = new QGraphicsPixmapItem(right);
     handcard_pixmap->setPixmap(QPixmap("image/system/handcard.png"));
     handcard_pixmap->setPos(25, 127);
@@ -489,6 +495,8 @@ void Dashboard::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidg
     drawHp(painter);
 
     chain_icon->setVisible(Self->isChained());
+    slow_icon->changePixmap(QString("image/system/touhou/%1.png")
+                            .arg(Self->slowMode() ? "slow" : "high"));
     back_icon->setVisible(!Self->faceUp());
 }
 
