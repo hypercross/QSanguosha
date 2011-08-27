@@ -1838,7 +1838,7 @@ public:
         if(event == DrawNCards )
         {
             if(player->getMp()<1)return false;
-            if(!player->getRoom()->askForSkillInvoke(player,objectName()))return false;
+            if(player->getPhases().indexOf(Player::Play) == -1 || !player->getRoom()->askForSkillInvoke(player,objectName()))return false;
 
             player->getRoom()->changeMp(player,-1);
             data = QVariant::fromValue(data.toInt() + 1);
@@ -1847,6 +1847,8 @@ public:
         }
 
         const CardMoveStruct* move = data.value<CardMoveStar>();
+        if(move->from_place != Player::Hand)
+            return false;
 
         const Card* card =Sanguosha->getCard(move->card_id);
 
