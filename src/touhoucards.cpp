@@ -296,7 +296,7 @@ bool CombatCard::canbeBlocked(const Card *card) const
 {
     bool a = false;
     if(!card)return false;
-    if(card->objectName()==this->objectName())return this->getNumber()<=card->getNumber();
+    if(card->objectName()==this->objectName())return this->getNumber()<card->getNumber();
     a=a || (this->inherits("Barrage") && card->inherits("Strike"));
     a=a || (this->inherits("Rune") && card->inherits("Barrage"));
     a=a || (this->inherits("Strike") && card->inherits("Rune"));

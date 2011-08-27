@@ -1754,7 +1754,7 @@ class OstinateStone : public TriggerSkill
 public:
     OstinateStone():TriggerSkill("ostinatestone")
     {
-        events << PhaseChange;
+        events << PhaseChange << CombatRevealed << BlockDeclared;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
@@ -1766,6 +1766,7 @@ public:
             while(block)
             {
                 player->addToPile("Defense",block->getEffectiveId(),false);
+                player->gainMark("@koishi");
 
                 LogMessage log;
                 log.type = "#chosenOstinate";
@@ -1775,6 +1776,14 @@ public:
                 block = room->askForCard(player,".","ostinateCard",false);
             }
         }
+
+        if(event == CombatRevealed)
+        {
+            CombatRevealStruct reveal  = data.value <CombatRevealStruct>();
+            if(reveal.attacker)return false;
+            player->loseMark("@koishi");
+        }
+        if(event == BlockDeclared)player->gainMark("@koishi");
         return false;
     }
 };
@@ -1843,6 +1852,7 @@ public:
 
         if(card->inherits("CombatCard"))return false;
         if(!card->isAvailable(player))return false;
+        if(move->from_place != Player::Hand)return false;
         QString pattern = "@@unc_" + QString::number(move->card_id);
 
         player->getRoom()->askForUseCard(player,pattern,"@unc:::" + card->objectName());
@@ -2532,9 +2542,11 @@ void MindreaderCard::onEffect(const CardEffectStruct &effect) const
             }
 
 
-            effect.from->invoke("clearAG");
+
         }
     }
+
+    effect.from->invoke("clearAG");
 
     room->drawCards(effect.to,2);
 }
