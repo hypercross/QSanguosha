@@ -3,6 +3,9 @@ return
 	["touhou"] ="东方",
 	["combat"] ="战斗牌",
 	["MaxMP"]= "灵力上限",
+
+	["switchmode"] = "切换模式",
+	[":switchmode"] = "出牌阶段，你可以在高速与低速模式间切换，并结束出牌阶段。",
 	
 	["#AnnounceAttack"]="%from 对 %to 进行攻击",
 	["#chosenBlock"]   ="%from 打出了防御牌",
@@ -19,6 +22,9 @@ return
 	
 	["#SetConstraint"]  ="%from 给 %arg 施加了束缚",
 	["#LoseConstraint"] ="%from 的束缚 %arg 失去作用" ,
+
+	["$JileiA"] = "%from 的 %card 被冻结",
+	["$JileiTemp"] = "%from 的 %card 被暂时冻结",
 	
 	["barrage"]="弹幕",
 	[":barrage"]="出牌时机：出牌阶段\
@@ -113,7 +119,7 @@ return
 	
 	["pad"]     = "PAD",
 	[":pad"]     = "防具特效：锁定技，你没有宣告防御牌时，防御牌视为无花色的【灵击10】。",
-	["#PadConvert"] = "%from 的防御牌视为了 %card",
+	["$PadConvert"] = "%from 的防御牌视为了 %card",
 	
 	["doll"]    = "替身人偶",
 	[":doll"]    = "防具特效：你需要宣告防御牌时，可令对方用牌堆顶的牌代替进攻牌。",

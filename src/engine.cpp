@@ -536,8 +536,7 @@ QStringList Engine::getRandomLords() const{
 
     int max_choice = Config.value("MaxChoice", 5).toInt();
     int total = Sanguosha->getGeneralCount();
-    int max_available = (total-1) / (Sanguosha->getPlayerCount(Config.GameMode)-1);
-    int choice_count = qMin(max_choice, max_available);
+    int choice_count = qMin(max_choice, total);
     int i;
     const static int extra = choice_count;
     for(i=0; i< extra; i++)

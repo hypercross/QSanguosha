@@ -115,9 +115,28 @@ public:
         events << CardFinished;
     }
 
-    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
-    {
-        if(player->getHandcardNum()>0)
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const{
+        CardUseStruct use = data.value<CardUseStruct>();
+        if(use.card->isVirtualCard())
+            return false;
+        int jilei = 0;
+        if(player->hasFlag("jilei") || player->hasFlag("jilei_temp")){
+            QSet<const Card *> jilei_cards;
+            QList<const Card *> handcards = player->getHandcards();
+            foreach(const Card *card, handcards){
+                if(player->isJilei(card))
+                    jilei_cards << card;
+            }
+
+            if(jilei_cards.size() == player->getHandcardNum()){
+                // show all his cards
+                player->getRoom()->showAllCards(player);
+                return false;
+            }
+
+            jilei = jilei_cards.size();
+        }
+        if(player->getHandcardNum() - jilei)
             player->getRoom()->askForDiscard(player,"@guifu-constraint",1);
         return false;
     }
@@ -261,6 +280,12 @@ void FreezeCard::onEffect(const CardEffectStruct &effect) const
     to->jilei(QString::number(cid));
     to->invoke("jilei",QString::number(cid));
     to->setFlags("jilei");
+
+    LogMessage log;
+    log.type = "$JileiA";
+    log.from = to;
+    log.card_str = Sanguosha->getCard(cid)->toString();
+    room->sendLog(log);
 }
 
 class PerfectFreeze : public ZeroCardViewAsSkill
@@ -1454,6 +1479,12 @@ void FiveProblemCard::onEffect(const CardEffectStruct &effect) const
     effect.to->setFlags("jilei");
     effect.to->jilei(c->getEffectIdString());
     effect.to->invoke("jilei",c->getEffectIdString());
+
+    LogMessage log;
+    log.type = "$JileiA";
+    log.from = effect.to;
+    log.card_str = card->toString();
+    effect.from->getRoom()->sendLog(log);
 }
 
 class FiveProblemViewAs: public ZeroCardViewAsSkill

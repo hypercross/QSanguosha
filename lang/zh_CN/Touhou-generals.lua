@@ -18,7 +18,6 @@ return
 	[":guifu"]= "出牌阶段，你可消耗一点灵力，束缚一名玩家直到其回合结束：每当其使用一张牌，在其结算前需弃一张手牌。每回合限用一次。",
 	["guifu_constraint"] = "束缚：八方鬼缚阵",
 	[":guifu_constraint"] = "你每使用一张牌，须在其结算后弃置一张手牌（如果有）。",
-	["@guifu-constraint"] = "你须弃掉一张手牌",
 	["musoutensei"] = "梦想天生",
 	[":musoutensei"] = "你可以将你的黑桃手牌当作符卡使用或打出;你不会受到符咒的伤害。",
 	["#MusouProtect"] = "%from 防止了来自【符咒】的伤害",
@@ -162,8 +161,9 @@ return
 	["fuujin_saishi"] = "风神祭祀",
 	[":fuujin_saishi"] = "出牌阶段，每回合一次，你可令全场玩家各回复一点灵力。",
 	["moses_miracle"] = "摩西的奇迹",
-	["mosesmiracle"] = "摩西的奇迹",
 	[":moses_miracle"] = "出牌阶段，你可以将两张手牌交给一名玩家；若你如此做，你选择回复一点体力或摸两张牌。",
+	["moses_miracle:draw"] = "摸两张牌",
+	["moses_miracle:recover"] = "回复一点体力",
 
 	["nitori"] = "河城 荷取",
 	["opticalcamo"] = "光学迷彩",
@@ -176,7 +176,7 @@ return
 	["hina"] = "键山雏",
 	["brokenamulet"] = "破碎的护身符",
 	[":brokenamulet"] = "锁定技，你成为进攻目标时，若你灵力值不多于对方，对方支付一点灵力否则你跳过战斗。",
-	["#InsufficientMp"] = "%from 的灵力不足以支付技能%arg的要求！",
+	["#InsufficientMp"] = "%from 的灵力不足以支付技能 %arg 的要求！",
 	["wheelmisfortune"] = "厄运之轮",
 	[":wheelmisfortune"] = "出牌阶段，你可以指定一名灵力不满的玩家，获取一名灵力不为零的玩家的一点灵力，并且解除所有冻结。",
 	
@@ -191,7 +191,7 @@ return
 	[":ironwheel"] = "出牌阶段每回合一次，你可支付一点灵力，令场上手牌数最少的一名玩家摸2张牌。",
 	["hatillusion"] = "本体：帽子",
 	[":hatillusion"] = "你的本体为“ZUN帽”。（当任何玩家装备“ZUN帽”时，你的最后一点体力不可被扣减。）",
-	["#HatIllusion"] = "%from的最后一点体力不会被扣减，受到的伤害从%arg降低至%arg2",
+	["#HatIllusion"] = "%from 的最后一点体力不会被扣减，受到的伤害从 %arg 降低至 %arg2",
 
 	--绯想天
 	["tenshi"] = "比那名居 天子",
@@ -207,7 +207,7 @@ return
 	[":catwalk"] = "你的弹幕在防御中点数都视为K。",
 	["firewheel"]= "火焰车轮",
 	[":firewheel"]= "你宣告进攻牌时可支付1点灵力并展示之。若为符咒，你的进攻目标跳过战斗且需打出一张灵击，否则受到你造成的一点伤害。",
-	["#CatwalkConvert"] = "%from 的技能【怨灵猫乱步】被触发，战斗牌被视为了%card",
+	["#CatwalkConvert"] = "%from 的技能【怨灵猫乱步】被触发，战斗牌被视为了 %card",
 	
 	["utuho"] = "灵鸟路空",
 	["subterraneansun"] = "地狱的人工太阳",
@@ -215,7 +215,7 @@ return
 	["megaflare"] = "百万耀斑",
 	[":megaflare"] = "你可将你的黑桃手牌当做【流星爆炸】使用。",
 	
-	["#SunDamagePlus"]="%from 的技能【地狱的人工太阳】被触发，伤害从%arg 提升到%arg2",
+	["#SunDamagePlus"]="%from 的技能【地狱的人工太阳】被触发，伤害从 %arg 提升到 %arg2",
 
 	["koishi"] = "古明地 恋",
 	["@unc"] = "你可以立即使用弃入弃牌区的 %arg",
@@ -225,6 +225,7 @@ return
 	[":ostinatestone"] = "回合开始时，你可以背面向上打出任意张牌，作为你已经宣告的防御牌。",
 	["unconsciousness"] = "无意识",
 	[":unconsciousness"] = "你可以立即使用你在弃牌阶段弃掉的非战斗牌。摸牌阶段，你可支付一点灵力额外摸一张牌并跳过你的出牌阶段。",
+	["@koishi"] = "恋",
 	
 	["satori"] = "古明地 觉",
 	["mindreader"] = "读心术",

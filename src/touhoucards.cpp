@@ -337,6 +337,12 @@ void Strike::resolveAttack(CombatStruct &combat) const
         combat.from->jilei(QString(this->getEffectiveId()));
         combat.from->invoke("jilei",this->getEffectIdString());
         combat.from->setFlags("jilei_temp");
+
+        LogMessage log;
+        log.type = "$JileiTemp";
+        log.from = combat.from;
+        log.card_str = this->toString();
+        combat.from->getRoom()->sendLog(log);
     }
 }
 
@@ -348,6 +354,12 @@ void Strike::resolveDefense(CombatStruct &combat) const
         combat.to->jilei(QString(this->getEffectiveId()));
         combat.to->invoke("jilei",this->getEffectIdString());
         combat.to->setFlags("jilei_temp");
+
+        LogMessage log;
+        log.type = "$JileiTemp";
+        log.from = combat.to;
+        log.card_str = this->toString();
+        combat.from->getRoom()->sendLog(log);
     }
 }
 
@@ -526,6 +538,12 @@ void Surprise::onEffect(const CardEffectStruct &effect) const
         effect.to->jilei(js);
         effect.to->invoke("jilei",js);
         effect.to->setFlags("jilei");
+
+        LogMessage log;
+        log.type = "$JileiA";
+        log.from = effect.to;
+        log.card_str = Sanguosha->getCard(cid)->toString();
+        room->sendLog(log);
 
         room->showCard(effect.to,cid);
     }

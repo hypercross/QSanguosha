@@ -224,7 +224,7 @@ public:
             combat.block = strike;
 
             LogMessage log;
-            log.type = "#PadConvert";
+            log.type = "$PadConvert";
             log.from = combat.to ;
             log.card_str = strike->toString();
             room->sendLog(log);
