@@ -2252,7 +2252,7 @@ public:
     {
         events << BlockDeclare;
 
-        frequency = Frequent ;
+        frequency = Compulsory;
     }
 
     virtual bool triggerable(const ServerPlayer *target) const
@@ -2273,6 +2273,7 @@ public:
 
         room->throwCard(combat.combat);
         combat.from->addToPile("Attack",card->getId(),false);
+        combat.combat = card;
 
         player->tag["combatEffective"] = true;
 
@@ -2282,10 +2283,62 @@ public:
         player->getRoom()->sendLog(log);
         player->getRoom()->getThread()->delay();
 
+        data = QVariant::fromValue(combat);
+
         return false;
     }
 };
 
+class FolkDance: public TriggerSkill{
+public:
+    FolkDance():TriggerSkill("folkdance"){
+        events << BlockDeclared;
+    }
+
+    virtual bool triggerable(const ServerPlayer *) const{
+        return true;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const{
+        CombatStruct combat = data.value<CombatStruct>();
+        if(!combat.from->hasSkill(objectName()))
+            return false;
+        if(combat.from->askForSkillInvoke(objectName(),data)){
+            Room *room = combat.from->getRoom();
+            room->moveCardTo(combat.block, player, Player::Hand, false);
+            player->jilei(QString(combat.block->getEffectiveId()));
+            player->invoke("jilei", combat.block->getEffectIdString());
+            player->setFlags("jilei_temp");
+
+            LogMessage log;
+            log.type = "#FolkDance";
+            log.from = player;
+
+            room->sendLog(log);
+
+            const Card* block = room->askForCard(player, ".", "blockCard", false);
+            combat.block = block;
+
+            if(block){
+                combat.to->addToPile("Defense", block->getEffectiveId(), false);
+                player->tag["combatEffective"] = true;
+                if(block->getSkillName().length()>0){
+                    player->tag["Combat_Convert_From"] = block->getEffectiveId()+1;
+                    player->tag["Combat_Convert_To"] = block->toString();
+                }
+
+                LogMessage log;
+                log.type = "#chosenBlock";
+                log.from = player;
+                room->sendLog(log);
+            }
+
+            data = QVariant::fromValue(combat);
+        }
+
+        return false;
+    }
+};
 
 class MasterSpark : public OneCardViewAsSkill
 {
@@ -2634,6 +2687,7 @@ void TouhouPackage::addGenerals()
 
     General * alice = new General(this,"alice","_hrp",4,false,false,3);
     alice->addSkill(new DollMaster);
+    alice->addSkill(new FolkDance);
 
     General * marisa = new General(this,"marisa","_hrp",4,false,false,4);
     marisa->addSkill(new MasterSpark);

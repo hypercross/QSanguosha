@@ -35,9 +35,12 @@ return
 	["thiefmarisa"] = "神偷魔理沙！",
 	[":thiefmarisa"] = "锁定技，你与其他玩家计算距离时，始终-1。",
 	
-	["alice"] = "爱丽丝",
+	["alice"] = "爱丽丝 玛格特罗依德",
 	["dollmaster"] = "七色的人形使",
-	[":dollmaster"] = "你未装备防具时，总是视为装备着【替身人偶】",
+	[":dollmaster"] = "锁定技，你未装备防具时，总是视为装备着【替身人偶】",
+	["folkdance"] = "Folk Dance",
+	[":folkdance"] = "你进攻时，若对方宣告了防御牌，你可以令对方收回防御牌并暂时冻结，然后重新选一张手牌作为防御牌。",
+	["#FolkDance"] = "%from 的防御牌被返回手牌暂时冻结",
 
 	--红魔乡
 	["chiruno"]="琪露诺",
@@ -52,8 +55,7 @@ return
 	["imperishable_heart"] = "碎心",
 	[":imperishable_heart"] = "你可获得其他玩家的红桃判定牌。",
 	["remilia_stalker"] = "潜行者雷米莉亚",
-	["remiliastalker"] = "潜行者雷米莉亚",
-	[":remilia_stalker"] = "你进攻时，若你的攻击距离大于对方的灵力，对方不可宣告防御牌。",
+	[":remilia_stalker"] = "锁定技，你进攻时，若你的攻击距离大于对方的灵力，对方不可宣告防御牌。",
 	
 	["sakuya"] = "十六夜 咲夜",
 	["killer_doll"] = "杀人玩偶",
@@ -169,7 +171,7 @@ return
 	["opticalcamo"] = "光学迷彩",
 	[":opticalcamo"] = "其他角色需要宣告防御牌时，你可支付一点灵力替其打出防御牌。",
 	["extendedarm"] = "手臂延伸",
-	[":extendedarm"] = "你可将武器手牌当作灵击使用或打出。",
+	[":extendedarm"] = "你可将武器手牌当作【灵击】使用或打出。",
 	["@camo-card"] = "你可支付一点灵力替 %src 宣告防御牌",
 	["#chosenCamo"] = "%from 打出了防御牌",
 	

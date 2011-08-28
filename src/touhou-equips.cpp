@@ -265,6 +265,7 @@ public:
 
         room->throwCard(combat.combat);
         combat.from->addToPile("Attack",card->getId(),false);
+        combat.combat = card;
 
         player->tag["combatEffective"] = true;
 
@@ -273,6 +274,8 @@ public:
         log.type = "#DollExchange";
         player->getRoom()->sendLog(log);
         player->getRoom()->getThread()->delay();
+
+        data = QVariant::fromValue(combat);
 
         return false;
     }
