@@ -35,7 +35,7 @@ return
 	["thiefmarisa"] = "神偷魔理沙！",
 	[":thiefmarisa"] = "锁定技，你与其他玩家计算距离时，始终-1。",
 	
-	["alice"] = "爱丽丝 玛格特罗依德",
+	["alice"] = "爱丽丝",
 	["dollmaster"] = "七色的人形使",
 	[":dollmaster"] = "锁定技，你未装备防具时，总是视为装备着【替身人偶】",
 	["folkdance"] = "Folk Dance",
