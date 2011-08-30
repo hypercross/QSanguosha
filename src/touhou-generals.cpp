@@ -2035,15 +2035,11 @@ class BrokenAmulet  : public TriggerSkill
 public:
     BrokenAmulet():TriggerSkill("brokenamulet")
     {
-        events << CombatTargetDeclare;
+        events << CombatTargetDeclared;
 
         frequency = Compulsory;
     }
 
-    virtual bool triggerable(const ServerPlayer *target) const
-    {
-        return true;
-    }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
     {
@@ -2250,7 +2246,7 @@ class DollMaster : public TriggerSkill
 public:
     DollMaster():TriggerSkill("dollmaster")
     {
-        events << BlockDeclare;
+        events << CombatTargetDeclared;
 
         frequency = Compulsory;
     }

@@ -234,11 +234,15 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
             if(combat.combat->inherits("CombatCard")){
                 const CombatCard *ccard=qobject_cast<const CombatCard*>(combat.combat);
                 ccard->resolveAttack(combat);
+                if(room->obtainable(blocker,player) && player->slowMode())player->obtainCard(blocker);
             }
         }else if(blocker->inherits("CombatCard")){
             const CombatCard *ccard=qobject_cast<const CombatCard*>(blocker);
             ccard->resolveDefense(combat);
+
         }
+
+
 
         room->getThread()->trigger(CombatFinished,source,data);
         room->getThread()->trigger(TargetFinished,player,data);

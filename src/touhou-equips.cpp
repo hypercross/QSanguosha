@@ -248,7 +248,7 @@ class DollSkill : public ArmorSkill
 public:
     DollSkill():ArmorSkill("doll")
     {
-        events << BlockDeclare;
+        events << CombatTargetDeclared;
 
         frequency = Frequent ;
     }
