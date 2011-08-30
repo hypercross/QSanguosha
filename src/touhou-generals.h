@@ -6,11 +6,11 @@
 #include "standard-skillcards.h"
 
 
-class ModeSwitchCard : public SkillCard
+class SwitchModeCard : public SkillCard
 {
     Q_OBJECT
 public:
-    Q_INVOKABLE ModeSwitchCard();
+    Q_INVOKABLE SwitchModeCard();
 
     virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
 };

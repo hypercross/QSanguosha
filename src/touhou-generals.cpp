@@ -18,24 +18,24 @@ public:
 
     virtual const Card* viewAs() const
     {
-        return new ModeSwitchCard;
+        return new SwitchModeCard;
     }
 
     virtual bool isEnabledAtPlay(const Player *player) const
     {
-        return !player->hasUsed("ModeSwitchCard");
+        return !player->hasUsed("SwitchModeCard");
     }
 };
 
 
-ModeSwitchCard::ModeSwitchCard()
+SwitchModeCard::SwitchModeCard()
 {
     setObjectName("switchmode");
 
     target_fixed = true;
 }
 
-void ModeSwitchCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
+void SwitchModeCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
 {
     source->setSlowMode(!source->slowMode());
     room->broadcastProperty(source,"slow_mode");
@@ -2796,7 +2796,7 @@ void TouhouPackage::addGenerals()
     skills << new BlackButterflyConstraint << new BlackButterflyDetacher;
 
     skills << new SwitchMode;
-    addMetaObject<ModeSwitchCard>();
+    addMetaObject<SwitchModeCard>();
 
     addMetaObject<GuifuCard>();
     addMetaObject<FreezeCard>();

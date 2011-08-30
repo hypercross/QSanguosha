@@ -909,7 +909,7 @@ TouhouPackage::TouhouPackage()
 
     cards << new Dannatu(Card::Spade,1);
 
-    cards << new Surprise(Card::Spade,3);
+    cards << new Snatch(Card::Spade,3);
     cards << new Snatch(Card::Spade,4);
 
     cards << new ExSpell(Card::Spade,6);
@@ -922,7 +922,7 @@ TouhouPackage::TouhouPackage()
     cards << new ExSpell(Card::Spade,13);
 
 
-    cards << new Surprise(Card::Spade,3);
+    cards << new Dismantlement(Card::Spade,3);
     cards << new FullscreanBarrage(Card::Spade,4);
     cards << new Barrage(Card::Spade,5);
     cards << new Indulgence(Card::Spade,6);
@@ -950,7 +950,7 @@ TouhouPackage::TouhouPackage()
 
     cards << new AmazingGrace(Card::Heart,4);
     cards << new AmazingGrace(Card::Heart,5);
-    cards << new Dismantlement(Card::Heart,6);
+    cards << new ExNihilo(Card::Heart,6);
     cards << new Dismantlement(Card::Heart,7);
     cards << new ExNihilo(Card::Heart,8);
     cards << new Indulgence(Card::Heart,9);

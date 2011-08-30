@@ -54,7 +54,7 @@ public:
 };
 
 Hisonoken::Hisonoken(Card::Suit suit, int number)
-    :Weapon(suit, number, 3)
+    :Weapon(suit, number, 2)
 {
     setObjectName("hisonoken");
     skill = new HisonokenSkill;
@@ -156,7 +156,7 @@ public:
 };
 
 MagicBook::MagicBook(Card::Suit suit, int number)
-    :Weapon(suit,number,2)
+    :Weapon(suit,number,1)
 {
     setObjectName("magic_book");
     skill = new MagicBookSkill;
@@ -310,8 +310,8 @@ void TouhouPackage::addEquips()
     cards << new Hisonoken(Card::Spade,5);
 
     //ex
-    cards<< new Pad(Card::Spade,2);
-    cards<< new Doll(Card::Diamond,12);
+    cards<< new Pad(Card::Spade,6);
+    cards<< new Doll(Card::Diamond,9);
 
     foreach(Card *card, cards)
         card->setParent(this);
