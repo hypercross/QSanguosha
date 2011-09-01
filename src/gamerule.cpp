@@ -144,6 +144,40 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
             player->clearHistory();
 
             if(!player->slowMode())room->changeMp(player,1);
+            else if(!player->getMark("turn_combo") && room->askForSkillInvoke(player,"turn_combo")){
+
+                JudgeStruct judge;
+                judge.good = true;
+                judge.who  = player;
+
+                int bound = qMax(0,player->getMp());
+                QString pat = QString("(.*):(.*):([0-%1])").arg(bound);
+                judge.pattern = QRegExp(pat);
+
+                judge.reason = "turn_combo";
+
+
+                LogMessage log;
+                log.from = player;
+                log.type = "#TurnComboJudge";
+                log.arg  = QString::number(bound);
+                room->sendLog(log);
+
+                room->judge(judge);
+
+                if(judge.isGood())
+                {
+                    room->changeMp(player,-1);
+                    player->setMark("turn_combo",1);
+
+                    log.from = player;
+                    log.type = "#TurnComboStart";
+                    room->sendLog(log);
+
+                    room->getThread()->trigger(TurnStart,player);
+                    player->setMark("turn_combo",0);
+                }
+            }
             return;
         }
     }

@@ -6,6 +6,9 @@ return
 
 	["switchmode"] = "切换模式",
 	[":switchmode"] = "出牌阶段，你可以在高速与低速模式间切换，并结束出牌阶段。",
+	["turn_combo"] = "连携",
+	["#TurnComboJudge"] = "%from 进行连携判定, 成功条件是点数不大于 %arg",
+	["#TurnComboStart"] = "%from 开始了连携回合",
 	
 	["#AnnounceAttack"]="%from 对 %to 进行攻击",
 	["#chosenBlock"]   ="%from 打出了防御牌",
