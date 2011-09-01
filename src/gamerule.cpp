@@ -144,14 +144,16 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
             player->clearHistory();
 
             if(!player->slowMode())room->changeMp(player,1);
-            else if(!player->getMark("turn_combo") && room->askForSkillInvoke(player,"turn_combo")){
+            else if(!player->getMark("turn_combo") &&
+                    player->getMp() &&
+                    room->askForSkillInvoke(player,"turn_combo")){
 
                 JudgeStruct judge;
                 judge.good = true;
                 judge.who  = player;
 
-                int bound = qMax(0,player->getMp());
-                QString pat = QString("(.*):(.*):([0-%1])").arg(bound);
+                int bound = qMax(1,player->getMp());
+                QString pat = QString("(.*):(.*):([1-%1])").arg(bound);
                 judge.pattern = QRegExp(pat);
 
                 judge.reason = "turn_combo";

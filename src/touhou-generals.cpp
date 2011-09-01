@@ -2646,6 +2646,12 @@ public:
         return pattern == "@@mindreader";
     }
 
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return false;
+    }
+
     virtual const Card* viewAs() const
     {
         return new MindreaderCard;
