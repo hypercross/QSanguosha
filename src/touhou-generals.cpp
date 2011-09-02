@@ -160,10 +160,10 @@ public:
     }
 };
 
-class MusouViewAs : public OneCardViewAsSkill
+class Musoutensei: public OneCardViewAsSkill
 {
 public:
-    MusouViewAs():OneCardViewAsSkill("musoutensei")
+    Musoutensei():OneCardViewAsSkill("musoutensei")
     {
 
     }
@@ -195,19 +195,12 @@ public:
 
 };
 
-class Musou : public TriggerSkill
+class Musoufuuin: public TriggerSkill
 {
 public:
-    Musou():TriggerSkill("musoutensei")
-    {
-        view_as_skill = new MusouViewAs;
-
+    Musoufuuin():TriggerSkill("musoufuuin"){
+        frequency = Compulsory;
         events << Predamaged;
-    }
-
-    virtual int getPriority() const
-    {
-        return 2;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
@@ -254,17 +247,16 @@ public:
     }
 };
 
-FreezeCard::FreezeCard()
+PerfectFreezeCard::PerfectFreezeCard()
 {
-    setObjectName("perfect_freeze");
 }
 
-bool FreezeCard::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const
+bool PerfectFreezeCard::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const
 {
     return !to_select->isAllNude() && SkillCard::targetFilter(targets,to_select,Self);
 }
 
-void FreezeCard::onEffect(const CardEffectStruct &effect) const
+void PerfectFreezeCard::onEffect(const CardEffectStruct &effect) const
 {
     ServerPlayer * to =effect.to ;
     Room * room = to->getRoom();
@@ -273,7 +265,7 @@ void FreezeCard::onEffect(const CardEffectStruct &effect) const
     if(from->getMp()<1)return;
     room->changeMp(from,-1);
 
-    int cid = room->askForCardChosen(from,to,"hej",objectName());
+    int cid = room->askForCardChosen(from,to,"hej","perfect_freeze");
 
     room->obtainCard(to,cid);
     room->showCard(to,cid);
@@ -303,7 +295,7 @@ public:
 
     virtual const Card* viewAs() const
     {
-        return new FreezeCard;
+        return new PerfectFreezeCard;
     }
 
 };
@@ -600,8 +592,6 @@ public:
 
 FuujinSaishiCard::FuujinSaishiCard()
 {
-    setObjectName("fuujin_saishi");
-
     target_fixed = true;
 }
 
@@ -1351,6 +1341,20 @@ public:
     }
 };
 
+class AllLost :public GameStartSkill
+{
+public:
+    AllLost():GameStartSkill("alllost")
+    {
+
+    }
+
+    virtual void onGameStart(ServerPlayer *player) const
+    {
+        player->getRoom()->changeMp(player,player->getMaxMP());
+    }
+};
+
 class RealSumiSakuraViewas: public ZeroCardViewAsSkill{
 public:
     RealSumiSakuraViewas():ZeroCardViewAsSkill("sumisakura"){
@@ -1395,20 +1399,6 @@ RealSumiSakuraCard::RealSumiSakuraCard()
 {
     mute = true;
 }
-
-class AllLost :public GameStartSkill
-{
-public:
-    AllLost():GameStartSkill("alllost")
-    {
-
-    }
-
-    virtual void onGameStart(ServerPlayer *player) const
-    {
-        player->getRoom()->changeMp(player,player->getMaxMP());
-    }
-};
 
 void RealSumiSakuraCard::onEffect(const CardEffectStruct &effect) const
 {
@@ -2187,12 +2177,8 @@ class HatIllusion : public TriggerSkill{
 public:
     HatIllusion():TriggerSkill("hatillusion")
     {
-        events << Predamaged <<HpLost;
-    }
-
-    virtual int getPriority() const
-    {
-        return -2;
+        events << Predamaged << HpLost;
+        frequency = Compulsory;
     }
 
     virtual bool triggerable(const ServerPlayer *target) const
@@ -2679,9 +2665,10 @@ public:
 
 void TouhouPackage::addGenerals()
 {
-    General *lingmeng = new General(this,"reimu","_hrp", 3, false ,false, 4);
-    lingmeng->addSkill(new GuifuViewAs);
-    lingmeng->addSkill(new Musou);
+    General *reimu = new General(this,"reimu","_hrp", 3, false ,false, 4);
+    reimu->addSkill(new GuifuViewAs);
+    reimu->addSkill(new Musoutensei);
+    reimu->addSkill(new Musoufuuin);
 
     General *aya =new General(this,"aya","_hrp",4,false,false,3);
     aya->addSkill(new WindGirl);
@@ -2805,7 +2792,7 @@ void TouhouPackage::addGenerals()
     addMetaObject<SwitchModeCard>();
 
     addMetaObject<GuifuCard>();
-    addMetaObject<FreezeCard>();
+    addMetaObject<PerfectFreezeCard>();
     addMetaObject<PhoenixSoarCard>();
     addMetaObject<DeathlureCard>();
     addMetaObject<FuujinSaishiCard>();

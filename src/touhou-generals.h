@@ -28,11 +28,11 @@ public:
     static void ApplyChain(const QString & objectname,ServerPlayer * sp,ServerPlayer *source);
 };
 
-class FreezeCard : public SkillCard
+class PerfectFreezeCard : public SkillCard
 {
     Q_OBJECT
 public:
-    Q_INVOKABLE FreezeCard();
+    Q_INVOKABLE PerfectFreezeCard();
 
     virtual void onEffect(const CardEffectStruct &effect) const;
     virtual bool targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const;

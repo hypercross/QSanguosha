@@ -19,7 +19,9 @@ return
 	["guifu_constraint"] = "束缚：八方鬼缚阵",
 	[":guifu_constraint"] = "你每使用一张牌，须在其结算后弃置一张手牌（如果有）。",
 	["musoutensei"] = "梦想天生",
-	[":musoutensei"] = "你可以将你的黑桃手牌当作符卡使用或打出;你不会受到符咒的伤害。",
+	[":musoutensei"] = "你可以将你的黑桃手牌当作【符咒】使用或打出。",
+	["musoufuuin"] = "梦想封印",
+	[":musoufuuin"] = "锁定技，你不会受到符咒的伤害。",
 	["#MusouProtect"] = "%from 防止了来自【符咒】的伤害",
 	
 	["aya"]   = "射命丸文",
@@ -47,6 +49,7 @@ return
 	["baka"]   ="笨蛋",
 	[":baka"]  ="你的手牌上限最多为3。你宣告战斗牌时要展示之。",
 	["perfect_freeze"]="完美冻结",
+	["perfectfreeze"] = "完美冻结",
 	[":perfect_freeze"]="出牌阶段，你可以消耗一点灵力，然后指定场上任意一张牌；该牌返回其所有者手牌并冻结。（如果你指定了手牌，其所有者需展示之。）",
 	
 	["remilia"] = "雷米莉亚 斯卡雷特",
@@ -61,7 +64,6 @@ return
 	["killer_doll"] = "杀人玩偶",
 	[":killer_doll"] = "你进攻时，可将弹幕牌当做点数为K的灵击使用。",
 	["deflated_world"]="世界收缩",
-	["deflatedworld"]="世界收缩",
 	[":deflated_world"]="你可支付两点灵力并跳过判定阶段与摸牌阶段；若你如此做，该回合你可以额外使用一张战斗牌，战斗牌可指定额外一个目标且攻击距离无限。",
 	
 	["flandre"] = "芙兰朵露 斯卡雷特",
@@ -86,6 +88,7 @@ return
 	--妖妖梦
 	["yuyuko"] = "西行寺 幽幽子",
 	["death_lure"] = "诱灵",
+	["deathlure"] = "诱灵",
 	[":death_lure"] = "出牌阶段，你可支付你的所有X点灵力，并指定场上一名体力值小于X的角色。该角色需打出一张【樱饼】、【EX符卡】或【全屏弹幕】，否则失去所有体力。",
 	["sumi_sakura"] = "完全墨染之樱",
 	["sumisakura"] = "完全墨染之樱",
@@ -95,6 +98,8 @@ return
 	1、回复X点灵力，弃X张手牌；\
 	2、失去X点灵力，摸X张手牌；\
 	其中X是你已损失的灵力值。",
+	["sumisakura:gainmp"] = "回复X点灵力，弃X张手牌",
+	["sumisakura:gaincard"] = "失去X点灵力，摸X张手牌",
 	["alllost"] = "悉皆彷徨",
 	[":alllost"] = "游戏开始时，你的灵力值全满。",
 	["@sumisakura"] = "请指定发动【完全墨染之樱】的对象",
@@ -155,14 +160,16 @@ return
 	["lunaticredeyes"] = "幻胧月睨",
 	[":lunaticredeyes"] = "战斗结算时，你可以支付两点灵力交换双方的进攻牌与防御牌。",
 	["idlingwave"] = "惰性之波",
-	[":idlingwave"] = "你受到伤害时，可以回复一点灵力并令当前进行回合的玩家跳过本回合剩余的出牌阶段。",
+	[":idlingwave"] = "你受到伤害时，可以回复一点灵力并令当前进行回合的玩家结束出牌阶段。",
 	["#LunaticExchange"] = "%from 交换了双方的战斗牌",
 
 	--风神录
 	["sanai"] = "东风谷 早苗",
 	["fuujin_saishi"] = "风神祭祀",
+	["fuujinsaishi"] = "风神祭祀",
 	[":fuujin_saishi"] = "出牌阶段，每回合一次，你可令全场玩家各回复一点灵力。",
 	["moses_miracle"] = "摩西的奇迹",
+	["mosesmiracle"] = "摩西的奇迹",
 	[":moses_miracle"] = "出牌阶段，你可以将两张手牌交给一名玩家；若你如此做，你选择回复一点体力或摸两张牌。",
 	["moses_miracle:draw"] = "摸两张牌",
 	["moses_miracle:recover"] = "回复一点体力",
@@ -192,7 +199,7 @@ return
 	["ironwheel"] = "洩矢的铁轮",
 	[":ironwheel"] = "出牌阶段每回合一次，你可支付一点灵力，令场上手牌数最少的一名玩家摸2张牌。",
 	["hatillusion"] = "本体：帽子",
-	[":hatillusion"] = "你的本体为“ZUN帽”。（当任何玩家装备“ZUN帽”时，你的最后一点体力不可被扣减。）",
+	[":hatillusion"] = "锁定技，你的本体为“ZUN帽”。（当任何玩家装备“ZUN帽”时，你的最后一点体力不可被扣减。）",
 	["#HatIllusion"] = "%from 的最后一点体力不会被扣减，受到的伤害从 %arg 降低至 %arg2",
 
 	--绯想天
@@ -200,7 +207,6 @@ return
 	["munenmusou"] = "无念无想",
 	[":munenmusou"] = "你的最后一点灵力不会被损耗。",
 	["guardian_kanameishi"] = "守护的要石",
-	["guardiankanameishi"] = "守护的要石",
 	[":guardian_kanameishi"] = "每当你受到伤害，你可以将手牌补至3张。",
 	
 	--地灵殿
