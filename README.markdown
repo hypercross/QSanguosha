@@ -20,7 +20,6 @@ theme is set to the touhou world. All game cards are re-made
 
 The gameplay is my design, image & audio is from pixiv and 
 everywhere on the web, or possibly the remainder of the
-original game.
 
 Features
 ----------
@@ -28,10 +27,16 @@ Features
 1. Framework
     * Open source with Qt graphics view framework
     * Use irrKlang as sound engine
+    * Use plib as joystick backend 
+    * Use Lua as AI script
 
 2. Operation experience
-    * Full package (standard + wind + fire + thicket + maneuvering + others)
+    * Full package (include all yoka extension package)
     * Drag card to target to use card
     * Keyboard shortcut
     * Cards sorting (by card type and card suit)
+    * Multilayer display when cards are more than an upperlimit
+
+3. Extensible
+    * Some MODs are available based on this game
 

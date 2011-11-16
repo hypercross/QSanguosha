@@ -42,6 +42,7 @@ return {
 	["#Murder"] = "%to【%arg】 挂了，凶手是 %from", 
 	["#Suicide"] = "%to【%arg】 自杀身亡", 
 	["#InvokeSkill"] = "%from 使用了技能【%arg】", 
+	["#TriggerSkill"] = "%from 的锁定技【%arg】被触发", 
 	["#Pindian"] = "%from 向 %to 发起了拼点", 
 	["#PindianSuccess"] = "%from (对 %to) 拼点成功！\\(^o^)/", 
 	["#PindianFailure"] = "%from (对 %to) 拼点失败！-_-！", 
@@ -83,6 +84,7 @@ return {
 	["#SkipPhase"] = "%from 跳过了 %arg 阶段",
 	["#IronChainDamage"] = "%from 处于铁锁连环状态，将受到铁锁的传导伤害",
 	["#LoseHp"] = "%from 流失了 %arg 点体力",
+	["@askforslash"] = "你可以对你攻击范围内的一名角色使用一张【杀】",
 	
 	["3v3:cw"] = "顺时针",
 	["3v3:ccw"] = "逆时针",

@@ -48,10 +48,21 @@ int main(int argc, char *argv[])
     Sanguosha = new Engine;
     BanPair::loadBanPairs();
 
+
+    QFile file("sanguosha.qss");
+    if(file.open(QIODevice::ReadOnly)){
+        QTextStream stream(&file);
+        qApp->setStyleSheet(stream.readAll());
+    }
+
     if(qApp->arguments().contains("-server")){
         Server *server = new Server(qApp);
-        server->listen();
-        server->daemonize();
+        printf("Server is starting on port %u\n", Config.ServerPort);
+
+        if(server->listen())
+            printf("Starting successfully\n");
+        else
+            printf("Starting failed!\n");
 
         return qApp->exec();
     }
