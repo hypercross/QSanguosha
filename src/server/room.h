@@ -59,7 +59,7 @@ public:
     void damage(const DamageStruct &data);
     void sendDamageLog(const DamageStruct &data);
     void loseHp(ServerPlayer *victim, int lose = 1);
-    void changeMp(ServerPlayer *target, int delta);
+    bool changeMp(ServerPlayer *target, int delta, bool exhaust = true);
     void loseMaxHp(ServerPlayer *victim, int lose = 1);
     void applyDamage(ServerPlayer *victim, const DamageStruct &damage);
     void recover(ServerPlayer *player, const RecoverStruct &recover, bool set_emotion = false);
@@ -100,7 +100,8 @@ public:
     ServerPlayer *getFront(ServerPlayer *a, ServerPlayer *b) const;
     void signup(ServerPlayer *player, const QString &screen_name, const QString &avatar, bool is_robot);
     ServerPlayer *getOwner() const;
-    QString getRoleStateString();
+
+    void logNoMp(ServerPlayer *from,const QString &reason);
 
     void reconnect(ServerPlayer *player, ClientSocket *socket);
     void marshal(ServerPlayer *player);

@@ -56,8 +56,7 @@ bool GuifuCard::targetFilter(const QList<const Player *> &targets, const Player 
 
 void GuifuCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
 {
-    if(source->getMp()<1)return;
-    room->changeMp(source,-1);
+    if(!room->changeMp(source,-1))return;
     foreach(ServerPlayer * sp,targets)
     {
         if(sp->hasSkill(objectName() + "_constraint"))continue;
@@ -262,8 +261,7 @@ void PerfectFreezeCard::onEffect(const CardEffectStruct &effect) const
     Room * room = to->getRoom();
     ServerPlayer * from =effect.from;
 
-    if(from->getMp()<1)return;
-    room->changeMp(from,-1);
+    if(!room->changeMp(from,-1))return;
 
     int cid = room->askForCardChosen(from,to,"hej","perfect_freeze");
 
@@ -2030,6 +2028,11 @@ public:
         frequency = Compulsory;
     }
 
+    virtual int getPriority() const
+    {
+        return 2;
+    }
+
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
     {
@@ -2565,13 +2568,10 @@ public:
     Ninetail():TriggerSkill("ninetail")
     {
         view_as_skill = new NinetailViewas;
-        events << MpChanged << PhaseChange;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
     {
-        if(event == PhaseChange && player->getPhase() != Player::Discard)return false;
-        player->setXueyi(player->getMp());
         return false;
     }
 };
@@ -2584,6 +2584,16 @@ void MindreaderCard::onEffect(const CardEffectStruct &effect) const
 {
     int cid=-1;
     Room* room=effect.to->getRoom();
+
+
+    if(!room->changeMp(effect.from,-1))
+    {
+        room->logNoMp(effect.from,objectName());
+        return;
+    }
+
+
+    room->drawCards(effect.to,2);
     QList<int> hand=effect.to->handCards();
 
     if(!hand.isEmpty())
@@ -2616,7 +2626,7 @@ void MindreaderCard::onEffect(const CardEffectStruct &effect) const
 
     effect.from->invoke("clearAG");
 
-    room->drawCards(effect.to,2);
+
 }
 
 class MindreaderViewas: public ZeroCardViewAsSkill
@@ -2655,6 +2665,7 @@ public:
     virtual bool onPhaseChange(ServerPlayer *target) const
     {
         if(target->getPhase() != Player::Draw)return false;
+        if(!target->getMp())return false;
 
         Room * room = target->getRoom();
         if(!room->askForUseCard(target,"@@mindreader","@mindreader"))return false;

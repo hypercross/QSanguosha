@@ -435,7 +435,7 @@ public:
 StandardPackage::StandardPackage()
     :Package("standard")
 {
-    addCards();
+    //addCards();
     addGenerals();
 
     patterns["."] = new HandcardPattern;

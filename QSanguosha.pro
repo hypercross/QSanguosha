@@ -87,7 +87,9 @@ SOURCES += src/main.cpp \
 	src/util/detector.cpp \
 	src/util/nativesocket.cpp \
 	src/util/recorder.cpp \
-    src/touhoucards.cpp \
+        src/package/touhoucards.cpp \
+        src/package/touhou-generals.cpp \
+        src/package/touhou-equips.cpp \
 	swig/sanguosha_wrap.cxx
 
 HEADERS += src/client/aux-skills.h \
@@ -167,10 +169,10 @@ HEADERS += src/client/aux-skills.h \
 	src/util/detector.h \
 	src/util/nativesocket.h \
 	src/util/recorder.h \
-	src/util/socket.h
-    src/touhoucards.h \
-    src/touhou-generals.h \
-    src/touhou-equips.h
+        src/util/socket.h \
+        src/package/touhoucards.h \
+        src/package/touhou-generals.h \
+        src/package/touhou-equips.h
 	
 FORMS += src/dialog/cardoverview.ui \
 	src/dialog/configdialog.ui \

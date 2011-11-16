@@ -366,6 +366,15 @@ void Room::gameOver(const QString &winner){
         sem->release();
 }
 
+void Room::logNoMp(ServerPlayer *from,const QString &reason)
+{
+    LogMessage log;
+    log.type = "#InsufficientMp";
+    log.from = from;
+    log.arg  = reason;
+    sendLog(log);
+}
+
 void Room::slashEffect(const SlashEffectStruct &effect){
     effect.from->addMark("SlashCount");
 
@@ -683,11 +692,7 @@ const Card *Room::askForCard(ServerPlayer *player, const QString &pattern, const
     card = card->validateInResposing(player, &continuable);
 
     if(card){
-        if(card->getTypeId() != Card::Skill){
-            const CardPattern *card_pattern = Sanguosha->getPattern(pattern);
-            if(card_pattern == NULL || card_pattern->willThrow())
-                throwCard(card);
-        }else if(card->willThrow())
+        if(!data.toBool())
             throwCard(card);
 
         QVariant decisionData = QVariant::fromValue("cardResponsed:"+pattern+":"+prompt+":_"+card->toString()+"_");
@@ -712,7 +717,7 @@ const Card *Room::askForCard(ServerPlayer *player, const QString &pattern, const
         }
 
     }else if(continuable)
-        return askForCard(player, pattern, prompt);
+        return askForCard(player, pattern, prompt,data);
 
     return card;
 }
@@ -1740,7 +1745,7 @@ void Room::loseHp(ServerPlayer *victim, int lose){
     thread->trigger(HpLost, victim, data);
 }
 
-void Room::changeMp(ServerPlayer *target, int delta){
+bool Room::changeMp(ServerPlayer *target, int delta, bool exhaust){
 
     MpChangeStruct mpchange;
     mpchange.delta = delta;
@@ -1754,10 +1759,14 @@ void Room::changeMp(ServerPlayer *target, int delta){
     target = mpchange.who;
     delta  = mpchange.delta;
 
+    bool complete=true;
     int max=target->getMaxMP()-target->getMp();
     int min=-target->getMp();
+    if(delta<min || delta>max)complete=false;
+
     delta=qBound(min,delta,max);
-    if(delta==0)return;
+    if(delta==0)return false;
+    if(!complete&&!exhaust)return false;
 
     LogMessage log;
     log.type = delta>0 ? "#increasedMp" : "#decreasedMp";
@@ -1768,6 +1777,7 @@ void Room::changeMp(ServerPlayer *target, int delta){
 
     room->setPlayerProperty(target, "mp", target->getMp() + delta);
     room->broadcastInvoke("mpChange", QString("%1:%2").arg(target->objectName()).arg(delta));
+    return complete;
 
 }
 
@@ -1782,23 +1792,10 @@ void Room::loseMaxHp(ServerPlayer *victim, int lose){
 }
 
 void Room::applyDamage(ServerPlayer *victim, const DamageStruct &damage){
-    int dmg = damage.damage;
-//    int mpc = 0;
-//    if(victim->slowMode() && damage.card && damage.card->inherits("CombatCard"))
-//    {
-//        if(dmg>0 && victim->getMp())
-//        {
-//            mpc = mpc + qMin(dmg,victim->getMp());
-//            dmg = dmg - mpc ;
-//        }
-//    }
-
-    int new_hp = victim->getHp() - dmg;
-//    int new_mp = victim->getMp() - mpc;
+    int new_hp = victim->getHp() - damage.damage;
 
     setPlayerProperty(victim, "hp", new_hp);
-//    setPlayerProperty(victim, "mp", new_mp);
-    QString change_str = QString("%1:%2").arg(victim->objectName()).arg(-dmg);
+    QString change_str = QString("%1:%2").arg(victim->objectName()).arg(-damage.damage);
     switch(damage.nature){
     case DamageStruct::Fire: change_str.append("F"); break;
     case DamageStruct::Thunder: change_str.append("T"); break;

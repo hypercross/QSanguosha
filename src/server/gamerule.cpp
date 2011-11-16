@@ -144,44 +144,45 @@ void GameRule::onPhaseChange(ServerPlayer *player) const{
 
             player->clearFlags();
 
-            if(!player->slowMode())room->changeMp(player,1);
-            else if(!player->getMark("turn_combo") &&
-                    player->getMp() &&
-                    room->askForSkillInvoke(player,"turn_combo")){
+            room->changeMp(player,1);
+//            if(!player->slowMode())room->changeMp(player,1);
+//            else if(!player->getMark("turn_combo") &&
+//                    player->getMp() &&
+//                    room->askForSkillInvoke(player,"turn_combo")){
 
-                JudgeStruct judge;
-                judge.good = true;
-                judge.who  = player;
+//                JudgeStruct judge;
+//                judge.good = true;
+//                judge.who  = player;
 
-                int bound = qMax(1,player->getMp());
-                QString pat = QString("(.*):(.*):([1-%1])").arg(bound);
-                judge.pattern = QRegExp(pat);
+//                int bound = qMax(1,player->getMp());
+//                QString pat = QString("(.*):(.*):([1-%1])").arg(bound);
+//                judge.pattern = QRegExp(pat);
 
-                judge.reason = "turn_combo";
+//                judge.reason = "turn_combo";
 
 
-                LogMessage log;
-                log.from = player;
-                log.type = "#TurnComboJudge";
-                log.arg  = QString::number(bound);
-                room->sendLog(log);
+//                LogMessage log;
+//                log.from = player;
+//                log.type = "#TurnComboJudge";
+//                log.arg  = QString::number(bound);
+//                room->sendLog(log);
 
-                room->judge(judge);
+//                room->judge(judge);
 
-                if(judge.isGood())
-                {
-                    room->changeMp(player,-1);
-                    player->setMark("turn_combo",1);
+//                if(judge.isGood())
+//                {
+//                    room->changeMp(player,-1);
+//                    player->setMark("turn_combo",1);
 
-                    log.from = player;
-                    log.type = "#TurnComboStart";
-                    room->sendLog(log);
+//                    log.from = player;
+//                    log.type = "#TurnComboStart";
+//                    room->sendLog(log);
 
-                    room->getThread()->trigger(TurnStart,player);
-                    player->setMark("turn_combo",0);
-                }
-            }
-            return;
+//                    room->getThread()->trigger(TurnStart,player);
+//                    player->setMark("turn_combo",0);
+//                }
+//            }
+//            return;
         }
     }
 }
@@ -234,7 +235,6 @@ bool GameRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data)
                 setGameProcess(room);
 
             player->drawCards(4, false);
-            player->getRoom()->attachSkillToPlayer(player,"switchmode");
 
             if(room->getMode() == "02_1v1")
                 room->setTag("FirstRound", true);

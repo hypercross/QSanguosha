@@ -1,2 +1,2 @@
-e:\swig\swig -c++ -lua sanguosha.i
+k:\tools\swigwin-2.0.4\swig -c++ -lua sanguosha.i
 pause

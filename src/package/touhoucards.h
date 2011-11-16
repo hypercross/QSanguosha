@@ -2,8 +2,8 @@
 #define TOUHOUCARDS_H
 
 #include<standard.h>
-#include<touhou-generals.h>
 #include<engine.h>
+#include<touhou-generals.h>
 
 class CombatCard : public BasicCard
 {

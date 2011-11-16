@@ -1115,8 +1115,8 @@ StandardCardPackage::StandardCardPackage()
           << new Indulgence(Card::Heart, 6)
           << new Lightning(Card::Spade, 1);
 
-    foreach(Card *card, cards)
-        card->setParent(this);
+    //foreach(Card *card, cards)
+      //  card->setParent(this);
 
     skills << new SpearSkill << new AxeViewAsSkill;
 }

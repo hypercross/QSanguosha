@@ -68,7 +68,10 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
             && !source->hasFlag("tianyi_success")
             && !source->hasSkill("sharpmind"))
     {
-        if(source->getMp()< (farthest - source->getAttackRange()) )return;
+        if(source->getMp()< (farthest - source->getAttackRange()) ){
+            room->logNoMp(source,objectName());
+            return;
+        }
         room->changeMp(source,source->getAttackRange() - farthest);
     }
 

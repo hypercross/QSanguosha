@@ -10,7 +10,7 @@ Player::Player(QObject *parent)
     hp(-1), max_hp(-1), mp(-1), max_mp(-1), state("online"), seat(0), alive(true),
     phase(NotActive),
     weapon(NULL), armor(NULL), defensive_horse(NULL), offensive_horse(NULL),
-    face_up(true), chained(false)
+    face_up(true), chained(false), slow_mode(false)
 {
 }
 
@@ -513,12 +513,8 @@ int Player::getMaxCards() const{
     int juejing = hasSkill("juejing") ? 2 : 0;
 
     int xueyi = 0;
-    if(hasLordSkill("xueyi")){
-        QList<const Player *> players = getSiblings();
-        foreach(const Player *player, players){
-            if(player->isAlive() && player->getKingdom() == "qun")
-                xueyi += 2;
-        }
+    if(hasLordSkill("ninetail")){
+        xueyi += mp;
     }
 
     int shenwei = 0;
@@ -647,7 +643,7 @@ bool Player::canCombat(const Player *other, bool distance_limit) const{
         return false;
 
     if(distance_limit)
-        return distanceTo(other) <= getAttackRange() + (slowMode() ? 0 : mp);
+        return distanceTo(other) <= getAttackRange() + (mp);
     else
         return true;
 }
