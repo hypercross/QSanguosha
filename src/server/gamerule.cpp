@@ -493,7 +493,7 @@ bool GameRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data)
 
             bool broken = room->getThread()->trigger(BlockDeclare, effect.to, data);
             if(!broken){
-                const Card* block=room->askForCard(effect.to,".","blockCard",false);
+                const Card* block=room->askForCard(effect.to,".","blockCard",true);
                 effect.block=block;
                 effect.to->tag["combatEffective"]=true;
                 if(!block)break;

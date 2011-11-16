@@ -40,7 +40,7 @@ public:
         int cid = target->getPile("Defense").first();
         room ->showCard(target,cid,player);
 
-        const Card* newCombat = room -> askForCard(player,".combat","hisonoken-combat",false);
+        const Card* newCombat = room -> askForCard(player,".combat","hisonoken-combat",true);
         if(!newCombat)return false;
 
         room->throwCard(player->getPile("Attack").first());

@@ -100,7 +100,7 @@ public:
     ServerPlayer *getFront(ServerPlayer *a, ServerPlayer *b) const;
     void signup(ServerPlayer *player, const QString &screen_name, const QString &avatar, bool is_robot);
     ServerPlayer *getOwner() const;
-
+	QString getRoleStateString();
     void logNoMp(ServerPlayer *from,const QString &reason);
 
     void reconnect(ServerPlayer *player, ClientSocket *socket);

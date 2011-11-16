@@ -1227,7 +1227,7 @@ public:
         {
             if(cs.to->containsTrick("supply_shortage"))return false;
             if(player->getMp()<1)return false;
-            const Card* basic = player->getRoom()->askForCard(player,".basic","snow-basic",false);
+            const Card* basic = player->getRoom()->askForCard(player,".basic","snow-basic",true);
             if(!basic)return false;
 
             player->getRoom()->changeMp(player,-1);
@@ -1781,7 +1781,7 @@ public:
         if(player->getPhase() == Player::Start)
         {
             Room * room =player->getRoom();
-            const Card* block = room->askForCard(player,".","ostinateCard",false);
+            const Card* block = room->askForCard(player,".","ostinateCard",true);
             while(block)
             {
                 player->addToPile("Defense",block->getEffectiveId(),false);
@@ -1792,7 +1792,7 @@ public:
                 log.from = player;
                 room->sendLog(log);
 
-                block = room->askForCard(player,".","ostinateCard",false);
+                block = room->askForCard(player,".","ostinateCard",true);
             }
         }
 
@@ -1908,7 +1908,7 @@ public:
 
         if(nitori->getHandcardNum()<1 || nitori->getMp()<1)return false;
 
-        const Card * block = room->askForCard(nitori,".","@camo-card:" + player->objectName(),false);
+        const Card * block = room->askForCard(nitori,".","@camo-card:" + player->objectName(),true);
         if(!block)return false;
 
         room->changeMp(nitori,-1);
@@ -2301,7 +2301,7 @@ public:
 
             room->sendLog(log);
 
-            const Card* block = room->askForCard(player, ".", "blockCard", false);
+            const Card* block = room->askForCard(player, ".", "blockCard", true);
             combat.block = block;
 
             if(block){

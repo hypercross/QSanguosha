@@ -1,22 +1,24 @@
 local function Reverse(self, cardlist)
+	local size = #cardlist
 	local Reverse_list = {}
-	for i=#cardlist, 1, -1 do
-		table.insert(Reverse_list, cardlist[i])
+	while(size > 0) do
+		table.insert(Reverse_list, cardlist[size])
+		size = size - 1
 	end
 	return Reverse_list
 end
 
-sgs.ai_judgestring = 
+sgs.JudgeString = 
 {
-	indulgence = "heart",
-	diamond = "heart",
-	supply_shortage = "club",
-	spade = "club",
-	club = "club",
-	lightning = "spade",
+indulgence = "heart",
+diamond = "heart",
+supply_shortage = "club",
+spade = "club",
+club = "club",
+lightning = "spade",
 }
 
-local function getIdToCard(self, cards)
+function getIdToCard(self, cards)
 	local tocard = {}
 	for _, card_id in ipairs(cards) do
 		local card = sgs.Sanguosha:getCard(card_id)
@@ -26,7 +28,7 @@ local function getIdToCard(self, cards)
 	return tocard
 end
 
-local function getBackToId(self, cards)
+function getBackToId(self, cards)
 	local cards_id = {}
 	for _, card in ipairs(cards) do
 		self:log(card:objectName()..":"..card:getSuitString())
@@ -35,9 +37,9 @@ local function getBackToId(self, cards)
 	return cards_id
 end
 
-local function getOwnCards(self, up, buttom, next_judge)
+function getOwnCards(self, up, buttom, next_judge)
 	self:sortByUseValue(buttom)
-	local has_slash = self:getCardsNum("Slash")>0
+	local hasSlash = self:getSlash()
 	local hasNext = false
 	for index, gcard in ipairs(buttom) do
 		if index == 3 then break end
@@ -47,7 +49,7 @@ local function getOwnCards(self, up, buttom, next_judge)
 			self:log(gcard:objectName() .. "!!!!!")
 			hasNext = true
 		else
-			if has_slash then 
+			if hasSlash then 
 				if not gcard:inherits("Slash") then 
 					table.insert(up, gcard) 
 					table.remove(buttom, index)
@@ -56,7 +58,7 @@ local function getOwnCards(self, up, buttom, next_judge)
 				if gcard:inherits("Slash") then 
 					table.insert(up, gcard) 
 					table.remove(buttom, index)
-					has_slash = true 
+					hasSlash = true 
 				end
 			end
 		end
@@ -71,10 +73,10 @@ local function getOwnCards(self, up, buttom, next_judge)
 	return up, buttom
 end
 
-local function GuanXing(self, cards)
+function GuanXing(self, cards)
 	local up, buttom = {}, {}
-	local has_lightning, has_judged
-	local judged_list = {}
+	local hasLightning, hasJudged
+	local is_judged = {}
 	
 	buttom = getIdToCard(self, cards)
 	self:sortByUseValue(buttom, true)
@@ -86,12 +88,12 @@ local function GuanXing(self, cards)
 	for judge_count, need_judge in ipairs(judge) do
 		local index = 1
 		local lightning_flag = false
-		local judge_str = sgs.ai_judgestring[need_judge:objectName()] or sgs.ai_judgestring[need_judge:getSuitString()]
+		local judge_str = sgs.JudgeString[need_judge:objectName()] or sgs.JudgeString[need_judge:getSuitString()]
 		self:log("------------------>"..judge_str ..":")
 		
 		for _, for_judge in ipairs(buttom) do
 			if judge_str == "spade" and not lightning_flag then
-				has_lightning = need_judge
+				hasLightning = need_judge
 				self:log("Lightning------->"..for_judge:getSuitString()..":"..for_judge:getNumber())
 				if for_judge:getNumber() >= 2 and for_judge:getNumber() <= 9 then lightning_flag = true end
 			end
@@ -99,18 +101,18 @@ local function GuanXing(self, cards)
 				(lightning_flag and judge_str ~= for_judge:getSuitString()) then
 				table.insert(up, for_judge)
 				table.remove(buttom, index)
-				judged_list[judge_count] = 1
-				has_judged = true
+				is_judged[judge_count] = 1
+				hasJudged = true
 				break
 			end
 			index = index + 1
 		end
-		if not judged_list[judge_count] then judged_list[judge_count] = 0 end
+		if not is_judged[judge_count] then is_judged[judge_count] = 0 end
 	end
 	
-	if has_judged then
-		for index=1, #judged_list do
-			if judged_list[index] == 0 then
+	if hasJudged then
+		for index=1, #is_judged do
+			if is_judged[index] == 0 then
 				table.insert(up, index, table.remove(buttom))
 			end
 		end
@@ -123,16 +125,16 @@ local function GuanXing(self, cards)
 	judge = next_player:getCards("j")
 	judge = sgs.QList2Table(judge)
 	judge = Reverse(self, judge)
-	if has_lightning then table.insert(judge, 1, has_lightning) end
+	if hasLightning then table.insert(judge, 1, hasLightning) end
 	
-	has_judged = false
-	judged_list = {}
+	hasJudged = false
+	is_judged = {}
 	
 	while(#buttom >= 3) do
 		local index = 1
 		local lightning_flag = false
 		if pos > #judge then break end
-		local judge_str = sgs.ai_judgestring[judge[pos]:objectName()] or sgs.ai_judgestring[judge[pos]:getSuitString()]
+		local judge_str = sgs.JudgeString[judge[pos]:objectName()] or sgs.JudgeString[judge[pos]:getSuitString()]
 		if self:isFriend(next_player) then
 			self:log("------------------>"..judge_str ..":friend")
 		else
@@ -149,8 +151,8 @@ local function GuanXing(self, cards)
 					if for_judge:isBlack() then
 						table.insert(next_judge, for_judge)
 						table.remove(buttom, index)	
-						has_judged = true
-						judged_list[pos] = 1
+						hasJudged = true
+						is_judged[pos] = 1
 						break
 					end
 				else
@@ -158,8 +160,8 @@ local function GuanXing(self, cards)
 						if not lightning_flag then
 							table.insert(next_judge, for_judge)
 							table.remove(buttom, index)
-							has_judged = true
-							judged_list[pos] = 1
+							hasJudged = true
+							is_judged[pos] = 1
 							break
 						end
 					end
@@ -168,8 +170,8 @@ local function GuanXing(self, cards)
 				if next_player:hasSkill("luoshen") and for_judge:isRed() and not luoshen_flag then
 					table.insert(next_judge, for_judge)
 					table.remove(buttom, index)	
-					has_judged = true
-					judged_list[pos] = 1
+					hasJudged = true
+					is_judged[pos] = 1
 					luoshen_flag = true
 					break
 				else
@@ -177,20 +179,20 @@ local function GuanXing(self, cards)
 						or judge_str ~= for_judge:getSuitString() then
 						table.insert(next_judge, for_judge)
 						table.remove(buttom, index)
-						has_judged = true
-						judged_list[pos] = 1
+						hasJudged = true
+						is_judged[pos] = 1
 					end
 				end
 			end
 			index = index + 1
 		end
-		if not judged_list[pos] then judged_list[pos] = 0 end
+		if not is_judged[pos] then is_judged[pos] = 0 end
 		pos = pos + 1
 	end
 	
-	if has_judged then
-		for index=1, #judged_list do
-			if judged_list[index] == 0 then
+	if hasJudged then
+		for index=1, #is_judged do
+			if is_judged[index] == 0 then
 				table.insert(next_judge, index, table.remove(buttom))
 			end
 		end
@@ -204,9 +206,9 @@ local function GuanXing(self, cards)
 	return up, buttom
 end
 
-local function XinZhan(self, cards)
+function XinZhan(self, cards)
 	local up, buttom = {}, {}
-	local judged_list = {}
+	local is_judged = {}
 	local hasJudge = false
 	local next_player = self.player:getNextAlive()
 	local judge = next_player:getCards("j")
@@ -217,12 +219,12 @@ local function XinZhan(self, cards)
 	for judge_count, need_judge in ipairs(judge) do
 		local index = 1
 		local lightning_flag = false
-		local judge_str = sgs.ai_judgestring[need_judge:objectName()] or sgs.ai_judgestring[need_judge:getSuitString()]
+		local judge_str = sgs.JudgeString[need_judge:objectName()] or sgs.JudgeString[need_judge:getSuitString()]
 		self:log("------------------>"..judge_str ..":")
 		
 		for _, for_judge in ipairs(buttom) do
 			if judge_str == "spade" and not lightning_flag then
-				has_lightning = need_judge
+				hasLightning = need_judge
 				if for_judge:getNumber() >= 2 and for_judge:getNumber() <= 9 then lightning_flag = true end
 			end
 			if self:isFriend(next_player) then
@@ -230,8 +232,8 @@ local function XinZhan(self, cards)
 					if not lightning_flag then
 						table.insert(up, for_judge)
 						table.remove(buttom, index)
-						judged_list[judge_count] = 1
-						has_judged = true
+						is_judged[judge_count] = 1
+						hasJudged = true
 						break
 					end
 				end
@@ -240,18 +242,18 @@ local function XinZhan(self, cards)
 					(judge_str == for_judge:getSuitString() and judge_str == "spade" and lightning_flag) then
 					table.insert(up, for_judge)
 					table.remove(buttom, index)
-					judged_list[judge_count] = 1
-					has_judged = true
+					is_judged[judge_count] = 1
+					hasJudged = true
 				end
 			end
 			index = index + 1
 		end
-		if not judged_list[judge_count] then judged_list[judge_count] = 0 end
+		if not is_judged[judge_count] then is_judged[judge_count] = 0 end
 	end
 	
-	if has_judged then
-		for index=1, #judged_list do
-			if judged_list[index] == 0 then
+	if hasJudged then
+		for index=1, #is_judged do
+			if is_judged[index] == 0 then
 				table.insert(up, index, table.remove(buttom))
 			end
 		end
@@ -263,11 +265,4 @@ local function XinZhan(self, cards)
 	
 	up = getBackToId(self, up)
 	return up, {}
-end
-
-function SmartAI:askForGuanxing(cards, up_only)
-	if not up_only then return GuanXing(self,cards)
-	else return XinZhan(self, cards)
-	end
-	return cards, {}
 end
