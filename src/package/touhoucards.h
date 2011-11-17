@@ -147,6 +147,8 @@ class Broomstick : public DefensiveHorse
     Q_OBJECT
 public:
     Q_INVOKABLE Broomstick(Card::Suit suit, int number);
+
+    virtual void onUninstall(ServerPlayer *player) const;
 };
 
 class ZunHat : public DefensiveHorse

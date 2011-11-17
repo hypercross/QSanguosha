@@ -174,22 +174,28 @@ public:
 
     virtual bool isEnabledAtResponse(const Player *player, const QString &pattern) const
     {
-        return pattern == "rune" || pattern == ".combat" || pattern == ".";
+        return pattern == "rune" ||
+               pattern == ".combat" ||
+               pattern == "strike" ||
+               pattern == ".";
     }
 
     virtual bool viewFilter(const CardItem *to_select) const{
         const Card *card = to_select->getFilteredCard();
 
-        return card->getSuit() == Card::Spade && !card->isEquipped();
+        return card->inherits("Strike") ||
+               card->inherits("Rune");
 
     }
 
     virtual const Card *viewAs(CardItem *card_item) const{
         const Card *card = card_item->getCard();
-        Card *rune = new Rune(card->getSuit(), card->getNumber());
-        rune->addSubcard(card->getId());
-        rune->setSkillName(objectName());
-        return rune;
+        Card *convert;
+        if(card->inherits("Strike"))convert = new Rune(card->getSuit(), card->getNumber());
+        else convert = new Strike(card->getSuit(), card->getNumber());
+        convert->addSubcard(card->getId());
+        convert->setSkillName(objectName());
+        return convert;
     }
 
 };
@@ -248,18 +254,16 @@ public:
 
 PerfectFreezeCard::PerfectFreezeCard()
 {
+    setObjectName("perfectfreeze");
+
+    target_fixed = true ;
 }
 
-bool PerfectFreezeCard::targetFilter(const QList<const Player *> &targets, const Player *to_select, const Player *Self) const
+void PerfectFreezeCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
 {
-    return !to_select->isAllNude() && SkillCard::targetFilter(targets,to_select,Self);
-}
-
-void PerfectFreezeCard::onEffect(const CardEffectStruct &effect) const
-{
-    ServerPlayer * to =effect.to ;
-    Room * room = to->getRoom();
-    ServerPlayer * from =effect.from;
+    QList<ServerPlayer *> players = room->getOtherPlayers(source);
+    ServerPlayer * to = players.at(qrand() % players.size());
+    ServerPlayer * from =source;
 
     if(!room->changeMp(from,-1))return;
 
@@ -881,6 +885,34 @@ public:
         return strike;
     }
 };
+
+class PerfectMaid: public TriggerSkill
+{
+public:
+    PerfectMaid():TriggerSkill("perfectmaid"){
+        frequency = Compulsory;
+        events << Predamaged;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        DamageStruct damage = data.value<DamageStruct>();
+
+        if(damage.card && damage.card->inherits("Rune"))
+        {
+            LogMessage log;
+            log.type = "#MusouProtect";
+            log.from = player;
+            player->getRoom()->sendLog(log);
+
+            return true;
+        }
+
+        return false;
+    }
+
+};
+
 
 class DeflatedWorld : public PhaseChangeSkill
 {
@@ -1536,10 +1568,8 @@ public:
         ServerPlayer * yukari = room->findPlayerBySkillName(objectName());
         if(!yukari)return false;
 
-        if(yukari->getMp()<1)return false;
-        if(!room->askForSkillInvoke(yukari,objectName()))return false;
-
-        room->changeMp(yukari,-1);
+        //if(yukari->getMp()<1)return false;
+        if(!room->askForCard(yukari,".C","@realmcontroller"))return false;
         return true;
     }
 
@@ -1595,7 +1625,9 @@ public:
 
         QList<ServerPlayer *> other_players = room->getOtherPlayers(target);
 
-        if(!room->askForCard(target,".C","@blackbutterfly"))return;
+        if(target->getMp()<1)return;
+        if(!room->askForSkillInvoke(target,"blackbutterfly"))return;
+        room->changeMp(target,-1);
 
         foreach(ServerPlayer* aplayer, other_players)
         {
@@ -1611,10 +1643,15 @@ public:
     }
 
     virtual int getCorrect(const Player *from, const Player *to) const{
-        if(to->hasSkill(objectName()))
-            return from->isChained() ? +2 : +1;
-        else
-            return 0;
+        if(!to->hasSkill(objectName()))return 0;
+        static bool bypass = true;
+
+        if(bypass=(!bypass))return to->isChained() ? 1 : 0;
+
+        int orig = from->rawDistanceTo(to);
+
+        return qMax(to->isChained() ? 1 : 0,2 - orig);
+
     }
 };
 
@@ -1695,28 +1732,28 @@ class Catwalk : public TriggerSkill
 public:
     Catwalk():TriggerSkill("catwalk")
     {
-        events << TargetFinish;
-
-        frequency = Compulsory;
+        events << BlockDeclare;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
     {
         Room *room = player->getRoom();
-        CombatStruct combat = data.value<CombatStruct>();
-        if(!combat.block->inherits("Barrage"))return false;
 
-        Barrage *barrage = new Barrage(combat.block->getSuit(),13);
-        barrage->setSkillName(objectName());
-        barrage->addSubcard(combat.block);
-        combat.block = barrage;
+        if(!player->getMp())return false;
 
-        data = QVariant::fromValue(combat);
+        if(player->getPile("Defense").size())return false;
+
+        if(!room->askForSkillInvoke(player,objectName()))return false;
+
+        if(player->getPile("Defense").size())room->throwCard(player->getPile("Defense").first());
+        else player->gainMark("@koishi");
+        const Card* card = room->peek();
+        room->drawCards(player,1);
+        player->addToPile("Defense",card->getId(),false);
 
         LogMessage log;
-        log.type = "#CatwalkConvert";
-        log.from = combat.to ;
-        log.card_str = barrage->toString();
+        log.type = "#chosenCatwalk";
+        log.from = player;
         room->sendLog(log);
 
         return false;
@@ -1780,19 +1817,22 @@ public:
     {
         if(player->getPhase() == Player::Start)
         {
+
+
+
             Room * room =player->getRoom();
             const Card* block = room->askForCard(player,".","ostinateCard",true);
-            while(block)
+            if(block)
             {
+                if(player->getPile("Defense").size())room->throwCard(player->getPile("Defense").first());
+                else player->gainMark("@koishi");
                 player->addToPile("Defense",block->getEffectiveId(),false);
-                player->gainMark("@koishi");
+
 
                 LogMessage log;
                 log.type = "#chosenOstinate";
                 log.from = player;
                 room->sendLog(log);
-
-                block = room->askForCard(player,".","ostinateCard",true);
             }
         }
 
@@ -1912,6 +1952,7 @@ public:
         if(!block)return false;
 
         room->changeMp(nitori,-1);
+        room->drawCards(nitori,1);
         player->tag["combatEffective"]=true;
         player->addToPile("Defense",block->getEffectiveId(),false);
 
@@ -2098,7 +2139,7 @@ void OnbashiraCard::onEffect(const CardEffectStruct &effect) const{
     QString choice = room->askForChoice(effect.from,"onbashira","recovermp+losemp");
 
     int num = (choice == "recovermp") ? 1 : -1 ;
-    room->changeMp(effect.from,num);
+    //room->changeMp(effect.from,num);
     room->changeMp(effect.to,num);
 }
 
@@ -2288,8 +2329,10 @@ public:
         CombatStruct combat = data.value<CombatStruct>();
         if(!combat.from->hasSkill(objectName()))
             return false;
+        if(combat.from->getMp()<1)return false;
         if(combat.from->askForSkillInvoke(objectName(),data)){
             Room *room = combat.from->getRoom();
+            room->changeMp(combat.from,-1);
             room->moveCardTo(combat.block, player, Player::Hand, false);
             player->jilei(QString(combat.block->getEffectiveId()));
             player->invoke("jilei", combat.block->getEffectIdString());
@@ -2346,7 +2389,7 @@ public:
     virtual bool viewFilter(const CardItem *to_select) const{
         const Card *card = to_select->getFilteredCard();
 
-        return card->isBlack();
+        return card->getSuit() == Card::Spade;
 
     }
 
@@ -2360,18 +2403,36 @@ public:
 
 };
 
-class ThiefMarisa: public DistanceSkill{
+class ThiefMarisa: public TriggerSkill{
 public:
-    ThiefMarisa():DistanceSkill("thiefmarisa")
+    ThiefMarisa():TriggerSkill("thiefmarisa")
     {
+        events << CombatFinished << TargetFinished;
     }
 
-    virtual int getCorrect(const Player *from, const Player *to) const{
-        if(from->hasSkill(objectName()))
-            return -1;
-        else
-            return 0;
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return TriggerSkill::triggerable(target)
+                && target->getMp();
     }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        CombatStruct combat = data.value<CombatStruct>();
+
+        Room * room = combat.from->getRoom();
+        const Card * card = event == CombatFinished ? combat.block : combat.combat;
+        if(!card)return false;
+        if(!room->obtainable(card,player))return false;
+        if(!player->getMp())return false;
+        if(!room->askForSkillInvoke(player,objectName()))return false;
+
+        room->changeMp(player,-1);
+        player->obtainCard(card);
+        return false;
+    }
+
+
 };
 
 class LunaticRedEyes : public TriggerSkill
@@ -2679,17 +2740,17 @@ void TouhouPackage::addGenerals()
     General *reimu = new General(this,"reimu","_hrp", 3, false ,false, 4);
     reimu->addSkill(new GuifuViewAs);
     reimu->addSkill(new Musoutensei);
-    reimu->addSkill(new Musoufuuin);
+    //reimu->addSkill(new Musoufuuin);
 
     General *aya =new General(this,"aya","_hrp",4,false,false,3);
     aya->addSkill(new WindGirl);
     aya->addSkill(new Fastshot);
 
-    General * alice = new General(this,"alice","_hrp",4,false,false,3);
+    General * alice = new General(this,"alice","_hrp",3,false,false,3);
     alice->addSkill(new DollMaster);
     alice->addSkill(new FolkDance);
 
-    General * marisa = new General(this,"marisa","_hrp",4,false,false,4);
+    General * marisa = new General(this,"marisa","_hrp",4,false,false,3);
     marisa->addSkill(new MasterSpark);
     marisa->addSkill(new ThiefMarisa);
 
@@ -2703,7 +2764,7 @@ void TouhouPackage::addGenerals()
     remilia->addSkill(new RemiliaStalker);
 
     General *sakuya = new General(this,"sakuya","_esd",4,false,false,2);
-    sakuya->addSkill(new KillerDoll);
+    sakuya->addSkill(new PerfectMaid);
     sakuya->addSkill(new DeflatedWorld);
 
     General *flandre = new General(this,"flandre","_esd",3,false,false,4);
@@ -2790,7 +2851,7 @@ void TouhouPackage::addGenerals()
     General * satori = new General(this,"satori","_sa",4,false,false,3);
     satori->addSkill(new Mindreader);
 
-    General *kogasa = new General(this,"kogasa","_ufo",3,false,false,4);//--now for test
+    //General *kogasa = new General(this,"kogasa","_ufo",3,false,false,4);//--now for test
     /*kogasa->addSkill(new UmbrellaIllusion);
     kogasa->addSkill(new UmbrellaRecollect);
     */

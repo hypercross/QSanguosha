@@ -35,7 +35,7 @@ Photo::Photo()
     back_icon->hide();
     back_icon->setZValue(1.0);
 
-    slow_icon = new Pixmap("image/system/touhou/high.png");
+    slow_icon = new Pixmap();
     slow_icon->setParentItem(this);
     slow_icon->setPos(-12, -6);
     //back_icon->hide();
@@ -659,8 +659,8 @@ void Photo::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWi
         painter->drawPixmap(28, 16, chain);
 
     back_icon->setVisible(! player->faceUp());
-    slow_icon->changePixmap(QString("image/system/touhou/%1.png")
-                            .arg(player->slowMode() ? "slow" : "high"));
+//    slow_icon->changePixmap(QString("image/system/touhou/%1.png")
+//                            .arg(player->slowMode() ? "slow" : "high"));
 }
 
 void Photo::drawEquip(QPainter *painter, CardItem *equip, int order){

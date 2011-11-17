@@ -241,7 +241,7 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
         }else if(blocker->inherits("CombatCard")){
             const CombatCard *ccard=qobject_cast<const CombatCard*>(blocker);
             ccard->resolveDefense(combat);
-            if(combat.to->slowMode())room->changeMp(combat.to,1);
+            //if(combat.to->slowMode())room->changeMp(combat.to,1);
         }
 
         room->getThread()->trigger(CombatFinished,source,data);
@@ -660,9 +660,18 @@ void Pants::onUninstall(ServerPlayer *player) const
 }
 
 Broomstick::Broomstick(Card::Suit suit, int number)
-    :DefensiveHorse(suit,number, +2)
+    :DefensiveHorse(suit,number, +1)
 {
     setObjectName("broomstick");
+}
+
+void Broomstick::onUninstall(ServerPlayer *player) const
+{
+    Room * room = player->getRoom();
+    if(!room->askForSkillInvoke(player,"broom-lost"))return;
+
+    room->changeMp(player,1);
+    room->getCurrent()->setFlags("IdlingWave");
 }
 
 class ZunHatSkill : public TriggerSkill
@@ -670,7 +679,7 @@ class ZunHatSkill : public TriggerSkill
 public:
     ZunHatSkill():TriggerSkill("zunhat")
     {
-        events << MpChanged;
+        events << MpChanged << CardLost;
         frequency = Compulsory;
     }
 
@@ -681,6 +690,10 @@ public:
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
     {
+        if(event == CardLost && player->getPhase()==Player::Discard)
+            player->addMark("zun_hat_trigger");
+
+        if(event != MpChanged || !player->getMark("zun_hat_trigger"))return false;
         MpChangeStruct change = data.value<MpChangeStruct>();
         if(change.delta<=0)return false;
 
@@ -696,6 +709,8 @@ public:
         log.arg  = QString("%1").arg(change.delta-1);
         log.arg2 = QString("%1").arg(change.delta);
         room->sendLog(log);
+
+        player->setMark("zun_hat_trigger",0);
 
         return false;
     }

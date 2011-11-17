@@ -365,7 +365,7 @@ bool SupplyShortage::targetFilter(const QList<const Player *> &targets, const Pl
 
     int distance = Self->distanceTo(to_select);
 
-        return distance <= 1 + (Self->slowMode() ? 0 :Self->getMp());
+        return distance <= 1 + Self->getMp();
 }
 
 void SupplyShortage::takeEffect(ServerPlayer *target) const{

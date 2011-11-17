@@ -189,6 +189,17 @@ void Player::setFixedDistance(const Player *player, int distance){
 }
 
 int Player::distanceTo(const Player *other) const{
+
+    int distance = rawDistanceTo(other);
+    // keep the distance >=1
+    if(distance < 1)
+        distance = 1;
+
+    return distance;
+}
+
+int Player::rawDistanceTo(const Player *other) const
+{
     if(this == other)
         return 0;
 
@@ -200,10 +211,6 @@ int Player::distanceTo(const Player *other) const{
     int distance = qMin(left, right);
 
     distance += Sanguosha->correctDistance(this, other);
-
-    // keep the distance >=1
-    if(distance < 1)
-        distance = 1;
 
     return distance;
 }

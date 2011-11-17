@@ -666,7 +666,7 @@ void Collateral::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
     if(on_effect){
         QString prompt = QString("collateral-combat:%1:%2")
                          .arg(source->objectName()).arg(victims.first()->objectName());
-        const Card *slash = room->askForCard(killer, ".combat", prompt,false);
+        const Card *slash = room->askForCard(killer, ".combat", prompt,true);
         if(slash){
             CardUseStruct use;
             use.card = slash;
@@ -771,7 +771,7 @@ bool Snatch::targetFilter(const QList<const Player *> &targets, const Player *to
     if(to_select == Self)
         return false;
 
-    if(Self->distanceTo(to_select) > (1+(Self->slowMode() ? 0 : Self->getMp())) && !Self->hasSkill("qicai"))
+    if(Self->distanceTo(to_select) > (1+Self->getMp()) && !Self->hasSkill("qicai"))
         return false;
 
     return true;
