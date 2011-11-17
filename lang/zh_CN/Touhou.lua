@@ -18,7 +18,8 @@ return
 	["dannatu-barrage"] ="%src 向您弹压，您需要打出一张【弹幕】",
 	["full-scre-strike"]="%src 使用了【全屏符卡】，请打出一张【灵击】或【符咒】来响应",
 	["#AttackerWin"] = "%from 击败了 %to",
-	["#DefenderWin"] = "%to 防御住了 %from ",
+	["#DefenderWin"] = "%to 未击败 %from ",
+	["#CombatDraw"] = "%to 战平 %from ",
 	
 	["#increasedMp"]    ="%from 回复了 %arg 点灵力",
 	["#decreasedMp"]    ="%from 损失了 %arg 点灵力",

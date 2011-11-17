@@ -21,12 +21,14 @@ public:
 
     virtual void onUse(Room *room, const CardUseStruct &card_use) const;
 
-    virtual bool canbeBlocked(const Card* card) const;
+    virtual int battle(const Card* card) const;
     virtual void resolveDefense(CombatStruct &combat) const;
     virtual void resolveAttack(CombatStruct &combat) const;
     virtual bool isAvailable(const Player *player) const;
 
     static bool IsAvailable(const Player *player);
+
+    static int BattleJudge(const Card* atker,const Card* dfser);
 };
 
 class Barrage : public CombatCard

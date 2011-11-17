@@ -226,19 +226,29 @@ void CombatCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer 
         attackCard = combat.combat;
         blocker    = combat.block;
 
-        bool success = blocker->canbeBlocked(attackCard);
+        int success = CombatCard::BattleJudge(attackCard,blocker);
         LogMessage CombatResult;
-        CombatResult.type = success ? "#AttackerWin" : "#DefenderWin";
+        switch(success)
+        {
+        case 1:
+            CombatResult.type = "#AttackerWin" ;
+            break;
+        case -1:
+            CombatResult.type = "#DefenderWin";
+            break;
+        default:
+            CombatResult.type = "#CombatDraw";
+        }
         CombatResult.from = combat.from;
         CombatResult.to << combat.to;
         room->sendLog(CombatResult);
 
-        if(success){
+        if(success>0){
             if(combat.combat->inherits("CombatCard")){
                 const CombatCard *ccard=qobject_cast<const CombatCard*>(combat.combat);
                 ccard->resolveAttack(combat);
             }
-        }else if(blocker->inherits("CombatCard")){
+        }else if((success<0) && blocker->inherits("CombatCard")){
             const CombatCard *ccard=qobject_cast<const CombatCard*>(blocker);
             ccard->resolveDefense(combat);
             //if(combat.to->slowMode())room->changeMp(combat.to,1);
@@ -296,16 +306,29 @@ bool CombatCard::targetFilter(const QList<const Player *> &targets, const Player
     return Self->canCombat(to_select, distance_limit);
 }
 
-bool CombatCard::canbeBlocked(const Card *card) const
+int CombatCard::battle(const Card *card) const
 {
     bool a = false;
-    if(!card)return false;
-    if(card->objectName()==this->objectName())return this->getNumber()<card->getNumber();
+    if(!card)return 1;
+    if(card->inherits("Strike") && this->inherits("Strike"))return 1;
+    if(card->objectName()==this->objectName())return 0;
     a=a || (this->inherits("Barrage") && card->inherits("Strike"));
     a=a || (this->inherits("Rune") && card->inherits("Barrage"));
     a=a || (this->inherits("Strike") && card->inherits("Rune"));
-    return a;
+    return a ? -1 : 1;
 }
+
+int CombatCard::BattleJudge(const Card *atker, const Card *dfser)
+{
+    if(!atker->inherits("CombatCard"))return -1;
+    if(!dfser->inherits("CombatCard"))return 1;
+
+    const CombatCard *atkc =qobject_cast<const CombatCard *>(atker);
+    const CombatCard *dfsc =qobject_cast<const CombatCard *>(dfser);
+
+    return atkc->battle(dfsc);
+}
+
 
 Barrage::Barrage(Card::Suit suit, int number):CombatCard(suit,number)
 {

@@ -117,6 +117,7 @@ return
 	["@realmcontroller"] = "你可以打出一张梅花牌，保持该束缚",
 	["blackbutterfly_constraint"]="束缚：二重 黑死蝶",
 	[":blackbutterfly_constraint"]="你出牌阶段开始时，需弃掉一张梅花手牌，否则流失一点体力。",
+	["#blackbutterfly_losthp"]="%from 未能打出一张梅花牌",
 	["kamikakushi"] = "八云紫的神隐",
 	[":kamikakushi"] = "锁定技，被束缚的玩家到你的距离+1;其他玩家到你的距离至少为2。",
 	["blackbutterfly"] = "二重 黑死蝶",

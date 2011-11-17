@@ -1250,7 +1250,7 @@ public:
     {
         CombatStruct cs = data.value<CombatStruct>();
 
-        if(!cs.combat->canbeBlocked(cs.block))
+        if(cs.combat->battle(cs.block)>0)
         {
             if(player->getMp()==player->getMaxMP())return false;
             if(!player->getRoom()->askForSkillInvoke(player,objectName()))return false;
@@ -1588,8 +1588,13 @@ public:
         if(player->getPhase() != Player::Play)return false;
         Room * room = player->getRoom();
 
-        if(!room->askForCard(player,".C","@black-butterfly"))
+        const Card * card = room->askForCard(player,".C","@black-butterfly");
+        if(!card)
         {
+            LogMessage log;
+            log.type = "#blackbutterfly-losthp";
+            log.from = player;
+            room->sendLog(log);
             room->loseHp(player);
         }
 
