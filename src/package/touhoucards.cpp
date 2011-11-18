@@ -310,7 +310,7 @@ int CombatCard::battle(const Card *card) const
 {
     bool a = false;
     if(!card)return 1;
-    if(card->inherits("Strike") && this->inherits("Strike"))return 1;
+    //if(card->inherits("Strike") && this->inherits("Strike"))return 1;
     if(card->objectName()==this->objectName())return 0;
     a=a || (this->inherits("Barrage") && card->inherits("Strike"));
     a=a || (this->inherits("Rune") && card->inherits("Barrage"));
@@ -357,7 +357,7 @@ Strike::Strike(Card::Suit suit, int number):CombatCard(suit,number)
 
 void Strike::resolveAttack(CombatStruct &combat) const
 {
-    combat.to->getRoom()->changeMp(combat.to,-1);
+    combat.to->getRoom()->changeMp(combat.to,-2);
     if(combat.from->getRoom()->obtainable(this,combat.from))
     {
         combat.from->getRoom()->obtainCard(combat.from,this->getEffectiveId());

@@ -496,7 +496,7 @@
         <location filename="src/client/client.cpp" line="1231"/>
         <source>You are dying, please provide %1 peach(es)(or analeptic) to save yourself</source>
         <oldsource>You are dying, please provide %2 peach(es)(or analeptic) to save yourself</oldsource>
-        <translation>您正在死亡线上挣扎，请提供 %1 个桃子（或酒）来救您自己</translation>
+        <translation>您正在死亡线上挣扎，请提供 %2 个【樱饼】（或AOE）来拯救自己</translation>
     </message>
     <message>
         <location filename="src/client/client.cpp" line="1235"/>

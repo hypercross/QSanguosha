@@ -1250,7 +1250,7 @@ public:
     {
         CombatStruct cs = data.value<CombatStruct>();
 
-        if(cs.combat->battle(cs.block)>0)
+        if(CombatCard::BattleJudge(cs.combat,cs.block))
         {
             if(player->getMp()==player->getMaxMP())return false;
             if(!player->getRoom()->askForSkillInvoke(player,objectName()))return false;
@@ -2428,6 +2428,7 @@ public:
         Room * room = combat.from->getRoom();
         const Card * card = event == CombatFinished ? combat.block : combat.combat;
         if(!card)return false;
+        if(room->getCardPlace(card->getId())!=Player::DiscardedPile)return false;
         if(!room->obtainable(card,player))return false;
         if(!player->getMp())return false;
         if(!room->askForSkillInvoke(player,objectName()))return false;

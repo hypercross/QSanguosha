@@ -18,7 +18,7 @@ return
 	["dannatu-barrage"] ="%src 向您弹压，您需要打出一张【弹幕】",
 	["full-scre-strike"]="%src 使用了【全屏符卡】，请打出一张【灵击】或【符咒】来响应",
 	["#AttackerWin"] = "%from 击败了 %to",
-	["#DefenderWin"] = "%to 未击败 %from ",
+	["#DefenderWin"] = "%to 成功防御了 %from ",
 	["#CombatDraw"] = "%to 战平 %from ",
 	
 	["#increasedMp"]    ="%from 回复了 %arg 点灵力",
@@ -123,7 +123,7 @@ return
 	
 	["pad"]     = "PAD",
 	[":pad"]     = "防具特效：锁定技，你没有宣告防御牌时，防御牌视为无花色的【灵击10】。",
-	["$PadConvert"] = "%from 的防御牌视为了 %card",
+	["#PadConvert"] = "%from 的防御牌视为了 %card",
 	
 	["doll"]    = "替身人偶",
 	[":doll"]    = "防具特效：你需要宣告防御牌时，可令对方用牌堆顶的牌代替进攻牌。",
