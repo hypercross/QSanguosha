@@ -236,6 +236,8 @@ public:
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const;
     virtual bool validPhaseChange(ServerPlayer* player, QVariant & data) const;
 
+    static void Detach(ServerPlayer * player, const DetacherSkill* skill) ;
+
 };
 
 class ConstraintSkill : public TriggerSkill

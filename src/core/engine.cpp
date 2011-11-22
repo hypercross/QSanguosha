@@ -369,7 +369,7 @@ QStringList Engine::getKingdoms() const{
     if(kingdoms.isEmpty())
         kingdoms << "wei" << "shu" << "wu" << "qun" << "god" <<
                     "_hrp" << "_esd" << "_pcb" << "_in" << "_stb"
-                    << "_mof" << "_swr" << "_sa" << "_ufo";
+                 << "_mof" << "_swr" << "_sa" << "_ufo" << "_pfv";
 
     return kingdoms;
 }
@@ -710,6 +710,8 @@ const ViewAsSkill *Engine::getViewAsSkill(const QString &skill_name) const{
 const ProhibitSkill *Engine::isProhibited(const Player *from, const Player *to, const Card *card) const{
     foreach(const ProhibitSkill *skill, prohibit_skills){
         if(to->hasSkill(skill->objectName()) && skill->isProhibited(from, to, card))
+            return skill;
+        if(skill->isProhibited(from,to,card) && skill->isGlobal())
             return skill;
     }
 

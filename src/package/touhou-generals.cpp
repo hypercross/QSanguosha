@@ -691,7 +691,7 @@ public:
 
     virtual bool triggerable(const ServerPlayer *target) const
     {
-        return TriggerSkill::triggerable(target) && target->getRoom()->getCardPlace(102) == Player::Equip;
+        return TriggerSkill::triggerable(target) && target->getRoom()->getCardPlace(104) == Player::Equip;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
@@ -746,6 +746,105 @@ public:
         if(room->getCardPlace(102)==Player::DiscardedPile)kogasa->obtainCard(umb);
 
         return false;
+    }
+};
+
+class ScareViewas : public ZeroCardViewAsSkill
+{
+public:
+    ScareViewas():ZeroCardViewAsSkill("scare_viewas")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return player->getMp();
+    }
+
+    virtual const Card* viewAs() const
+    {
+        return new Surprise(Card::NoSuit,0);
+    }
+};
+
+class Scare : public TriggerSkill
+{
+public:
+    Scare():TriggerSkill("scare")
+    {
+        view_as_skill = new ScareViewas;
+
+        events << CardUsed;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        CardUseStruct use = data.value<CardUseStruct>();
+        if(!use.card->isVirtualCard())return false;
+        if(!use.card->inherits("Surprise"))return false;
+
+        player->getRoom()->changeMp(player,-1);
+
+        return false;
+    }
+};
+
+class Forgotten : public PhaseChangeSkill
+{
+public:
+    Forgotten():PhaseChangeSkill("forgotten")
+    {
+
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return PhaseChangeSkill::triggerable(target)
+                && target->getPhase() == Player::Finish
+                && target->getMp();
+    }
+
+    virtual bool onPhaseChange(ServerPlayer *target) const
+    {
+        if(!target->askForSkillInvoke(objectName()))return false;
+        target->getRoom()->changeMp(target,-1);
+        ServerPlayer* tgt = target->getRoom()->askForPlayerChosen(target,target->getRoom()->getAlivePlayers(),objectName());
+
+        GuifuCard::ApplyChain(objectName(),tgt,target);
+        return false;
+    }
+};
+
+class ForgottenDetacher : public DetacherSkill
+{
+public:
+    ForgottenDetacher():DetacherSkill("forgotten")
+    {
+        events << CombatTargetDeclare;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        if(event == PhaseChange)return false;
+        if(data.value<CombatStruct>().to->hasSkill("forgotten"))
+            DetacherSkill::Detach(player,this);
+
+        return false;
+    }
+};
+
+class ForgottenProhibit : public ProhibitSkill
+{
+public:
+    ForgottenProhibit():ProhibitSkill("#forgotten_prohibit")
+    {
+
+    }
+
+    virtual bool isProhibited(const Player *from, const Player *to, const Card *card) const
+    {
+        return from->hasSkill("forgotten_constraint") && card->inherits("TrickCard");
     }
 };
 
@@ -2740,6 +2839,87 @@ public:
     }
 };
 
+class FSViewas : public OneCardViewAsSkill
+{
+public:
+    FSViewas():OneCardViewAsSkill("fs_viewas")
+    {
+
+    }
+
+    virtual bool isEnabledAtPlay(const Player *player) const
+    {
+        return player->getMark("springflower_limited");
+    }
+
+    virtual bool viewFilter(const CardItem *to_select) const
+    {
+        return to_select->getFilteredCard()->isBlack();
+    }
+
+    virtual const Card *viewAs(CardItem *card_item) const{
+        const Card *card = card_item->getCard();
+        Dannatu *duel = new Dannatu(card->getSuit(), card->getNumber());
+        duel->addSubcard(card);
+        duel->setSkillName(objectName());
+        return duel;
+    }
+};
+
+class FantasySpringflower : public PhaseChangeSkill
+{
+public:
+    FantasySpringflower():PhaseChangeSkill("fantasyspringflower")
+    {
+        view_as_skill = new FSViewas;
+
+        frequency = Limited;
+    }
+
+    virtual bool onPhaseChange(ServerPlayer *target) const
+    {
+        if(target->getPhase()==Player::NotActive
+                && target->getMark("springflower_limited"))
+        {
+            target->setMark("springflower_limited",0);
+            return false;
+        }
+
+        if(target->getPhase()!=Player::Start)return false;
+        if(!target->getMark("@springflower"))return false;
+        if(target->getMp()<2)return false;
+        if(!target->askForSkillInvoke(objectName()))return false;
+
+        target->getRoom()->changeMp(target,-2);
+        target->loseMark("@springflower");
+
+        target->drawCards(qMax(0,target->getHp() - target->getHandcardNum()));
+        target->getRoom()->setPlayerMark(target,"springflower_limited",1);
+
+        return false;
+    }
+};
+
+class FSViewasProhibit : public ProhibitSkill
+{
+public:
+    FSViewasProhibit():ProhibitSkill("#fs_viewas_prohibit")
+    {
+
+    }
+
+    virtual bool isProhibited(const Player *from, const Player *to, const Card *card) const
+    {
+        return card->getSkillName()=="fs_viewas"
+                && from->distanceTo(to)>1;
+    }
+
+    virtual bool isGlobal() const
+    {
+        return true;
+    }
+};
+
 
 void TouhouPackage::addGenerals()
 {
@@ -2857,14 +3037,21 @@ void TouhouPackage::addGenerals()
     General * satori = new General(this,"satori","_sa",4,false,false,3);
     satori->addSkill(new Mindreader);
 
-    //General *kogasa = new General(this,"kogasa","_ufo",3,false,false,4);//--now for test
-    /*kogasa->addSkill(new UmbrellaIllusion);
-    kogasa->addSkill(new UmbrellaRecollect);
-    */
+    General *kogasa = new General(this,"kogasa","_ufo",3,false,false,4);//--now for test
+    kogasa->addSkill(new UmbrellaIllusion);
+    kogasa->addSkill(new Forgotten);
+    kogasa->addSkill(new ForgottenProhibit);
+
+    General *yuuka = new General(this,"yuuka","_pfv",4,false,false,3);
+    yuuka->addSkill(new FantasySpringflower);
+    yuuka->addSkill(new FSViewasProhibit);
+    yuuka->addSkill(new MarkAssignSkill("@springflower", 1));
+
 
     skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;
     skills << new WorldJarDetacher << new Skill("worldjar_constraint");
     skills << new BlackButterflyConstraint << new BlackButterflyDetacher;
+    skills << new ForgottenDetacher << new Skill("forgotten_constraint");
 
     skills << new SwitchMode;
     addMetaObject<SwitchModeCard>();

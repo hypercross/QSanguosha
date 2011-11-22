@@ -352,10 +352,17 @@ DetacherSkill::DetacherSkill(const QString &name)
 bool DetacherSkill::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
 {
     if(!validPhaseChange(player,data))return false;
-    bool broken = player->getRoom()->getThread()->trigger(ConstraintLose,player);
-    if(broken)return false;
+    DetacherSkill::Detach(player,this);
 
-    QString name = objectName();
+    return false;
+}
+
+void DetacherSkill::Detach(ServerPlayer *player, const DetacherSkill *skill)
+{
+    bool broken = player->getRoom()->getThread()->trigger(ConstraintLose,player);
+    if(broken)return;
+
+    QString name = skill->objectName();
     name.replace("_detacher","_constraint");
     name.replace("#","");
 
@@ -367,13 +374,11 @@ bool DetacherSkill::trigger(TriggerEvent event, ServerPlayer *player, QVariant &
     player->getRoom()->sendLog(log);
 
     player->getRoom()->detachSkillFromPlayer(player,name);
-    player->getRoom()->detachSkillFromPlayer(player,objectName());
+    player->getRoom()->detachSkillFromPlayer(player,skill->objectName());
 
     player->getRoom()->setPlayerMark(player,"Chain",player->getMark("Chain")-1);
     player->setChained(player->getMark("Chain")>0);
     player->getRoom()->broadcastProperty(player,"chained");
-
-    return false;
 }
 
 bool DetacherSkill::validPhaseChange(ServerPlayer *player, QVariant &data) const
