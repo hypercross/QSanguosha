@@ -2920,9 +2920,149 @@ public:
     }
 };
 
+class Kachoufuugetu : public TriggerSkill
+{
+public:
+    Kachoufuugetu():TriggerSkill("kachoufuugetu")
+    {
+        events << CombatFinished;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        if(!player->getMp())return false;
+        if(!player->askForSkillInvoke(objectName()))return false;
+
+        player->getRoom()->changeMp(player,-1);
+
+        CombatStruct combat = data.value<CombatStruct>();
+        GuifuCard::ApplyChain(objectName(),combat.to,player);
+        return false;
+    }
+};
+
+class KachoufuugetuConstraint : public ConstraintSkill
+{
+public:
+    KachoufuugetuConstraint():ConstraintSkill("kachoufuugetu")
+    {
+        events << BlockDeclare << CardLost;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        if(event == CardLost)
+        {
+            CardMoveStar cms = data.value<CardMoveStar>();
+            if(cms->to == cms->from)return false;
+
+            player->getRoom()->detachSkillFromPlayer(player,"kachoufuugetu_viewas");
+            return false;
+        }
+
+        player->getRoom()->acquireSkill(player,"kachoufuugetu_viewas",false);
+        return false;
+    }
+};
+
+class KachoufuugetuDetacher : public DetacherSkill
+{
+public:
+    KachoufuugetuDetacher():DetacherSkill("kachoufuugetu")
+    {
+        events.clear();
+        events<< Damage;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        DetacherSkill::Detach(player,this);
+        return false;
+    }
+};
+
+class KachoufuugetuViewas : public FilterSkill
+{
+public:
+    KachoufuugetuViewas():FilterSkill("kachoufuugetu_viewas")
+    {
+
+    }
+
+    virtual bool viewFilter(const CardItem *to_select) const
+    {
+        return to_select->getCard()->inherits("Barrage");
+    }
+
+    virtual const Card *viewAs(CardItem *card_item) const
+    {
+        Peach *card= new Peach(card_item->getCard()->getSuit(),card_item->getCard()->getNumber());
+        card->addSubcard(card_item->getCard());
+        card->setSkillName(objectName());
+        return card;
+    }
+
+};
+
+class FantasyFlier : public DistanceSkill
+{
+public:
+    FantasyFlier():DistanceSkill("fantasyflier")
+    {
+
+    }
+
+    virtual int getCorrect(const Player *from, const Player *to) const
+    {
+        if(!from->getMark("fantasyflier_enabled"))return 0;
+        if(!to->getMark("fantasyflier_enabled"))return 0;
+
+        int temp = qAbs(from->getSeat() - from->getMark("fantasyflier"));
+        int distF =qMin( temp, from->aliveCount() - temp);
+
+        temp = qAbs(to->getSeat() - to->getMark("fantasyflier"));
+        int distT =qMin(temp, to->aliveCount() - temp);
+
+        if(distT + distF == from->rawDistanceTo(to,false)) return -1;
+
+        return 0;
+    }
+};
+
+class FantasyFlierMarkassigner : public TriggerSkill
+{
+public:
+    FantasyFlierMarkassigner():TriggerSkill("#ff_markassigner")
+    {
+        events << GameStart << Death;
+    }
+
+    virtual bool triggerable(const ServerPlayer *target) const
+    {
+        return true;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        ServerPlayer * nue = player->getRoom()->findPlayerBySkillName(objectName());
+        if(!nue)return false;
+
+        foreach(ServerPlayer * sp, player->getRoom()->getOtherPlayers(nue))
+        {
+            nue->getRoom()->setPlayerMark(sp,"fantasyflier_enabled",1);
+            nue->getRoom()->setPlayerMark(sp,"fantasyflier",nue->getSeat());
+        }
+
+
+        return false;
+    }
+};
 
 void TouhouPackage::addGenerals()
 {
+    //General *tester = new General(this,"tester","_hrp");
+    //tester->addSkill(new KachoufuugetuConstraint);
+
     General *reimu = new General(this,"reimu","_hrp", 3, false ,false, 4);
     reimu->addSkill(new GuifuViewAs);
     reimu->addSkill(new Musoutensei);
@@ -3047,11 +3187,19 @@ void TouhouPackage::addGenerals()
     yuuka->addSkill(new FSViewasProhibit);
     yuuka->addSkill(new MarkAssignSkill("@springflower", 1));
 
+    yuuka->addSkill(new Kachoufuugetu);
+
+
+    General *nue = new General(this,"nue","_ufo",4,false,false,3);
+    nue->addSkill(new FantasyFlier);
+    nue->addSkill(new FantasyFlierMarkassigner);
+
 
     skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;
     skills << new WorldJarDetacher << new Skill("worldjar_constraint");
     skills << new BlackButterflyConstraint << new BlackButterflyDetacher;
     skills << new ForgottenDetacher << new Skill("forgotten_constraint");
+    skills << new KachoufuugetuConstraint << new KachoufuugetuDetacher << new KachoufuugetuViewas;
 
     skills << new SwitchMode;
     addMetaObject<SwitchModeCard>();

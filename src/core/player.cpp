@@ -198,7 +198,7 @@ int Player::distanceTo(const Player *other) const{
     return distance;
 }
 
-int Player::rawDistanceTo(const Player *other) const
+int Player::rawDistanceTo(const Player *other,bool applyDistanceSkills) const
 {
     if(this == other)
         return 0;
@@ -210,7 +210,8 @@ int Player::rawDistanceTo(const Player *other) const
     int left = aliveCount() - right;
     int distance = qMin(left, right);
 
-    distance += Sanguosha->correctDistance(this, other);
+    if(applyDistanceSkills)
+        distance += Sanguosha->correctDistance(this, other);
 
     return distance;
 }
