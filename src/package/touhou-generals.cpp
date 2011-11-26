@@ -807,6 +807,7 @@ public:
 
     virtual bool onPhaseChange(ServerPlayer *target) const
     {
+        if(!target->getMp())return false;
         if(!target->askForSkillInvoke(objectName()))return false;
         target->getRoom()->changeMp(target,-1);
         ServerPlayer* tgt = target->getRoom()->askForPlayerChosen(target,target->getRoom()->getAlivePlayers(),objectName());
@@ -3058,6 +3059,30 @@ public:
     }
 };
 
+class UFO : public TriggerSkill
+{
+public:
+    UFO():TriggerSkill("ufo")
+    {
+        events << CardEffected;
+    }
+
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const
+    {
+        CardEffectStruct effect = data.value<CardEffectStruct>();
+        const Card * card = effect.card;
+        if(!(card->inherits("Snatch")||card->inherits("Dismantlement")))return false;
+        if(!player->getMp())return false;
+        if(!player->askForSkillInvoke(objectName()))return false;
+
+        player->getRoom()->changeMp(player,-1);
+        int self_chosen = player->getRoom()->askForCardChosen(player,player,"hej","ufo");
+        player->getRoom()->provide(Sanguosha->getCard(self_chosen));
+
+        return false;
+    }
+};
+
 void TouhouPackage::addGenerals()
 {
     //General *tester = new General(this,"tester","_hrp");
@@ -3181,6 +3206,7 @@ void TouhouPackage::addGenerals()
     kogasa->addSkill(new UmbrellaIllusion);
     kogasa->addSkill(new Forgotten);
     kogasa->addSkill(new ForgottenProhibit);
+    kogasa->addSkill(new Scare);
 
     General *yuuka = new General(this,"yuuka","_pfv",4,false,false,3);
     yuuka->addSkill(new FantasySpringflower);
@@ -3193,6 +3219,7 @@ void TouhouPackage::addGenerals()
     General *nue = new General(this,"nue","_ufo",4,false,false,3);
     nue->addSkill(new FantasyFlier);
     nue->addSkill(new FantasyFlierMarkassigner);
+    nue->addSkill(new UFO);
 
 
     skills << new GuifuDetacher << new GuifuConstraint << new PhilosopherStoneDetacher << new PhilosopherStoneConstraint;

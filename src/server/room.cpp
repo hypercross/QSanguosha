@@ -622,6 +622,13 @@ int Room::askForCardChosen(ServerPlayer *player, ServerPlayer *who, const QStrin
 
     int card_id;
 
+    if(provided)
+    {
+        card_id = provided->getId();
+        provided = NULL;
+        return card_id;
+    }
+
     AI *ai = player->getAI();
     if(ai){
         thread->delay(Config.AIDelay);
