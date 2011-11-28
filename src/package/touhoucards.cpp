@@ -320,6 +320,18 @@ int CombatCard::battle(const Card *card) const
 
 int CombatCard::BattleJudge(const Card *atker, const Card *dfser)
 {
+
+    if(atker->inherits("Moutama"))
+    {
+        if(dfser->inherits("Moutama"))return 0;
+        else if(dfser->inherits("CombatCard"))return 1;
+        else return -1;
+    }else if(dfser->inherits("Moutama"))
+    {
+        if(atker->inherits("CombatCard"))return -1;
+        else return 1;
+    }
+
     if(!atker->inherits("CombatCard"))return -1;
     if(!dfser->inherits("CombatCard"))return 1;
 
@@ -419,23 +431,7 @@ void Rune::resolveDefense(CombatStruct &combat) const
     combat.to->getRoom()->changeMp(combat.from,-1);
 }
 
-Moutama::Moutama(Card::Suit suit, int number):BasicCard(suit,number)
-{
-    setObjectName("moutama");
-    target_fixed = true;
-}
 
-QString Moutama::getSubtype() const
-{
-    return "recover_card";
-}
-
-void Moutama::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const
-{
-    room->throwCard(this->getEffectiveId());
-    room->changeMp(source,1);
-    room->drawCards(source,1);
-}
 
 ExSpell::ExSpell(Card::Suit suit, int number)
     :AOE(suit,number)

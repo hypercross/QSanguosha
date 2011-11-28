@@ -3083,6 +3083,8 @@ public:
     }
 };
 
+
+
 void TouhouPackage::addGenerals()
 {
     //General *tester = new General(this,"tester","_hrp");

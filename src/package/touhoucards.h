@@ -58,14 +58,7 @@ public:
     virtual void resolveAttack(CombatStruct &combat) const;
 };
 
-class Moutama : public BasicCard
-{
-    Q_OBJECT
-public:
-    Q_INVOKABLE Moutama(Card::Suit suit, int number);
-    virtual QString getSubtype() const;
-    virtual void use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const;
-};
+
 
 class ExSpell : public AOE
 {

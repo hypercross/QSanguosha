@@ -90,7 +90,8 @@ SOURCES += src/main.cpp \
         src/package/touhoucards.cpp \
         src/package/touhou-generals.cpp \
         src/package/touhou-equips.cpp \
-	swig/sanguosha_wrap.cxx
+	swig/sanguosha_wrap.cxx \
+    src/package/expansion_one.cpp
 
 HEADERS += src/client/aux-skills.h \
 	src/client/client.h \
@@ -172,7 +173,8 @@ HEADERS += src/client/aux-skills.h \
         src/util/socket.h \
         src/package/touhoucards.h \
         src/package/touhou-generals.h \
-        src/package/touhou-equips.h
+        src/package/touhou-equips.h \
+    src/package/expansion_one.h
 	
 FORMS += src/dialog/cardoverview.ui \
 	src/dialog/configdialog.ui \
@@ -220,3 +222,5 @@ CONFIG(joystick){
 }
 
 TRANSLATIONS += sanguosha.ts
+
+

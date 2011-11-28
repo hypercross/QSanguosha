@@ -44,6 +44,7 @@ extern "C" {
     //Package *NewSP();
     //Package *NewYJCM();
     Package *NewTouhou();
+    Package *NewExpansionOne();
 
     //Scenario *NewGuanduScenario();
 //    Scenario *NewFanchengScenario();
@@ -76,6 +77,7 @@ Engine::Engine()
 //    addPackage(NewSP());
 //    addPackage(NewYJCM());
     addPackage(NewTouhou());
+    addPackage(NewExpansionOne());
 
 
 //    addScenario(NewGuanduScenario());
